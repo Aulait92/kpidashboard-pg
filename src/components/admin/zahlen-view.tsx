@@ -1044,6 +1044,8 @@ function VertriebSheet({ v, initial, rangeLabel, onClose }: { v: VertriebZahlen;
 }
 
 // ─── BWA ─────────────────────────────────────────────────────────────────
+/** Leere BWA-Zelle (statt „noch keine Daten“ in jeder Zelle). */
+export const BWA_LEER = "·";
 const eur2 = (v: number) => v.toLocaleString("de-DE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
 function BwaTab({ d }: { d: BwaData }) {
@@ -1064,7 +1066,8 @@ function BwaTab({ d }: { d: BwaData }) {
     if (v == null) return "";
     if (r.kind === "pct") return pct(v, 0);
     const shown = displaySign(r) * v;
-    return shown === 0 ? NOCH_KEINE_DATEN : eur2(shown);
+    // Leere Zellen als „·“ (Usability-Check 25.11.2026), der Hinweis steht einmal über der Tabelle
+    return shown === 0 ? BWA_LEER : eur2(shown);
   };
   const tone = (r: BwaRow, v: number | null) => (v != null && r.kind !== "pct" && displaySign(r) * v < 0 ? "text-rose-600" : "");
   return (
@@ -1102,13 +1105,13 @@ function BwaTab({ d }: { d: BwaData }) {
       </div>
       <Card
         title="BWA (vereinfacht, netto)"
-        cap="Umsatz und Kosten je Monat, ohne Hochrechnung. Ergebnis vor Steuern und ohne Unternehmerlohn. Zeile anklicken: woraus besteht das?"
+        cap={`Umsatz und Kosten je Monat, ohne Hochrechnung. Ergebnis vor Steuern und ohne Unternehmerlohn. Zeile anklicken: woraus besteht das? ${BWA_LEER} = noch keine Daten.`}
       >
         <div className="-mx-4 overflow-x-auto sm:-mx-5" data-bwa-tabelle>
           <table className="w-full min-w-max border-collapse text-[13px] tabular-nums">
             <thead>
               <tr className="text-[color:var(--muted)]">
-                <th className="sticky left-0 z-10 bg-white py-1.5 pl-4 pr-3 text-left font-medium sm:pl-5">Position</th>
+                <th className="sticky left-0 z-10 w-[9.5rem] min-w-[9.5rem] bg-white py-1.5 pl-4 pr-3 text-left font-medium sm:w-auto sm:min-w-[13rem] sm:pl-5">Position</th>
                 {bwa.months.map((m) => (
                   <th key={m} className={cn("whitespace-nowrap px-2 text-right font-medium", incomplete.has(m) && "text-slate-400")} title={incomplete.has(m) ? "Vor den ersten Bankdaten: Betriebskosten unvollständig" : undefined}>
                     {shortMonth(m)} {m.slice(2, 4)}
@@ -1136,9 +1139,18 @@ function BwaTab({ d }: { d: BwaData }) {
                       r.kind === "pct" && "text-[color:var(--muted)]",
                     )}
                   >
-                    <td className={cn("sticky left-0 z-10 max-w-[220px] truncate py-1.5 pl-4 pr-3 sm:pl-5", r.kind === "result" ? "bg-slate-50" : "bg-white", r.kind === "line" && "pl-6 sm:pl-7")}>
+                    {/* Zeilentitel ganz lesbar (Usability-Check 25.11.2026): Umbruch statt Abschneiden, am Handy bleibt die Spalte stehen */}
+                    <td
+                      className={cn(
+                        "sticky left-0 z-10 w-[9.5rem] min-w-[9.5rem] max-w-[9.5rem] whitespace-normal break-words py-1.5 pl-4 pr-3 align-top leading-snug sm:w-auto sm:min-w-[13rem] sm:max-w-[20rem] sm:pl-5",
+                        r.kind === "result" ? "bg-slate-50" : "bg-white",
+                        r.kind === "line" && "pl-6 sm:pl-7",
+                      )}
+                      title={r.label}
+                      data-bwa-titel
+                    >
                       {r.lines?.length ? (
-                        <button type="button" onClick={() => setDrill(r)} className="max-w-full truncate text-left hover:text-[color:var(--brand)] hover:underline" title="Woraus besteht das?" data-bwa-zeile={r.key}>
+                        <button type="button" onClick={() => setDrill(r)} className="text-left hover:text-[color:var(--brand)] hover:underline" title={`${r.label}: Woraus besteht das?`} data-bwa-zeile={r.key}>
                           {r.label}
                         </button>
                       ) : (
@@ -1146,11 +1158,11 @@ function BwaTab({ d }: { d: BwaData }) {
                       )}
                     </td>
                     {r.values.map((v, i) => (
-                      <td key={bwa.months[i]} className={cn("whitespace-nowrap px-2 text-right", tone(r, v), incomplete.has(bwa.months[i]) && "opacity-60")}>
+                      <td key={bwa.months[i]} className={cn("whitespace-nowrap px-2 text-right align-top", tone(r, v), cell(r, v) === BWA_LEER && "text-slate-300", incomplete.has(bwa.months[i]) && "opacity-60")}>
                         {cell(r, v)}
                       </td>
                     ))}
-                    <td className={cn("whitespace-nowrap px-2 pr-4 text-right font-semibold sm:pr-5", tone(r, r.total))}>{cell(r, r.total)}</td>
+                    <td className={cn("whitespace-nowrap px-2 pr-4 text-right align-top font-semibold sm:pr-5", tone(r, r.total), cell(r, r.total) === BWA_LEER && "text-slate-300")}>{cell(r, r.total)}</td>
                   </tr>
                 ),
               )}
