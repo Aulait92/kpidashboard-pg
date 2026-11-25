@@ -60,6 +60,8 @@ export const RESERVED_SEGMENTS: ReadonlySet<string> = new Set([
   "termin",
   // Eigene Funnels (lib/funnel, eigene Adresse beitrag.pkv-tarife.com)
   "f",
+  // Download-Link Belegpaket fürs Steuerbüro (app/belege/paket, nur auf der App-Adresse)
+  "belege",
 ]);
 
 const SLUG_RE = /^[A-Za-z0-9_-]{1,80}$/;
