@@ -428,6 +428,17 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
     });
   }
 
+  // Buchungsseite eines Kunden seit über 3 Std. (tagsüber) ohne freie Zeiten (Cron speichert „leer seit“,
+  // lib/buchungsseite-leer-server.ts; Ole 25.11.2026)
+  items.push(
+    ...(await import("@/lib/buchungsseite-leer-server")
+      .then((m) => m.ladeBuchungsseitenLeer(now))
+      .catch((err: unknown) => {
+        reportError(err, "admin-heute-buchungsseite");
+        return [] as HeuteItem[];
+      })),
+  );
+
   // ── Leads / Pay-per-Lead ───────────────────────────────
   if (unassigned.length) {
     const leads = unassigned.reduce((a, r) => a + r._count, 0);

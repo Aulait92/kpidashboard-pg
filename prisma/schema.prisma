@@ -1352,6 +1352,12 @@ model CalendarConnection {
   // Davon zuletzt nicht abrufbar (z. B. Tippfehler → notFound); werden übersprungen, Hinweis in den Einstellungen
   // (Ole, 18.11.2026). Leer = alle lesbar.
   busyCalendarErrors String[] @default([])
+  // Warnung „Buchungsseite ohne freie Zeiten“ (Ole, 25.11.2026, lib/buchungsseite-leer-server.ts): Der Cron prüft
+  // tagsüber höchstens alle 30 Minuten, ob suggestSlots (lead, 14 Tage) Zeiten liefert. keineZeitenSeit = erster
+  // leerer bzw. fehlerhafter Lauf (null = Zeiten da), Grund kurz (z. B. Allianz-Termin-Art ohne freie Zeiten).
+  keineZeitenSeit       DateTime?
+  keineZeitenGrund      String?
+  keineZeitenGeprueftAt DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -1600,6 +1606,9 @@ model Appointment {
   // Push „Ist … da?“ zum Terminbeginn bzw. „Ist … noch gekommen?“ nach dem Termin (je einmal)
   startPushAt           DateTime?
   afterPushAt           DateTime?
+  // Push „Wie lief der Termin mit …?“ am nächsten Werktag ab 8 Uhr, solange das Ergebnis fehlt (Ole, 25.11.2026,
+  // lib/termin-ergebnis-push.ts): höchstens einmal je Termin
+  ergebnisPushAt        DateTime?
   // Vom Vermittler übersprungene Erinnerungen (Paket P6): vortag | vortag_mail | stunde | gleich
   erinnerungenUebersprungen String[] @default([])
   // Komplettcheck = Ja: auf 45 Min. verlängert („verlaengert“) bzw. Hinweis an den Vermittler („hinweis“)
