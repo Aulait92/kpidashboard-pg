@@ -16,12 +16,14 @@ Zielvorschlag (Red Team + CFO): „30.000 € frei verfügbar am 31.12.“ = Kon
 ## Jahresend-Angebot „Januar-Start sichern“
 Listenkonditionen (6 Monate: 1 Monat geschenkt, Einrichtung 1.490 €; 12 Monate: 3 Monate geschenkt, Einrichtung 990 €). Neu nur der Rahmen: Zahlung bis 19.12., Einrichtung im Dezember, Kampagnen ab 2.1., feste Startplätze. Keine zusätzlichen Rabatte oder Garantien. Steuerlicher Vorteil nur als Hinweis „mit Steuerberater prüfen“.
 
-## Wochenplan (Ø Abschluss ≈ 5.300 € Cash, Quote ≈ 30 %)
-- KW 48: 6 Gespräche, 4 Angebote, 1 Abschluss (Haferstroh 26.11.)
-- KW 49: 6 Gespräche, 3 Angebote, 2 Abschlüsse
-- KW 50: 4 Gespräche, 2 Angebote, 1 Abschluss
-- KW 51 (bis 19.12.): 1 Abschluss, danach nur einsammeln
-Vorkasse per Überweisung, Rechnungen spätestens fällig 15.12.
+## Wochenplan (Head of Sales, korrigiert mit K = 3.700 €)
+Gewichtete Summe aus warmer Pipeline und Upsells: rund 23.600 € (Erwartungswert), also unter der Lücke. Es braucht 2 bis 3 zusätzliche Abschlüsse aus Kaltakquise.
+Je bezahltem Abschluss (Ø 5.300 €): etwa 5 Gespräche und 3 Angebote.
+- KW 48: 8 bis 10 Gespräche, 5 bis 6 Angebote, 1 bezahlt
+- KW 49: 10 bis 11 Gespräche, 6 bis 7 Angebote, 2 bis 3 bezahlt
+- KW 50: 6 bis 8 Gespräche, 3 bis 4 Angebote, 2 bezahlt (letzte Angebote 8.12.)
+- KW 51 bis 53: nur Zahlungseingänge prüfen, am 16.12. mahnen
+Annahme bis 8.12., Zahlungsziel 15.12., Überweisung. Instantly-Kampagnen jetzt starten (Antworten nach dem 5.12. zahlen nicht mehr rechtzeitig).
 
 ## Rote Linien
 - 19 % jeder Dezember-Einzahlung sofort auf Rücklagekonto
