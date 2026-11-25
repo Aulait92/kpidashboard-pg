@@ -1407,6 +1407,9 @@ model AgentConfig {
   allianzLastOkAt          DateTime?
   allianzLastError         String?
   allianzAlertAt           DateTime?
+  // „Ich habe keinen Online-Kalender“ (25.11.2026): App-Kalender mit festen Beratungszeiten, Termine als Einladung per
+  // Mail, eigene Termine per Weiterleitung blockiert. Zählt als Quelle (appKalenderPruefen schaltet nicht ab).
+  ohneOnlineKalenderAt     DateTime?
   createdAt                DateTime  @default(now())
   updatedAt                DateTime  @updatedAt
 

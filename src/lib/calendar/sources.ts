@@ -1,6 +1,7 @@
 // Verfügbarkeits-Quellen eines Kunden einrichten (Kundenbereich und Admin):
 //   A) ICS-Link des Firmenkalenders, B) Allianz-Online-Kalender,
-//   C) immer: feste Lead-Zeiten + „Zeit blockieren".
+//   C) immer: feste Lead-Zeiten + „Zeit blockieren",
+//   D) „Ich habe keinen Online-Kalender“: App-Kalender mit festen Beratungszeiten (ohneOnlineKalenderEinschalten).
 // Die Server-Actions prüfen die Rechte und rufen nur diese Funktionen auf.
 
 import { prisma } from "@/lib/prisma";
@@ -52,17 +53,20 @@ export type AllianzSummary = {
   lastError: string | null;
 };
 
-export async function loadSources(customerId: string): Promise<{ hasIcs: boolean; allianz: AllianzSummary | null; bookingCalendar: boolean }> {
+export async function loadSources(
+  customerId: string,
+): Promise<{ hasIcs: boolean; allianz: AllianzSummary | null; bookingCalendar: boolean; ohneOnlineKalender: boolean }> {
   const [agent, conn] = await Promise.all([
     prisma.agentConfig.findUnique({
       where: { customerId },
-      select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true, allianzConsentAt: true, allianzLastOkAt: true, allianzLastError: true },
+      select: { availabilityIcsUrlEnc: true, allianzCalendarEnc: true, allianzConsentAt: true, allianzLastOkAt: true, allianzLastError: true, ohneOnlineKalenderAt: true },
     }),
     prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true } }),
   ]);
   const cal = decodeAllianzCalendar(agent?.allianzCalendarEnc);
   return {
     hasIcs: !!agent?.availabilityIcsUrlEnc,
+    ohneOnlineKalender: !!agent?.ohneOnlineKalenderAt,
     bookingCalendar: conn?.status === "connected",
     allianz: cal
       ? {
@@ -186,6 +190,24 @@ export async function saveIcsLink(customerId: string, raw: string): Promise<Sour
   // Ohne Google/Outlook: Termine über den App-Kalender mit Einladung per Mail (lib/calendar/app-kalender.ts)
   const app = await appKalenderEinschalten(customerId);
   return { ok: true, info: `Kalender-Link gespeichert. Belegte Zeiten daraus berücksichtigen wir ab sofort.${app ? " Termine bekommen Sie als Einladung per Mail." : ""}` };
+}
+
+/**
+ * D) „Ich habe keinen Online-Kalender“ (25.11.2026, für alle Gesellschaften): App-Kalender einschalten, Termine als
+ * Einladung per Mail, freie Zeiten aus den festen Beratungszeiten (Lead-Zeiten, ohne Einstellung Mo bis Fr 10 bis
+ * 17 Uhr), eigene Termine per Weiterleitung an die Termin-Adresse (lib/calendar/termin-weiterleitung.ts). Die Wahl ist
+ * gespeichert und zählt als Quelle, damit appKalenderPruefen den Kalender nicht wieder ausschaltet. Ein verbundener
+ * Google-/Outlook-Kalender bleibt unangetastet.
+ */
+export async function ohneOnlineKalenderEinschalten(customerId: string): Promise<SourceResult> {
+  const conn = await prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true, provider: true } });
+  if (conn?.status === "connected" && conn.provider !== "app") {
+    return { error: "Ihr Google- bzw. Outlook-Kalender ist schon verbunden. Termine landen direkt dort." };
+  }
+  const at = new Date();
+  await prisma.agentConfig.upsert({ where: { customerId }, create: { customerId, ohneOnlineKalenderAt: at }, update: { ohneOnlineKalenderAt: at } });
+  await appKalenderEinschalten(customerId);
+  return { ok: true, info: "Eingerichtet. Termine bekommen Sie als Einladung per Mail." };
 }
 
 export async function removeIcsLink(customerId: string): Promise<void> {

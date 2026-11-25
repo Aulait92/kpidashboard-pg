@@ -24,6 +24,7 @@ import {
   deleteBlockAction,
   disconnectAllianzAction,
   disconnectNativeCalendarAction,
+  ohneOnlineKalenderAction,
   remindAdvisorCalendarAction,
   removeIcsAction,
   saveBeraterAllianzAction,
@@ -136,6 +137,9 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
                   disconnectAllianzAction={disconnectAllianzAction}
                   disconnectNativeAction={disconnectNativeCalendarAction}
                   allianzOption={allianzKalender}
+                  ohneKalenderAction={ohneOnlineKalenderAction}
+                  beratungszeiten={setup.beratungszeiten}
+                  einladungAn={setup.einladungAn}
                 />
               ) : null}
               {setup ? (
@@ -272,7 +276,7 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
 
       {setup ? (
         // Eine Karte für die Zeiten (UX-Runde Team C, 19.11.2026): „Zeit blockieren“ ist die Ausnahme dazu, früher eigene Karte; „menus“: ohne overflow-hidden, damit die Speichern-Leiste kleben kann
-        <Card className="mt-5" menus>
+        <Card id="beratungszeiten" className="mt-5 scroll-mt-20" menus>
           <CardHeader title="Wann dürfen Leads Termine buchen?" icon={Clock} />
           <div className="p-5">
             <p className="mb-4 text-sm text-[color:var(--muted)]">Unser Assistent schlägt nur diese Zeiten vor, und nur wenn Sie dann frei sind.</p>

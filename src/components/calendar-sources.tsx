@@ -6,7 +6,7 @@ import { WebexAnleitung } from "@/components/webex-anleitung";
 // Die Server-Actions kommen als Props (Kundenbereich bzw. Admin mit customerId).
 
 import { useActionState, useState, useTransition } from "react";
-import { CheckCircle2, Copy, Loader2, Plus, Trash2, X } from "lucide-react";
+import { CheckCircle2, ChevronDown, Clock, Copy, Forward, Loader2, Mail, Plus, Trash2, X } from "lucide-react";
 import { buttonClass } from "@/components/ui";
 import { TimeSelect } from "@/components/time-select";
 import { CopyField } from "@/components/termin/copy-field";
@@ -146,7 +146,7 @@ export function LeadTimesForm({
    * Zeiten im Allianz-Kalender freigehalten werden (eine echte Blockierung
    * sähen wir über ICS bzw. den Online-Kalender sonst als belegt).
    */
-  source?: "none" | "ics" | "allianz";
+  source?: "none" | "ics" | "allianz" | "ohne";
   /** Speichern als Nebenaktion (Einrichtung Allianz: Hauptaktion ist dort „Verbinden“) */
   zweitrangig?: boolean;
 }) {
@@ -389,7 +389,9 @@ export function LeadTimesForm({
       <p className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3 text-sm">
         {source === "allianz"
           ? "Halten Sie diese Zeiten in Ihrem Allianz-Kalender frei. Blocken Sie sie dort bitte nicht, sonst zeigt Ihr Online-Kalender sie als belegt und wir können sie nicht anbieten."
-          : source === "ics"
+          : source === "ohne"
+            ? "Eigene Termine in diesen Zeiten leiten Sie an Ihre Termin-Adresse weiter, dann bieten wir dort keine Termine an."
+            : source === "ics"
             ? "Tragen Sie diese Zeiten als Serie „Leadtermine“ in Ihren Allianz-Kalender ein und stellen Sie „Anzeigen als: Frei“ ein. So bucht dort niemand anderes hinein, und wir sehen die Zeiten weiter als frei."
             : "Termine werden nur angeboten, wenn Sie in Ihrem Kalender frei sind. Wenn Sie diese Zeiten dort markieren möchten (z. B. als Serie „Leadtermine“), dann nur mit „Anzeigen als: Frei“."}
       </p>
@@ -416,6 +418,47 @@ export function LeadTimesForm({
 }
 
 // ─── Zeit blockieren ────────────────────────────────────────────────────
+
+/**
+ * Persönliche Termin-Adresse mit Kurzanleitung (App-Kalender, lib/calendar/termin-weiterleitung.ts): Einladung
+ * weiterleiten oder die Adresse als Teilnehmer einladen, dann ist die Zeit belegt. Anleitung für Outlook, iPhone und
+ * Gmail aufklappbar (Ole, 25.11.2026: nicht als langer Text). Einrichtung und „Mein Kalender“ nutzen dieselbe Box.
+ */
+export function TerminAdresseHilfe({ adresse }: { adresse: string }) {
+  return (
+    <div className="space-y-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken,#f1f5f9)] p-3" data-termin-weiterleitung>
+      <p className="text-sm font-medium">Eigene Termine blockieren: an diese Adresse weiterleiten oder sie als Teilnehmer einladen</p>
+      <CopyField value={adresse} />
+      <details className="group/hilfe text-sm" data-termin-anleitung>
+        <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-1 font-medium text-[color:var(--brand)] [&::-webkit-details-marker]:hidden">
+          So geht es in Outlook, iPhone und Gmail
+          <ChevronDown className="h-4 w-4 transition group-open/hilfe:rotate-180" />
+        </summary>
+        <dl className="mt-1 space-y-2">
+          <div>
+            <dt className="font-medium">Outlook</dt>
+            <dd className="text-[color:var(--muted)]">
+              Termin öffnen, <b>Weiterleiten</b>, Adresse einfügen, senden. Bei neuen Terminen die Adresse gleich unter <b>Teilnehmer</b> eintragen.
+            </dd>
+          </div>
+          <div>
+            <dt className="font-medium">iPhone (Kalender)</dt>
+            <dd className="text-[color:var(--muted)]">
+              Termin öffnen, <b>Bearbeiten</b>, <b>Teilnehmer</b>, Adresse einfügen, <b>Fertig</b>.
+            </dd>
+          </div>
+          <div>
+            <dt className="font-medium">Gmail (Google Kalender)</dt>
+            <dd className="text-[color:var(--muted)]">
+              Termin öffnen, bei <b>Gäste hinzufügen</b> die Adresse eintragen, <b>Speichern</b> und Einladung <b>senden</b>.
+            </dd>
+          </div>
+        </dl>
+        <p className="mt-2 text-xs text-[color:var(--muted)]">Wir übernehmen nur Beginn und Ende. Absagen und Verschieben genauso, dann passen wir die Zeit an.</p>
+      </details>
+    </div>
+  );
+}
 
 const fmtBlock = (start: Date, end: Date) => {
   const day = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" }).format(start);
@@ -450,13 +493,7 @@ export function BlockTimes({
   const hiddenInputs = hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null;
   return (
     <div className="space-y-4">
-      {terminAdresse ? (
-        <div className="space-y-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken,#f1f5f9)] p-3" data-termin-weiterleitung>
-          <p className="text-sm font-medium">Termine aus Outlook blockieren: Einladung an diese Adresse weiterleiten</p>
-          <CopyField value={terminAdresse} />
-          <p className="text-xs text-[color:var(--muted)]">Wir übernehmen nur Beginn und Ende. Leiten Sie eine Absage weiter, ist die Zeit wieder frei.</p>
-        </div>
-      ) : null}
+      {terminAdresse ? <TerminAdresseHilfe adresse={terminAdresse} /> : null}
       {!offen && !state.error && !state.ok ? (
         <button type="button" disabled={readOnly} onClick={() => setOffen(true)} className={buttonClass("secondary", "md")} data-block-oeffnen>
           Zeit blockieren
@@ -516,6 +553,8 @@ export function BlockTimes({
 export type SourceStatus = {
   native: { connected: boolean; label: string | null; account?: string | null; app?: boolean };
   hasIcs: boolean;
+  /** „Ich habe keinen Online-Kalender“ gewählt (25.11.2026) */
+  ohneOnlineKalender?: boolean;
   allianz: { orgName: string; templateName: string; durationMin: number; lastError: string | null; abFruehestemTag?: boolean } | null;
 };
 
@@ -640,6 +679,10 @@ export function SourcePicker({
   hidden,
   allianzOption = true,
   ohneAllianz = false,
+  ohneKalenderAction,
+  beratungszeiten,
+  einladungAn,
+  terminAdresse,
 }: {
   status: SourceStatus;
   readOnly: boolean;
@@ -655,7 +698,16 @@ export function SourcePicker({
   allianzOption?: boolean;
   /** Allianz-Kalender steht schon darüber (Einrichtung für Allianz-Vertreter): hier nur Google, Outlook und Kalender-Link */
   ohneAllianz?: boolean;
+  /** „Ich habe keinen Online-Kalender“ anbieten (alle Gesellschaften, 25.11.2026) */
+  ohneKalenderAction?: FormAction;
+  /** Beratungszeiten als Text, z. B. „Mo bis Fr, 10 bis 17 Uhr“ (Formular darunter unter #beratungszeiten) */
+  beratungszeiten?: string | null;
+  /** Adresse, an die Einladungen gehen */
+  einladungAn?: string | null;
+  /** Persönliche Termin-Adresse (nur App-Kalender), mit Kurzanleitung */
+  terminAdresse?: string | null;
 }) {
+  const [ohneOffen, setOhneOffen] = useState(false);
   const showAllianz = !ohneAllianz && (allianzOption || !!status.allianz);
   const [way, setWay] = useState<"ics" | "allianz">(status.allianz ? "allianz" : status.hasIcs || !showAllianz ? "ics" : "allianz");
   const hiddenInputs = hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null;
@@ -668,11 +720,23 @@ export function SourcePicker({
     <div className="space-y-4">
       <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-4" data-ihr-kalender>
         {status.native.app ? (
-          <div className="space-y-2">
-            <span className="flex items-center gap-1.5 text-[15px] font-medium text-emerald-700">
-              <CheckCircle2 className="h-4 w-4 shrink-0" />
-              Termine bekommen Sie als Einladung per Mail
+          <div className="space-y-3">
+            <span className="flex items-start gap-1.5 text-[15px] font-medium text-emerald-700" data-app-kalender>
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+              <span className="min-w-0">
+                Termine bekommen Sie als Einladung {einladungAn ? "an " : "per Mail"}
+                {einladungAn ? <span className="inline-block max-w-full break-all">{einladungAn}</span> : null}
+              </span>
             </span>
+            {status.ohneOnlineKalender && beratungszeiten ? (
+              <p className="text-sm text-[color:var(--muted)]" data-ohne-kalender-zeiten>
+                Leads buchen in Ihren Beratungszeiten: <b className="text-[color:var(--foreground)]">{beratungszeiten}</b>.{" "}
+                <a href="#beratungszeiten" className="font-medium text-[color:var(--brand)] hover:underline">
+                  Ändern
+                </a>
+              </p>
+            ) : null}
+            {terminAdresse ? <TerminAdresseHilfe adresse={terminAdresse} /> : null}
             <p className="text-sm text-[color:var(--muted)]">
               Lieber direkt im Kalender?{" "}
               <a href={connectLinks.google} className={`font-medium text-[color:var(--brand)] hover:underline ${readOnly ? "pointer-events-none opacity-60" : ""}`}>
@@ -708,13 +772,24 @@ export function SourcePicker({
           <div className="space-y-3">
             <p className="text-sm text-[color:var(--muted)]">Verbinden Sie Ihren Kalender. Termine landen dann nur in Ihren freien Zeiten direkt dort.</p>
             <div className="flex flex-wrap gap-2">
-              <a href={connectLinks.google} className={buttonClass(ohneAllianz ? "secondary" : "primary", "md", readOnly ? "pointer-events-none opacity-60" : "")}>
+              <a href={connectLinks.google} className={buttonClass(ohneAllianz || ohneOffen ? "secondary" : "primary", "md", readOnly ? "pointer-events-none opacity-60" : "")}>
                 Google-Kalender verbinden
               </a>
               <a href={connectLinks.microsoft} className={buttonClass("secondary", "md", readOnly ? "pointer-events-none opacity-60" : "")}>
                 Outlook / Microsoft 365 verbinden
               </a>
             </div>
+            {ohneKalenderAction ? (
+              <OhneOnlineKalender
+                offen={ohneOffen}
+                setOffen={setOhneOffen}
+                action={ohneKalenderAction}
+                readOnly={readOnly}
+                hidden={hidden}
+                beratungszeiten={beratungszeiten ?? null}
+                einladungAn={einladungAn ?? null}
+              />
+            ) : null}
           </div>
         )}
       </div>
@@ -803,6 +878,79 @@ export function SourcePicker({
         </div>
       </details>
       )}
+    </div>
+  );
+}
+
+/**
+ * „Ich habe keinen Online-Kalender“ (Ole, 25.11.2026, z. B. Vertreter ohne freigegebenen Firmenkalender): App-Kalender
+ * mit festen Beratungszeiten. Gebuchte Termine kommen als Einladung per Mail, eigene Termine blockiert der Vermittler per
+ * Weiterleitung an seine Termin-Adresse. Aufgeklappt wird die Wahl zur Hauptaktion (Google/Outlook werden zweitrangig).
+ */
+function OhneOnlineKalender({
+  offen,
+  setOffen,
+  action,
+  readOnly,
+  hidden,
+  beratungszeiten,
+  einladungAn,
+}: {
+  offen: boolean;
+  setOffen: (v: boolean) => void;
+  action: FormAction;
+  readOnly: boolean;
+  hidden?: Record<string, string>;
+  beratungszeiten: string | null;
+  einladungAn: string | null;
+}) {
+  const [state, formAction, pending] = useActionState<SourceResult, FormData>(action, {});
+  return (
+    <div data-ohne-kalender>
+      <button
+        type="button"
+        aria-expanded={offen}
+        onClick={() => setOffen(!offen)}
+        className="inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-[color:var(--brand)] hover:underline"
+        data-ohne-kalender-oeffnen
+      >
+        Ich habe keinen Online-Kalender
+        <ChevronDown className={`h-4 w-4 transition ${offen ? "rotate-180" : ""}`} />
+      </button>
+      {offen ? (
+        <form action={formAction} className="mt-2 space-y-3 border-t border-[color:var(--border)] pt-3">
+          {hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null}
+          <ul className="space-y-2 text-sm">
+            <li className="flex items-start gap-2">
+              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+              <span className="min-w-0">
+                Gebuchte Termine kommen als Kalendereinladung an {einladungAn ? <b className="inline-block max-w-full break-all">{einladungAn}</b> : "Ihre E-Mail-Adresse"}.
+              </span>
+            </li>
+            {beratungszeiten ? (
+              <li className="flex items-start gap-2">
+                <Clock className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+                <span className="min-w-0">
+                  Leads buchen in Ihren Beratungszeiten: <b>{beratungszeiten}</b>.{" "}
+                  <a href="#beratungszeiten" className="font-medium text-[color:var(--brand)] hover:underline">
+                    Ändern
+                  </a>
+                </span>
+              </li>
+            ) : null}
+            <li className="flex items-start gap-2">
+              <Forward className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+              <span className="min-w-0">Eigene Termine blockieren Sie, indem Sie sie an Ihre persönliche Termin-Adresse weiterleiten.</span>
+            </li>
+          </ul>
+          <div className="flex flex-wrap items-center gap-3">
+            <Submit pending={pending} disabled={readOnly}>
+              Ohne Online-Kalender starten
+            </Submit>
+            <Result state={state} />
+          </div>
+        </form>
+      ) : null}
     </div>
   );
 }
