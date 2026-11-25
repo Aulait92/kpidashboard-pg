@@ -52,21 +52,43 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
   const inRange = (m: string) => months.includes(m);
   const items: BwaItem[] = [];
 
-  // ── Umsatz (Umsatzbuch; Pay-per-Lead ohne Hochrechnung) ──
-  const [{ ledger, pplCounts }, settings] = await Promise.all([loadLedger(now, { firstMonth: BWA_AB }), loadKpiSettings()]);
-  const ids = new Set<string>([...ledger.rows.map((r) => r.customerId), ...pplCounts.map((p) => p.customerId)]);
-  const names = new Map(
-    (await prisma.customer.findMany({ where: { id: { in: [...ids].filter((x) => !x.includes(":")) } }, select: { id: true, name: true } })).map((c) => [c.id, c.name]),
-  );
-  const nameOf = (id: string) => names.get(id) ?? (id.startsWith("nachtrag:") ? "Nachtrag (ohne Kunde)" : id.startsWith("angebot:") ? "Angebot (ohne Kundenakte)" : "Unbekannt");
-  for (const p of pplCounts) {
-    if (!inRange(p.month) || !(p.amount > 0)) continue;
-    items.push({ month: p.month, line: "umsatz:ppl", label: nameOf(p.customerId), net: r2(p.amount), detail: `${p.n} Leads`, href: names.has(p.customerId) ? `/admin/neu/kunden/${p.customerId}` : null });
-  }
-  for (const r of ledger.rows) {
-    if (r.stream === "ppl" || !inRange(r.month)) continue;
-    const line = r.stream === "setup" ? "umsatz:setup" : r.stream === "software" ? "umsatz:software" : "umsatz:service";
-    items.push({ month: r.month, line, label: nameOf(r.customerId), net: r.amount, href: names.has(r.customerId) ? `/admin/neu/kunden/${r.customerId}` : null });
+  // ── Umsatz ──
+  // Nach Rechnungen (Ole, 25.11.2026), sobald Ausgangsrechnungen da sind: Papierkram-Rechnungen netto nach Rechnungsdatum
+  // plus HvK-Gutschriften (Pay-per-Lead im Gutschriftverfahren). Sonst wie bisher aus dem Umsatzbuch.
+  const settings = await loadKpiSettings();
+  const nachRechnungen = (await prisma.ausgangsrechnung.count()) > 0;
+  if (nachRechnungen) {
+    const [rechnungen, hvk] = await Promise.all([
+      prisma.ausgangsrechnung.findMany({ where: { datum: { gte: from } }, select: { nummer: true, datum: true, kunde: true, netto: true } }),
+      prisma.hvkInvoice.findMany({ where: { periodEnd: { gte: fromQ } }, select: { invoiceNo: true, invoiceDate: true, periodEnd: true, netCents: true } }),
+    ]);
+    for (const r of rechnungen) {
+      const m = r.datum.toISOString().slice(0, 7);
+      if (!inRange(m) || !Number(r.netto)) continue;
+      items.push({ month: m, line: "umsatz:rechnungen", label: r.kunde, net: r2(Number(r.netto)), detail: r.nummer });
+    }
+    for (const h of hvk) {
+      const m = (h.invoiceDate ?? h.periodEnd).toISOString().slice(0, 7);
+      // Beträge aus Sicht von HvK: gekaufte Leads negativ, Reklamationen positiv → Umsatz ist das Gegenteil
+      if (!inRange(m) || !h.netCents) continue;
+      items.push({ month: m, line: "umsatz:hvk", label: "Heinrich von Kleist (Gutschrift)", net: r2(-h.netCents / 100), detail: h.invoiceNo });
+    }
+  } else {
+    const { ledger, pplCounts } = await loadLedger(now, { firstMonth: BWA_AB });
+    const ids = new Set<string>([...ledger.rows.map((r) => r.customerId), ...pplCounts.map((p) => p.customerId)]);
+    const names = new Map(
+      (await prisma.customer.findMany({ where: { id: { in: [...ids].filter((x) => !x.includes(":")) } }, select: { id: true, name: true } })).map((c) => [c.id, c.name]),
+    );
+    const nameOf = (id: string) => names.get(id) ?? (id.startsWith("nachtrag:") ? "Nachtrag (ohne Kunde)" : id.startsWith("angebot:") ? "Angebot (ohne Kundenakte)" : "Unbekannt");
+    for (const p of pplCounts) {
+      if (!inRange(p.month) || !(p.amount > 0)) continue;
+      items.push({ month: p.month, line: "umsatz:ppl", label: nameOf(p.customerId), net: r2(p.amount), detail: `${p.n} Leads`, href: names.has(p.customerId) ? `/admin/neu/kunden/${p.customerId}` : null });
+    }
+    for (const r of ledger.rows) {
+      if (r.stream === "ppl" || !inRange(r.month)) continue;
+      const line = r.stream === "setup" ? "umsatz:setup" : r.stream === "software" ? "umsatz:software" : "umsatz:service";
+      items.push({ month: r.month, line, label: nameOf(r.customerId), net: r.amount, href: names.has(r.customerId) ? `/admin/neu/kunden/${r.customerId}` : null });
+    }
   }
 
   // ── Meta-Werbung (LEAD-Kosten): Kundengewinnung per Kampagnenname, Rest direkt ──
@@ -168,10 +190,17 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
     items: grouped,
     bankFrom,
     fixedLines: [
-      { section: "umsatz", line: "umsatz:software", label: "Software" },
-      { section: "umsatz", line: "umsatz:service", label: "Betreuung" },
-      { section: "umsatz", line: "umsatz:ppl", label: "Pay-per-Lead (Pilot)" },
-      { section: "umsatz", line: "umsatz:setup", label: "Einrichtung & Einmal-Umsätze" },
+      ...(nachRechnungen
+        ? [
+            { section: "umsatz" as const, line: "umsatz:rechnungen", label: "Ausgangsrechnungen" },
+            { section: "umsatz" as const, line: "umsatz:hvk", label: "Pay-per-Lead HvK (Gutschriften)" },
+          ]
+        : [
+            { section: "umsatz" as const, line: "umsatz:software", label: "Software" },
+            { section: "umsatz" as const, line: "umsatz:service", label: "Betreuung" },
+            { section: "umsatz" as const, line: "umsatz:ppl", label: "Pay-per-Lead (Pilot)" },
+            { section: "umsatz" as const, line: "umsatz:setup", label: "Einrichtung & Einmal-Umsätze" },
+          ]),
       { section: "direkt", line: "direkt:meta", label: "Meta-Werbung Pay-per-Lead (Pilot)" },
       ...(PRICE_LIST.whatsappIncluded ? [{ section: "direkt" as const, line: "direkt:whatsapp", label: "WhatsApp-Gebühren" }] : []),
       { section: "direkt", line: "direkt:ppl", label: "Lead-Kosten Pay-per-Lead (Pilot; Bank, Karte, laufend)" },
