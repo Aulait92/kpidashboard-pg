@@ -870,6 +870,7 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   },
   "test-chat": async (p) => (await import("@/lib/ops/test-chat")).testChatDiagnose(p),
   buchungslinks: async () => (await import("@/lib/ops/buchungslinks")).buchungslinksDiagnose(),
+  "kalender-check": async (p) => (await import("@/lib/ops/kalender-check")).kalenderCheckDiagnose(p),
   einwilligungstext: async (p) => (await import("@/lib/ops/einwilligungstext")).einwilligungstextDiagnose(p),
 };
 
