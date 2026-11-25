@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { NativeAppBridge } from "@/components/native-app-bridge";
+import { AppSperre } from "@/components/app-sperre";
 import { NeueVersion } from "@/components/neue-version";
 import { DatumKlick } from "@/components/datum-klick";
 import "./globals.css";
@@ -53,7 +54,9 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-const SPLASH_HIDE = '(function(){function h(){try{var p=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.SplashScreen;if(p&&p.hide)p.hide({fadeOutDuration:200})}catch(e){}}if(document.readyState!=="loading")requestAnimationFrame(h);else document.addEventListener("DOMContentLoaded",function(){requestAnimationFrame(h)})})();';
+// Face ID an (components/app-sperre.tsx, Kennzeichen pg-face-id): Seite sofort verdecken und den Startbildschirm stehen
+// lassen; die Sperre blendet ihn selbst aus, sobald sie gezeichnet ist. So ist nie Inhalt vor Face ID zu sehen.
+const SPLASH_HIDE = '(function(){try{if(/performancegrowthApp\\//.test(navigator.userAgent)&&localStorage.getItem("pg-face-id")==="1"){document.documentElement.classList.add("pg-gesperrt");return}}catch(e){}function h(){try{var p=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.SplashScreen;if(p&&p.hide)p.hide({fadeOutDuration:200})}catch(e){}}if(document.readyState!=="loading")requestAnimationFrame(h);else document.addEventListener("DOMContentLoaded",function(){requestAnimationFrame(h)})})();';
 
 export default function RootLayout({
   children,
@@ -63,6 +66,8 @@ export default function RootLayout({
   return (
     <html
       lang="de"
+      // Inline-Skript (SPLASH_HIDE) setzt bei aktiver Face-ID-Sperre vor dem Hydrieren die Klasse pg-gesperrt
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
@@ -73,6 +78,7 @@ export default function RootLayout({
         {children}
         <SiteFooter />
         <NativeAppBridge />
+        <AppSperre />
         <NeueVersion />
         <DatumKlick />
         {/* App-Store-App (Ole, 24.11.2026: „braucht sehr lange zum Öffnen, nur ein weißer Screen“): Startbildschirm

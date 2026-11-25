@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/buyer-shell";
 import { Card, CardHeader } from "@/components/ui";
 import { SignOutEverywhereButton } from "@/components/security/sign-out-everywhere";
 import { TotpPanel } from "@/components/security/totp-panel";
+import { FaceIdKarte } from "@/components/security/face-id-karte";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { EmailChangeForm } from "./email-form";
@@ -26,6 +27,8 @@ export default async function BuyerSecurityPage() {
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader back="/buyer/einstellungen" title="Anmeldung & Sicherheit" subtitle={ctx.email} />
       <div className="space-y-5">
+        {/* Nur in der App mit Face ID/Touch ID sichtbar */}
+        <FaceIdKarte disabled={ctx.preview} />
         <Card>
           <CardHeader title="E-Mail-Adresse für die Anmeldung" icon={AtSign} />
           <div className="px-5 pb-5">

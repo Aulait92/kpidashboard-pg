@@ -24,6 +24,7 @@ const PUBLIC_PREFIXES = [
   "/api/push", // service worker registriert Subscriptions
   "/api/app/handoff", // Einmal-Link App → System-Browser (dort noch ohne Sitzung; GET prüft Token, POST prüft Sitzung selbst)
   "/api/app/login-handoff", // Google/Microsoft-Login in der App: Einmal-Code aus dem System-Browser einlösen (lib/app-handoff.ts)
+  "/api/app/geraete-login/einloesen", // Face-ID-Anmeldung der App: Geräte-Schlüssel aus dem Schlüsselbund einlösen (lib/app-geraete-login.ts)
   "/api/telegram", // Telegram Bot webhook (Whitelist intern via TELEGRAM_ADMIN_USER_ID + Secret-Token-Header)
   "/api/whatsapp", // 360dialog-Webhook + Dev-Seed (per WHATSAPP_WEBHOOK_SECRET-Token gesichert)
   "/book", // öffentliche Terminbuchung für Leads (lesbarer Slug je Kunde)

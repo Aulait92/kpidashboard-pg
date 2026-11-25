@@ -209,3 +209,8 @@ body:has([data-admin-shell]) select { max-width: 100%; }
 
 /* Admin v2 A4 (F199): Vorlage von Hand als freigegeben markieren nur im alten Admin (geteilter Baustein) */
 [data-admin-neu] [data-hand-freigabe] { display: none; }
+
+/* Face-ID-Sperre der App (components/app-sperre.tsx): bis zum Entsperren nur die Sperre zeigen */
+html.pg-gesperrt body > :not(#pg-sperre) {
+  visibility: hidden;
+}
