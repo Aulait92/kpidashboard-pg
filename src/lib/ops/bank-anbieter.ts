@@ -20,7 +20,17 @@ export async function bankAnbieter(p: URLSearchParams) {
   const rows = await prisma.bankTransaction.findMany({
     // &eingang=1: Zahlungseingänge je Zahler statt Ausgaben je Anbieter (Ole, 23.11.2026: Umsatz je Kunde)
     where: { bookingDate: { gte: ab }, amount: p.get("eingang") === "1" ? { gt: 0 } : { lt: 0 } },
-    select: { accountKey: true, bookingDate: true, amount: true, counterparty: true, purpose: true, costPurpose: true, status: true, note: true },
+    select: {
+      accountKey: true,
+      bookingDate: true,
+      amount: true,
+      counterparty: true,
+      purpose: true,
+      costPurpose: true,
+      status: true,
+      note: true,
+      beleg: { select: { nummer: true, datum: true, brutto: true, netto: true } },
+    },
   });
   const m = new Map<string, { anbieter: string; anzahl: number; summe: number; konten: Set<string>; kostenarten: Set<string>; status: Set<string>; erster: string; letzter: string }>();
   for (const r of rows) {
@@ -52,6 +62,10 @@ export async function bankAnbieter(p: URLSearchParams) {
           zweck: r.purpose,
           status: r.status,
           notiz: r.note,
+          // Beleg zur Buchung (Belegnummer, Rechnungsdatum, Betrag laut Beleg), sonst null
+          beleg: r.beleg
+            ? { nummer: r.beleg.nummer, rechnungsdatum: r.beleg.datum?.toISOString().slice(0, 10) ?? null, brutto: r.beleg.brutto != null ? Number(r.beleg.brutto) : null, netto: r.beleg.netto != null ? Number(r.beleg.netto) : null }
+            : null,
         }))
     : undefined;
   return { ab: ab.toISOString().slice(0, 10), umsaetze: rows.length, anbieter, ...(einzeln ? { einzeln } : {}) };

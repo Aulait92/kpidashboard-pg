@@ -8,7 +8,7 @@ export function sessionIdOf(conn: { sessionEnc: string | null }): string | null 
   return conn.sessionEnc ? decryptSecret(conn.sessionEnc) : null;
 }
 import { getAppUrl } from "@/lib/email";
-import { classify, istKiKosten, netCost, type CostAction, type CostPurposeKey, type Rule } from "@/lib/bank/rules";
+import { bankNetto, classify, istKiKosten, type CostAction, type CostPurposeKey, type Rule } from "@/lib/bank/rules";
 import type { ParsedTx } from "@/lib/bank/csv";
 import * as eb from "@/lib/bank/enable-banking";
 
@@ -94,6 +94,11 @@ export async function importTransactions(
         else throw err;
       });
   }
+  // Rücklastschriften mit ihrer Lastschrift verrechnen (beide zählen nicht; Reihenfolge im Import egal)
+  if (stats.created) {
+    const { ruecklastschriftenVerrechnen } = await import("@/lib/bank/ruecklastschriften");
+    await ruecklastschriftenVerrechnen({ vorschau: false, accountKey });
+  }
   return stats;
 }
 
@@ -177,21 +182,20 @@ export async function applyRulesToOpen(): Promise<number> {
 export async function monthlyBankCosts(from: Date): Promise<Map<string, Record<CostPurposeKey, number>>> {
   const rows = await prisma.bankTransaction.findMany({
     where: { status: "zugeordnet", bookingDate: { gte: from }, amount: { lt: 0 }, costPurpose: { not: null } },
-    select: { bookingDate: true, amount: true, costPurpose: true, vatIncluded: true, counterparty: true, purpose: true, beleg: { select: { netto: true, brutto: true, waehrung: true } } },
+    select: { id: true, accountKey: true, bookingDate: true, amount: true, costPurpose: true, vatIncluded: true, counterparty: true, purpose: true, beleg: { select: { netto: true, brutto: true, waehrung: true } } },
   });
   const out = new Map<string, Record<CostPurposeKey, number>>();
   const r2 = (x: number) => Math.round(x * 100) / 100;
+  // zurückgegebene Lastschriften (noch nicht verrechnet) zählen nicht
+  const zurueck = await (await import("@/lib/bank/ruecklastschriften")).zurueckgegebeneLastschriften(rows);
   for (const r of rows) {
+    if (zurueck.has(r.id)) continue;
     const m = r.bookingDate.toISOString().slice(0, 7);
     const cur = out.get(m) ?? { ppl: 0, software: 0, ki: 0, akquise: 0, betrieb: 0 };
     const p = r.costPurpose === "ki" ? "software" : r.costPurpose!;
     const k = (["ppl", "software", "akquise", "betrieb"].includes(p) ? p : "betrieb") as CostPurposeKey;
     // Netto laut Beleg (GetMyInvoices), wenn der EUR-Betrag zum Umsatz passt; sonst Schätzung (wie BWA, lib/bwa.ts)
-    const b = r.beleg;
-    const net =
-      b && b.waehrung === "EUR" && b.netto != null && b.brutto != null && Math.abs(Number(b.brutto) + Number(r.amount)) <= 0.02
-        ? r2(Number(b.netto))
-        : netCost(Number(r.amount), r.vatIncluded);
+    const net = bankNetto(Number(r.amount), r.vatIncluded, r.beleg).netto;
     cur[k] = r2(cur[k] + net);
     if (istKiKosten(r)) cur.ki = r2(cur.ki + net);
     out.set(m, cur);
