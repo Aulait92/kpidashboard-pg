@@ -1194,6 +1194,7 @@ model User {
   substituteFor       UserAbsence[]        @relation("AbsenceSubstitute")
   deviceTokens        DeviceToken[]
   appHandoffs         AppHandoff[]
+  appGeraeteLogins    AppGeraeteLogin[]
   emailChangeRequests EmailChangeRequest[]
   adminUsageEvents    AdminUsageEvent[]
 
@@ -3634,6 +3635,25 @@ model DeviceToken {
 /// Einmal-Übergabe der Anmeldung aus der App in den System-Browser (z. B. für
 /// Google-/Microsoft-Kalender verbinden, das Google in eingebetteten Ansichten
 /// nicht erlaubt). Gültig 5 Minuten, nur einmal einlösbar.
+/// App-Store-App: dauerhafte Anmeldung je Gerät, im Schlüsselbund des Handys hinter Face ID gespeichert
+/// (lib/app-geraete-login.ts). Nur der Hash liegt hier. Jede Nutzung tauscht den Schlüssel aus; gültig nur,
+/// solange die Sitzungsversion des Logins gleich ist („Überall abmelden“, Passwortwechsel beenden ihn).
+model AppGeraeteLogin {
+  id             String    @id @default(cuid())
+  tokenHash      String    @unique
+  userId         String
+  sessionVersion Int
+  platform       String?
+  createdAt      DateTime  @default(now())
+  lastUsedAt     DateTime  @default(now())
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
 model AppHandoff {
   id        String    @id @default(cuid())
   tokenHash String    @unique

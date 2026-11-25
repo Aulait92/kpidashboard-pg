@@ -203,3 +203,153 @@ export function needsSystemBrowser(href: string): boolean {
     return false;
   }
 }
+
+// ─── Face ID: angemeldet bleiben und beim Öffnen entsperren ───────────────
+// Server: lib/app-geraete-login.ts. Der Geräte-Schlüssel liegt im Schlüsselbund hinter Face ID (Plugin
+// NativeBiometric, accessControl BIOMETRY_ANY: lesen geht nur nach Face ID). Im localStorage stehen nur
+// nicht geheime Kennzeichen: ob Face ID an ist (für die Sperre schon vor dem Laden, app/layout.tsx), die
+// Eintrags-ID (zum Beenden beim Abmelden) und ob der Nutzer Face ID selbst ausgeschaltet hat.
+
+/** Kennzeichen „Face ID an“; das Inline-Skript in app/layout.tsx liest es vor dem ersten Bild. */
+export const FACE_ID_AN_KEY = "pg-face-id";
+const FACE_ID_ID_KEY = "pg-face-id-eintrag";
+const FACE_ID_AUS_KEY = "pg-face-id-aus";
+const BIOMETRY_ANY = 2;
+
+function lsGet(k: string): string | null {
+  try {
+    return localStorage.getItem(k);
+  } catch {
+    return null;
+  }
+}
+function lsSet(k: string, v: string | null): void {
+  try {
+    if (v === null) localStorage.removeItem(k);
+    else localStorage.setItem(k, v);
+  } catch {
+    /* egal */
+  }
+}
+
+function keychainServer(): string {
+  return `pg-login:${window.location.host}`;
+}
+
+export type Biometrie = { verfuegbar: boolean; name: string };
+
+/** Face ID/Touch ID (iOS) bzw. Fingerabdruck (Android) eingerichtet? Ohne App: nicht verfügbar. */
+export async function biometrie(): Promise<Biometrie> {
+  if (!plugin("NativeBiometric")) return { verfuegbar: false, name: "Face ID" };
+  const r = (await call("NativeBiometric", "isAvailable", { useFallback: false })) as { isAvailable?: boolean; biometryType?: number } | undefined;
+  const name = r?.biometryType === 1 ? "Touch ID" : r?.biometryType === 2 ? "Face ID" : nativePlatform() === "android" ? "Fingerabdruck" : "Face ID";
+  return { verfuegbar: !!r?.isAvailable, name };
+}
+
+export function faceIdAn(): boolean {
+  return isNativeApp() && lsGet(FACE_ID_AN_KEY) === "1";
+}
+
+/** Hat der Nutzer Face ID in den Einstellungen ausgeschaltet? Dann nicht automatisch wieder einrichten. */
+export function faceIdAbgewaehlt(): boolean {
+  return lsGet(FACE_ID_AUS_KEY) === "1";
+}
+
+async function speichern(id: string, token: string): Promise<boolean> {
+  await call("NativeBiometric", "deleteCredentials", { server: keychainServer() });
+  const p = plugin("NativeBiometric");
+  const fn = p?.setCredentials as ((a: unknown) => Promise<unknown>) | undefined;
+  if (!fn) return false;
+  try {
+    await fn.call(p, { username: id, password: token, server: keychainServer(), accessControl: BIOMETRY_ANY });
+  } catch {
+    return false;
+  }
+  lsSet(FACE_ID_ID_KEY, id);
+  lsSet(FACE_ID_AN_KEY, "1");
+  return true;
+}
+
+/** Face ID einrichten (nur angemeldet): Schlüssel vom Server holen und hinter Face ID ablegen. */
+export async function faceIdEinrichten(): Promise<boolean> {
+  if (!(await biometrie()).verfuegbar) return false;
+  const r = await fetch("/api/app/geraete-login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ platform: nativePlatform() }),
+    cache: "no-store",
+  }).catch(() => null);
+  if (!r?.ok) return false;
+  const d = (await r.json().catch(() => null)) as { id?: string; token?: string } | null;
+  if (!d?.id || !d.token) return false;
+  const ok = await speichern(d.id, d.token);
+  if (ok) lsSet(FACE_ID_AUS_KEY, null);
+  return ok;
+}
+
+/** Face ID auf diesem Gerät beenden. `abgewaehlt`: vom Nutzer ausgeschaltet (nicht automatisch neu einrichten). */
+export function faceIdBeenden(opts: { abgewaehlt?: boolean } = {}): void {
+  const id = lsGet(FACE_ID_ID_KEY);
+  lsSet(FACE_ID_AN_KEY, null);
+  lsSet(FACE_ID_ID_KEY, null);
+  if (opts.abgewaehlt) lsSet(FACE_ID_AUS_KEY, "1");
+  if (!isNativeApp()) return;
+  void call("NativeBiometric", "deleteCredentials", { server: keychainServer() });
+  if (id) {
+    void fetch("/api/app/geraete-login", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+      keepalive: true,
+    }).catch(() => {});
+  }
+}
+
+export type Entsperrt =
+  | { status: "angemeldet"; ziel: string } // Face ID ok, Sitzung erneuert
+  | { status: "abgebrochen" } // Face ID abgebrochen oder fehlgeschlagen: erneut versuchen oder Passwort
+  | { status: "ungueltig" } // Schlüssel fehlt oder gilt nicht mehr: Face ID ist aus, normal anmelden
+  | { status: "offline" }; // Face ID ok, Server nicht erreichbar
+
+/** Face ID abfragen, Schlüssel einlösen (neue Sitzung) und den neuen Schlüssel wieder ablegen. */
+export async function faceIdEntsperren(next: string | null, grund: string): Promise<Entsperrt> {
+  const p = plugin("NativeBiometric");
+  const lesen = p?.getSecureCredentials as ((a: unknown) => Promise<{ username?: string; password?: string }>) | undefined;
+  if (!lesen) return { status: "ungueltig" };
+  let cred: { username?: string; password?: string };
+  try {
+    cred = await lesen.call(p, { server: keychainServer(), reason: grund });
+  } catch (e) {
+    // Kein Eintrag im Schlüsselbund (z. B. App neu installiert) → Face ID aus; sonst abgebrochen/fehlgeschlagen
+    const msg = String((e as { message?: unknown })?.message ?? e).toLowerCase();
+    if (/not found|no credentials|item not found|-25300/.test(msg)) {
+      faceIdBeenden();
+      return { status: "ungueltig" };
+    }
+    return { status: "abgebrochen" };
+  }
+  if (!cred?.password) {
+    faceIdBeenden();
+    return { status: "ungueltig" };
+  }
+  let r: Response | null;
+  try {
+    r = await fetch("/api/app/geraete-login/einloesen", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: cred.password, next }),
+      cache: "no-store",
+      credentials: "same-origin",
+    });
+  } catch {
+    return { status: "offline" };
+  }
+  if (r.status === 401) {
+    faceIdBeenden();
+    return { status: "ungueltig" };
+  }
+  if (!r.ok) return { status: "offline" };
+  const d = (await r.json().catch(() => null)) as { id?: string; token?: string; ziel?: string } | null;
+  if (d?.id && d.token) await speichern(d.id, d.token);
+  return { status: "angemeldet", ziel: d?.ziel ?? "/buyer" };
+}

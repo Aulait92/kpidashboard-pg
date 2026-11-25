@@ -8,12 +8,12 @@
 // - Google/Microsoft-Kalender verbinden im System-Browser (Google blockiert
 //   die Anmeldung in eingebetteten Ansichten) – mit Einmal-Übergabe der Anmeldung
 // - Google/Microsoft-Anmeldung: Rücksprung performancegrowth://login abfangen
-// - Beim Abmelden das Gerät vom Login lösen
+// - Beim Abmelden das Gerät vom Login lösen und Face ID beenden (components/app-sperre.tsx)
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { impact, installHapticDelegates } from "@/lib/haptics";
-import { forgetNativeDevice, initAppLoginListener, initNativePushListeners, isNativeApp, needsSystemBrowser, openInSystemBrowser, setAppBadge } from "@/lib/native-bridge";
+import { faceIdBeenden, forgetNativeDevice, initAppLoginListener, initNativePushListeners, isNativeApp, needsSystemBrowser, openInSystemBrowser, setAppBadge } from "@/lib/native-bridge";
 
 type CapApp = { addListener?: (e: string, cb: (d: { canGoBack?: boolean }) => void) => unknown; minimizeApp?: () => Promise<void> };
 
@@ -79,7 +79,11 @@ export function NativeAppBridge() {
     // Abmelden: Gerät vom Login lösen
     const onSubmit = (e: SubmitEvent) => {
       const f = e.target as HTMLFormElement | null;
-      if (f?.action && /\/api\/auth\/logout$/.test(new URL(f.action, location.origin).pathname)) forgetNativeDevice();
+      if (f?.action && /\/api\/auth\/logout$/.test(new URL(f.action, location.origin).pathname)) {
+        forgetNativeDevice();
+        // Face ID auf diesem Gerät beenden (Schlüsselbund leeren, Schlüssel auf dem Server sperren)
+        faceIdBeenden();
+      }
     };
     document.addEventListener("click", onClick, true);
     document.addEventListener("submit", onSubmit, true);
