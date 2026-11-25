@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BellRing, CalendarDays, Image as ImageIcon, ChevronRight, CreditCard, Gift, Mail, MessageSquareText, Percent, Send, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
+import { BellRing, CalendarDays, Eye, Image as ImageIcon, ChevronRight, CreditCard, Gift, Mail, MessageSquareText, Percent, Send, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { loadReferralSettings } from "@/lib/kollegen";
@@ -13,6 +13,7 @@ import { PolicenFreischaltungKarte } from "@/components/policen-freischaltung-ka
 import { BeratungsdokuSchalter } from "@/components/beratungsdoku-schalter";
 import { DATENNUTZUNG_EINTRAG, DATENNUTZUNG_PFAD, eintragText } from "@/lib/datennutzung";
 import { ladeStand as ladeDatennutzung } from "@/lib/datennutzung-server";
+import { SUPPORT_ZUGRIFFE_PFAD, supportZugriffeFuer } from "@/lib/support-zugriff";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einstellungen | performancegrowth" };
@@ -33,6 +34,11 @@ export default async function EinstellungenPage() {
   // „KI-Hilfe und Anzeigenlernen“ (lib/datennutzung.ts): nur Inhaber von Software-Kunden; führt zur Detailseite mit
   // dem ganzen Text, „Widersprechen“ und „Widerspruch zurücknehmen“
   const datennutzung = await ladeDatennutzung(ctx).catch(() => null);
+  // Support-Zugriffe (lib/support-zugriff.ts): Protokoll, wann unser Support ein Dokument im Chat geöffnet hat
+  const zugriffe = ctx.userId && !ctx.preview ? await supportZugriffeFuer(ctx, 1).catch(() => []) : [];
+  const zugriffText = zugriffe[0]
+    ? `Zuletzt am ${new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(zugriffe[0].createdAt)}`
+    : "Bisher kein Zugriff auf Ihre Dokumente";
   const groups: { title: string; items: Item[] }[] = [
     {
       title: "Mein Konto",
@@ -109,6 +115,9 @@ export default async function EinstellungenPage() {
             ) : null}
             <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
               <AnalyseSchalter status={analyse} pseudonym={ctx.userId ? analysePseudonym(ctx.userId) : null} />
+            </div>
+            <div className="mt-3 overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]" data-einstellungen-support-zugriffe>
+              <Zeile i={{ href: SUPPORT_ZUGRIFFE_PFAD, icon: Eye, color: "bg-slate-500", title: "Support-Zugriffe", text: zugriffText }} />
             </div>
             <PolicenFreischaltungKarte ctx={ctx} ort="einstellungen" className="mt-3 overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]" />
           </section>

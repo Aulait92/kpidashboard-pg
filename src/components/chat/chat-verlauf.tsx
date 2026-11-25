@@ -24,6 +24,7 @@ import {
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { waFormatKnoten } from "@/lib/wa-format";
+import { istDateiPlatzhalter } from "@/lib/chat-dateien";
 import {
   avatarFarbe,
   initialen,
@@ -128,6 +129,7 @@ export function ChatVerlauf<M extends VerlaufNachricht>({
   etikett = etikettKunde,
   text,
   fuss,
+  datei,
 }: {
   messages: M[];
   now: number;
@@ -142,6 +144,8 @@ export function ChatVerlauf<M extends VerlaufNachricht>({
   text?: (body: string, a: Absender) => React.ReactNode;
   /** Zusatz neben der Uhrzeit (z. B. Zustellstatus im Admin, „nicht zugestellt“) */
   fuss?: (m: M) => React.ReactNode;
+  /** Datei der Nachricht (Admin: Name, Art, Größe, Absender, Support-Zugriff; components/chat/chat-admin.tsx DateiKarte) */
+  datei?: (m: M) => React.ReactNode;
 }) {
   const eintraege = verlaufAufbauen(messages, now, { termine, unbekannteZeigen, sicht });
   return (
@@ -180,9 +184,22 @@ export function ChatVerlauf<M extends VerlaufNachricht>({
                 {tag.label}
               </div>
             ) : null}
-            <div className={cn("max-w-[85%] whitespace-pre-wrap break-words px-[15px] py-[10px] text-[15px] leading-[1.5] sm:max-w-[72%]", BLASE[absender])}>
-              {text ? text(m.body ?? "", absender) : waFormatKnoten(m.body)}
-            </div>
+            {(() => {
+              const anhang = datei?.(m) ?? null;
+              const nurAnhang = !!anhang && istDateiPlatzhalter(m.body);
+              return (
+                <div
+                  className={cn(
+                    "max-w-[85%] whitespace-pre-wrap break-words text-[15px] leading-[1.5] sm:max-w-[72%]",
+                    nurAnhang ? "p-1.5" : "px-[15px] py-[10px]",
+                    BLASE[absender],
+                  )}
+                >
+                  {nurAnhang ? anhang : text ? text(m.body ?? "", absender) : waFormatKnoten(m.body)}
+                  {anhang && !nurAnhang ? <div className="-mx-[9px] mt-2 -mb-1">{anhang}</div> : null}
+                </div>
+              );
+            })()}
             <div className="mt-1 flex items-center gap-1.5 px-1.5 text-[11px] text-[color:var(--muted)]" data-message-meta>
               <time dateTime={m.createdAt.toISOString()} title={formatDateTime(m.createdAt)}>
                 {uhrzeit(m.createdAt)}

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui";
 import { ChatVerlauf } from "@/components/chat/chat-verlauf";
-import { DeliveryStatus, etikettAdmin } from "@/components/chat/chat-admin";
+import { DateiKarte, DeliveryStatus, etikettAdmin } from "@/components/chat/chat-admin";
 import type { WhatsAppVerlauf } from "@/lib/vertrieb/whatsapp-verlauf";
 
 // WhatsApp-Verlauf der Support-Nummer in Kontakt- und Kundenakte (Ole, 22.11.2026): die letzten Nachrichten wie im
@@ -38,6 +38,7 @@ export function WhatsAppVerlaufKarte({ v, now }: { v: WhatsAppVerlauf; now: numb
             sicht="admin"
             etikett={etikettAdmin}
             fuss={(m) => (m.direction === "outbound" ? <DeliveryStatus status={m.status} /> : null)}
+            datei={(m) => (m.datei ? <DateiKarte d={m.datei} /> : null)}
           />
         </div>
       </div>

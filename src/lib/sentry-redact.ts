@@ -27,6 +27,7 @@ export const TOKEN_PATH_PREFIXES = [
   "/empfehlung/g", // Google-Bewertungslink je Kontakt
   "/empfehlung", // Empfehlungsseite je Kontakt
   "/feedback", // Kunden-Feedback per Mail-Link
+  "/api/admin/support-zugriff", // Support-Zugriff auf ein Dokument im Chat (signiert, 15 Minuten)
 ] as const;
 
 export const REDACTED_TOKEN = "[token]";

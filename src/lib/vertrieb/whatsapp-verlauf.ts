@@ -7,6 +7,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { phoneDigitsKey } from "@/lib/telefonsuche";
 import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
+import { dateiInfo, type DateiInfo } from "@/lib/chat-dateien";
 
 /** Wie viele Nachrichten die Karte zeigt (der Rest steht im Chat). */
 export const WHATSAPP_VERLAUF_ANZAHL = 4;
@@ -19,6 +20,8 @@ export type WhatsAppVerlaufNachricht = {
   sentBy: string | null;
   status: string | null;
   createdAt: Date;
+  /** Datei der Nachricht (lib/chat-dateien.ts): Name, Art, Größe, Absender; Support-Nummer ohne Support-Zugriff */
+  datei?: DateiInfo | null;
 };
 
 export type WhatsAppVerlauf = {
@@ -75,14 +78,30 @@ export async function ladeWhatsAppVerlauf(x: { salesContactId?: string | null; c
       where: { conversationId: { in: ids }, ...NACHRICHT },
       orderBy: { createdAt: "desc" },
       take: WHATSAPP_VERLAUF_ANZAHL,
-      select: { id: true, conversationId: true, direction: true, kind: true, body: true, sentBy: true, status: true, createdAt: true },
+      select: {
+        id: true,
+        conversationId: true,
+        direction: true,
+        kind: true,
+        body: true,
+        sentBy: true,
+        status: true,
+        createdAt: true,
+        mediaName: true,
+        mediaMime: true,
+        mediaSize: true,
+        conversation: { select: { contactName: true } },
+      },
     }),
   ]);
   if (!letzte.length) return null;
+  const datei = (m: (typeof letzte)[number]) => dateiInfo(m, { leadChat: false, supportChat: true, leadName: m.conversation.contactName });
   return {
     chatId: letzte[0].conversationId,
     anzahl,
-    nachrichten: letzte.reverse().map((m) => ({ id: m.id, direction: m.direction, kind: m.kind, body: m.body, sentBy: m.sentBy, status: m.status, createdAt: m.createdAt })),
+    nachrichten: letzte
+      .reverse()
+      .map((m) => ({ id: m.id, direction: m.direction, kind: m.kind, body: m.body, sentBy: m.sentBy, status: m.status, createdAt: m.createdAt, datei: datei(m) })),
     weitereChats: chats.length - 1,
   };
 }

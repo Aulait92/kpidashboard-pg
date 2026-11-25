@@ -35,7 +35,8 @@ import { LiveRefresh, NewMessageHint, StickToBottom } from "@/components/live-re
 import { lastInboundAt } from "@/lib/live";
 import { avatarFarbe, initialen } from "@/lib/chat-ansicht";
 import { ChatAvatar, ChatVerlauf } from "@/components/chat/chat-verlauf";
-import { DeliveryStatus, etikettAdmin } from "@/components/chat/chat-admin";
+import { DateiKarte, DeliveryStatus, etikettAdmin } from "@/components/chat/chat-admin";
+import { dateienImVerlauf } from "@/lib/support-zugriff";
 import { waOhneMarker } from "@/lib/wa-format";
 
 // Chats (WhatsApp): Liste, Verlauf und Lead-Seitenleiste. Gemeinsam für /admin/whatsapp (Chat per ?c=) und den
@@ -365,10 +366,25 @@ const ACTIVE_SELECT = {
   contactLinkManual: true,
   ...SUPPORT_BADGE_SELECT,
   customer: { select: { id: true, name: true } },
-  lead: { select: { id: true, source: true, status: true, formData: true, email: true, createdAt: true } },
+  lead: { select: { id: true, name: true, source: true, status: true, formData: true, email: true, createdAt: true } },
   messages: {
     orderBy: { createdAt: "asc" },
-    select: { id: true, direction: true, kind: true, body: true, sentBy: true, status: true, createdAt: true },
+    select: {
+      id: true,
+      direction: true,
+      kind: true,
+      body: true,
+      sentBy: true,
+      sentByUserId: true,
+      status: true,
+      createdAt: true,
+      // Dateien im Chat (lib/chat-dateien.ts): Name, Art, Größe; mediaId/mediaLink nur für „Support-Zugriff“
+      mediaId: true,
+      mediaName: true,
+      mediaMime: true,
+      mediaSize: true,
+      mediaLink: true,
+    },
   },
 } satisfies Prisma.ConversationSelect;
 
@@ -413,6 +429,13 @@ async function ActiveChat({ active, now, backHref }: { active: Active; now: numb
         select: { id: true, startsAt: true },
       })
     ).map((a) => [a.id, a.startsAt]),
+  );
+
+  // Dateien im Verlauf: Name, Art, Größe, Absender; geschützt bei Gesundheitsbezug bzw. Policen-Ablage (lib/support-zugriff.ts)
+  const dateien = await dateienImVerlauf(
+    { id: active.id, customerId: active.customerId, leadId: active.leadId, contactName: active.contactName, lead: active.lead ? { source: active.lead.source, name: active.lead.name } : null },
+    active.messages,
+    new Date(now),
   );
 
   return (
@@ -481,6 +504,10 @@ async function ActiveChat({ active, now, backHref }: { active: Active; now: numb
           unbekannteZeigen
           etikett={etikettAdmin}
           fuss={(m) => (m.direction === "outbound" ? <DeliveryStatus status={m.status} /> : null)}
+          datei={(m) => {
+            const d = dateien.get(m.id);
+            return d ? <DateiKarte d={d} /> : null;
+          }}
         />
         <StickToBottom count={active.messages.length} chatId={active.id} />
       </div>

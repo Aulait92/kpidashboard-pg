@@ -75,7 +75,30 @@ type MessageEcho = {
   id?: string;
   type?: string;
   text?: { body?: string };
+  // Dateien aus der WhatsApp-App (lib/chat-dateien.ts): Media-ID, Typ, Name (Größe liefert Meta hier nicht)
+  image?: EchoMedium;
+  document?: EchoMedium;
+  video?: EchoMedium;
 };
+type EchoMedium = { id?: string; mime_type?: string; filename?: string; caption?: string; file_size?: number | string };
+
+/**
+ * Metadaten einer Datei für die Admin-Ansicht (lib/chat-dateien.ts). Eingehend in Lead-Chats nur der Typ: Name und
+ * Inhalt gehören in die Policen-Ablage (lib/policen/server.ts, Gesundheitsbezug, A7). Sonst Name, Typ und Media-ID
+ * (Abruf nur per Support-Zugriff). Nie ins Log.
+ */
+export function dateiMetadaten(
+  type: string,
+  medium: EchoMedium | null | undefined,
+  o: { nurTyp: boolean },
+): { mediaId?: string | null; mediaName?: string | null; mediaMime?: string | null; mediaSize?: number | null } {
+  if (!medium || !["document", "image", "video"].includes(type)) return {};
+  const mime = medium.mime_type?.split(";")[0].trim().slice(0, 100) || null;
+  if (o.nurTyp) return { mediaMime: mime };
+  const name = (medium.filename ?? "").replace(/[\\/\r\n"<>]/g, "_").trim().slice(0, 160) || null;
+  const size = Number(medium.file_size);
+  return { mediaId: medium.id?.slice(0, 200) || null, mediaName: name, mediaMime: mime, mediaSize: Number.isFinite(size) && size > 0 ? Math.round(size) : null };
+}
 // Coexistence-Abgleich beim Verbinden der Business-App (Webhook-Felder „history“ und „smb_app_state_sync“):
 // alter Verlauf bzw. Adressbuch. Wir merken uns davon nur die Nummern (lib/whatsapp/nur-leads.ts), sonst nichts.
 type HistoryChunk = { threads?: Array<{ id?: string; messages?: unknown[] }> };
@@ -284,6 +307,8 @@ async function persistInbound(
       kind: type,
       body,
       waMessageId: m.id ?? null,
+      // Datei: Support-Nummer mit Name und Media-ID, sonst nur der Typ (Lead-Chats: Policen-Ablage, lib/chat-dateien.ts)
+      ...dateiMetadaten(type, type === "image" ? m.image : type === "document" ? m.document : null, { nurTyp: !support }),
     },
   });
 
@@ -594,6 +619,8 @@ async function persistEcho(
       waMessageId: e.id ?? null,
       status: "sent",
       sentBy: "app",
+      // Datei aus der WhatsApp-App: Name, Typ, Media-ID für die Admin-Ansicht und den Support-Zugriff (lib/support-zugriff.ts)
+      ...dateiMetadaten(type, type === "image" ? e.image : type === "document" ? e.document : type === "video" ? e.video : null, { nurTyp: false }),
     },
   });
   if (!conversation.leadId) {

@@ -30,6 +30,12 @@ export function isHealthLabel(label: string): boolean {
   return !TIER_RE.test(l) && LABEL_RE.test(l);
 }
 
+/** Freitext (z. B. Dateiname, Begleittext) mit eindeutigen Begriffen zur Gesundheit einer Person? Tierangaben nicht. */
+export function enthaeltGesundheitsangabe(text: string | null | undefined): boolean {
+  const t = norm(text ?? "");
+  return VALUE_RE.test(t) && !TIER_RE.test(t);
+}
+
 /** Formularangaben aufteilen: unbedenklich (für Assistent und Texte) und Gesundheitsangaben (nur Vermittler). */
 export function splitHealthAnswers<T extends Answer>(answers: T[]): { normal: T[]; health: T[] } {
   const normal: T[] = [];

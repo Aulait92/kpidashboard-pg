@@ -54,7 +54,7 @@ export async function sendErstinfoPdf(opts: { conversationId: string; an?: Anspr
     if (!account || account.status !== "connected" || !account.apiKeyEnc) return "not_possible";
     const { erstinfoPdfFuerWhatsApp, erstinfoPdfStand, erstinfoUrlFor } = await import("@/lib/erstinformation");
     step = "pdf";
-    let pdf: { link: string; filename: string } | null = await erstinfoPdfFuerWhatsApp(conv.customerId);
+    let pdf: { link: string; filename: string; size?: number } | null = await erstinfoPdfFuerWhatsApp(conv.customerId);
     if (!pdf) {
       // Angaben unvollständig: PDF im aktuellen Stand (derselbe Inhalt wie die öffentliche Seite) statt nur des Links
       const stand = await erstinfoPdfStand(conv.customerId);
@@ -66,7 +66,20 @@ export async function sendErstinfoPdf(opts: { conversationId: string; an?: Anspr
     step = "senden";
     const res = await sendDocument(decryptSecret(account.apiKeyEnc), conv.contactPhone, { link: pdf.link, filename: pdf.filename, caption: ERSTINFO_PDF_CAPTION });
     await prisma.message.create({
-      data: { conversationId: conv.id, direction: "outbound", kind: "document", body: `${ERSTINFO_PDF_CAPTION}\n${pdf.filename}\n${page}`, waMessageId: res.messageId, status: "sent", sentBy: "bot" },
+      data: {
+        conversationId: conv.id,
+        direction: "outbound",
+        kind: "document",
+        body: `${ERSTINFO_PDF_CAPTION}\n${pdf.filename}\n${page}`,
+        waMessageId: res.messageId,
+        status: "sent",
+        sentBy: "bot",
+        // Datei im Admin-Chat (lib/chat-dateien.ts): Name, Typ, Größe und die Adresse, unter der Meta das PDF geladen hat
+        mediaName: pdf.filename,
+        mediaMime: "application/pdf",
+        mediaSize: pdf.size ?? null,
+        mediaLink: pdf.link,
+      },
     });
     await prisma.conversation.update({ where: { id: conv.id }, data: { lastMessageAt: new Date() } });
     return "sent";

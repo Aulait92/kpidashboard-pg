@@ -390,11 +390,11 @@ export async function erstinfoDokument(
  * (/erstinformation/<token>/pdf?v=<hash>; der Token schützt die Adresse, Meta lädt die Datei dort) und Dateiname.
  * null = nicht vollständig bzw. nicht vorhanden.
  */
-export async function erstinfoPdfFuerWhatsApp(customerId: string): Promise<{ link: string; filename: string; hash: string } | null> {
+export async function erstinfoPdfFuerWhatsApp(customerId: string): Promise<{ link: string; filename: string; hash: string; size: number } | null> {
   if (!(await erstinfoBereit(customerId))) return null;
   const doc = await erstinfoDokument({ customerId });
   if (!doc) return null;
-  return { link: `${await erstinfoPdfUrlFor(customerId)}?v=${doc.hash}`, filename: doc.dateiname, hash: doc.hash };
+  return { link: `${await erstinfoPdfUrlFor(customerId)}?v=${doc.hash}`, filename: doc.dateiname, hash: doc.hash, size: doc.bytes.length };
 }
 
 /**
@@ -403,10 +403,10 @@ export async function erstinfoPdfFuerWhatsApp(customerId: string): Promise<{ lin
  * derselbe Inhalt wie die öffentliche Seite hinter dem Link der älteren Fassung. null = nicht erzeugbar.
  * fehlt: Bezeichnungen der fehlenden Pflichtangaben (ohne Werte, für Diagnose und Hinweis an den Vermittler).
  */
-export async function erstinfoPdfStand(customerId: string): Promise<{ link: string; filename: string; hash: string; vollstaendig: boolean; fehlt: string[] } | null> {
+export async function erstinfoPdfStand(customerId: string): Promise<{ link: string; filename: string; hash: string; size: number; vollstaendig: boolean; fehlt: string[] } | null> {
   const doc = await erstinfoDokument({ customerId });
   if (!doc) return null;
-  return { link: `${await erstinfoPdfUrlFor(customerId)}?v=${doc.hash}`, filename: doc.dateiname, hash: doc.hash, vollstaendig: doc.vollstaendig, fehlt: doc.fehlt };
+  return { link: `${await erstinfoPdfUrlFor(customerId)}?v=${doc.hash}`, filename: doc.dateiname, hash: doc.hash, size: doc.bytes.length, vollstaendig: doc.vollstaendig, fehlt: doc.fehlt };
 }
 
 /** Ist die Erstinformation dieses Kunden vollständig (darf als PDF an Leads gehen)? */
