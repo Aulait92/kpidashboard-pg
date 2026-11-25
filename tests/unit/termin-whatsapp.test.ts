@@ -176,3 +176,13 @@ describe("Vorlagen Fassung 2", () => {
     expect(erkenneTerminVorlage("Guten Tag, eine kurze Erinnerung zu Ihrem Angebot")).toBeNull();
   });
 });
+
+describe("Onboarding-Call (Ole, 25.11.2026)", () => {
+  it("eigenes Thema, Bestätigung ohne Verkaufstext (neutrale Fassung 1)", () => {
+    expect(terminThema({ bookingType: { slug: "onboarding" } })).toBe("onboarding");
+    const alle = () => true;
+    const v = waehleTerminVorlage("termin", { thema: "onboarding", modus: "video" }, alle);
+    expect(v?.version).toBe(1);
+    expect(v?.body).not.toMatch(/Leads|Angebot/);
+  });
+});

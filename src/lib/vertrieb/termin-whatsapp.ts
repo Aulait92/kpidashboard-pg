@@ -83,7 +83,8 @@ const NUTZEN = "wie Sie mit exklusiven Leads planbar neue Kundentermine bekommen
 const OLE = "Ole Kannapinn";
 
 export type TerminArtKey = "termin" | "erinnerung" | "gleich";
-export type Thema = "leads" | "entscheidung";
+// Onboarding-Call (Ole, 25.11.2026): keine eigene Fassung 2, daher die neutrale Fassung 1 ohne Verkaufstext
+export type Thema = "leads" | "entscheidung" | "onboarding";
 /** link: Video mit Link als Parameter; video: Link steht in der Kalendereinladung; telefon: Ole ruft an. */
 export type Modus = "video" | "link" | "telefon";
 type Param = "anrede" | "datum" | "zeit" | "art" | "videolink" | "link" | "linkV1";
@@ -257,8 +258,9 @@ export function waehleTerminVorlage(art: TerminArtKey, ctx: { thema: Thema; modu
   return nutzbar(v1.name, 1) ? v1 : null;
 }
 
-/** Entscheidungs-Call (Termintyp „entscheidung“ = DECISION_BOOKING_TYPE in lib/vertrieb/buchung.ts), sonst Meta-Leads-Call. */
+/** Entscheidungs-Call (Termintyp „entscheidung“), Onboarding-Call („onboarding“), sonst Meta-Leads-Call. */
 export function terminThema(m: { title?: string | null; bookingType?: { slug: string } | null }): Thema {
+  if (m.bookingType?.slug === "onboarding" || /onboarding/i.test(m.title ?? "")) return "onboarding";
   return m.bookingType?.slug === "entscheidung" || /entscheid/i.test(m.title ?? "") ? "entscheidung" : "leads";
 }
 
