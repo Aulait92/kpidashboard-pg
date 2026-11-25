@@ -69,6 +69,8 @@ import {
 import { GesellschaftenWahl, LogoZeile, TestleadSelbst } from "./selbst";
 import { loadLogoStand } from "@/lib/branding-logo-server";
 import { vertriebFuer } from "@/lib/tarifauswahl-server";
+import { einrichtungUntertitel, startNochVorne } from "@/lib/einrichtung-untertitel";
+import { nowMs } from "@/lib/now";
 import { bekannteGesellschaften, gesellschaftName } from "@/lib/tarifkatalog";
 
 export const dynamic = "force-dynamic";
@@ -285,13 +287,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader back="/buyer"
         title="Einrichtung"
-        subtitle={
-          ob.liveAt
-            ? `Live seit ${dateFmt(ob.liveAt)}.`
-            : ob.startDate
-              ? `Start am ${dateFmt(ob.startDate)}. Bis dahin richten wir alles gemeinsam ein.`
-              : "Wir richten alles gemeinsam ein."
-        }
+        subtitle={einrichtungUntertitel(ob, new Date(nowMs()))}
       />
 
       <Card className="mb-5">
@@ -869,7 +865,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           <IphoneAppSchritt geraet={geraet} appUrl={appHost()} readOnly={readOnly} angemeldet={appAngemeldet} />
         </Step>
 
-        <Step n={nextNo()} title="Start" icon={Rocket} done={!!ob.liveAt} open={current === "start"} current={current === "start" && !ob.liveAt}>
+        {/* „Start“ ohne Nummer: kein eigener Schritt des Kunden, die Zählung oben („x von y“) passt so zu den Nummern */}
+        <Step title="Start" icon={Rocket} done={!!ob.liveAt} open={current === "start"} current={current === "start" && !ob.liveAt}>
           {software && waVerbunden && !ob.liveAt ? (
             <div className="mb-4">
               <TestleadSelbst phone={eiTel} readOnly={readOnly} schonGetestet={!!ob.testLeadAt} />
@@ -878,7 +875,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           {kampagnen ? (
             <>
               <p className="text-sm text-[color:var(--muted)]">
-                {ob.startDate ? `Am ${dateFmt(ob.startDate)} ` : "Zum Start "}
+                {startNochVorne(ob.startDate, new Date(nowMs())) ? `Am ${dateFmt(ob.startDate)} ` : "Zum Start "}
                 gehen die Anzeigen live.{" "}
                 {software && waVerbunden
                   ? "Neue Leads bekommen innerhalb weniger Minuten eine WhatsApp-Nachricht und können direkt einen Termin buchen."
@@ -895,7 +892,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             </>
           ) : (
             <p className="text-sm text-[color:var(--muted)]" data-start-ppl>
-              {ob.startDate ? `Ab ${dateFmt(ob.startDate)} ` : "Ab dem Start "}
+              {startNochVorne(ob.startDate, new Date(nowMs())) ? `Ab ${dateFmt(ob.startDate)} ` : "Ab dem Start "}
               bekommt jeder Lead, den Sie per Pay-per-Lead bestellen, innerhalb weniger Minuten eine WhatsApp-Nachricht und kann direkt einen Termin buchen. Leads bestellen Sie
               unter <b>Wachstum → Leads bestellen</b>.
             </p>
@@ -980,7 +977,8 @@ function Step({
   /** Nächster offener Schritt: hervorgehoben mit „Als Nächstes“ (UX-Runde 19.11.2026). */
   current?: boolean;
   id?: string;
-  n: number;
+  /** Nummer; ohne Nummer (z. B. „Start“) zählt der Schritt nicht zu „x von y erledigt“ */
+  n?: number;
   title: string;
   icon: typeof Rocket;
   done: boolean;
@@ -999,7 +997,7 @@ function Step({
       <summary className="flex cursor-pointer items-center gap-2.5 px-5 py-3.5 group-open:border-b group-open:border-[color:var(--border)]">
         {done ? <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" /> : <Icon className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />}
         <span className={`flex-1 text-[15px] font-semibold tracking-tight ${done ? "text-[color:var(--muted)]" : ""}`}>
-          {n}. {title}
+          {n ? `${n}. ` : ""}{title}
         </span>
         {done ? <span className="text-xs font-semibold text-emerald-700">erledigt</span> : current ? <span className="text-xs font-semibold text-[color:var(--brand)]">Als Nächstes</span> : null}
         <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
