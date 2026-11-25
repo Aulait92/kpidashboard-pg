@@ -320,6 +320,58 @@ describe("Mail-Strecke und Betroffenenrechte", () => {
     expect(sms).toHaveLength(2);
   });
 
+  describe("Erst-SMS bei „kein WhatsApp“ (Ole, 25.11.2026, Auswertung Lohmann)", () => {
+    // Mittwoch, 25.11.2026, 10 Uhr Berlin (Geschäftszeit)
+    const MI = new Date("2026-11-25T09:00:00Z");
+
+    it("ohne E-Mail-Adresse: SMS mit Terminlink sofort statt nichts, ohne KI-Hinweis und Gedankenstriche, genau einmal", async () => {
+      const phone = mobil();
+      const l = await lead({ phone, email: null, outreachAt: MI, outreachStatus: "sent" });
+      expect(await markLeadNoWhatsApp(l.id, { code: 131026, now: MI })).toBe("flagged");
+      expect(sms).toHaveLength(1);
+      expect(sms[0].to).toBe(phone);
+      expect(sms[0].text).toMatch(/^Guten Tag, danke für Ihre Anfrage/);
+      expect(sms[0].text).toMatch(/Termin wählen: \S+\/t\//);
+      expect(sms[0].text).not.toMatch(/KI/);
+      expect(sms[0].text).not.toMatch(/[–—]/);
+      expect(await strecke(l.id)).toMatchObject({ ausloeser: "kein_whatsapp", nurSms: true, schritt: "sms", smsZahl: 1 });
+      expect(pushes.find((p) => p.title.startsWith("Sofort anrufen"))?.title).toBeTruthy();
+      // Doppelter Webhook bzw. Cron am selben Tag: keine zweite SMS
+      expect(await markLeadNoWhatsApp(l.id, { code: 131026, now: MI })).toBe("already");
+      await runMailStrecke(new Date(MI.getTime() + 10 * 60_000));
+      expect(sms).toHaveLength(1);
+    });
+
+    it("Erstmail geht nicht raus: weiter als Nur-SMS-Strecke mit Terminlink", async () => {
+      const { sendViaPostfach } = await import("@/lib/mail/postfach");
+      vi.mocked(sendViaPostfach).mockResolvedValueOnce({ ok: false, error: "smtp" } as never);
+      const l = await lead({ phone: mobil(), outreachAt: MI, outreachStatus: "sent" });
+      expect(await starteMailStrecke(l.id, "kein_whatsapp", { now: MI })).toMatchObject({ ergebnis: "gestartet", kanal: "sms", gesendet: true });
+      expect(sms).toHaveLength(1);
+      expect(await strecke(l.id)).toMatchObject({ nurSms: true, schritt: "sms", erstmailAt: null });
+    });
+
+    it("Cron holt verpasste Starts nach (48 Stunden, nur Handy, nicht bei Termin oder Pay-per-Lead)", async () => {
+      const vorher = new Date(MI.getTime() - 20 * 60_000);
+      const verpasst = await lead({ phone: mobil(), email: null, waUnavailableAt: vorher, outreachStatus: "no_whatsapp" });
+      const fest = await lead({ phone: "493012345678", email: null, waUnavailableAt: vorher, outreachStatus: "no_whatsapp" });
+      const alt = await lead({ phone: mobil(), email: null, waUnavailableAt: new Date(MI.getTime() - 3 * DAY), outreachStatus: "no_whatsapp" });
+      const termin = await lead({ phone: mobil(), email: null, waUnavailableAt: vorher, outreachStatus: "no_whatsapp" });
+      await prisma.appointment.create({ data: { customerId, leadId: termin.id, mode: "phone", startsAt: new Date(Date.now() + 2 * DAY), status: "booked" } });
+      const ppl = (await makeCustomer({ leadAddress: "sie" })).id;
+      try {
+        await prisma.agentConfig.create({ data: { customerId: ppl, active: true, outreachEnabled: true } });
+        const pplLead = await prisma.lead.create({ data: { customerId: ppl, name: "Paula Ppl", phone: mobil(), status: "Neuer Lead", waUnavailableAt: vorher } });
+        await runMailStrecke(MI);
+        expect((await strecke(verpasst.id)).nurSms).toBe(true);
+        for (const x of [fest.id, alt.id, termin.id, pplLead.id]) expect(await prisma.leadMailStrecke.count({ where: { leadId: x } })).toBe(0);
+        expect(sms.map((x) => x.to)).toEqual([verpasst.phone]);
+      } finally {
+        await cleanupCustomer(ppl);
+      }
+    });
+  });
+
   describe("Betroffenenrechte", () => {
     it("Löschwunsch im Chat: Anfrage, Bestätigung im Namen des Vermittlers, Assistent schweigt, Karte auf Heute", async () => {
       const phone = mobil();

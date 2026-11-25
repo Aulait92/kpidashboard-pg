@@ -12,14 +12,16 @@ import { waOhneMarker } from "@/lib/wa-format";
 export async function flagAttention(conversationId: string, reason: string, opts: { push?: boolean } = {}): Promise<void> {
   const conv = await prisma.conversation.findUnique({
     where: { id: conversationId },
-    select: { id: true, customerId: true, contactName: true, contactPhone: true, needsAttention: true, assignedUserId: true, lead: { select: { assignedUserId: true } } },
+    select: { id: true, customerId: true, contactName: true, contactPhone: true, needsAttention: true, attentionSince: true, assignedUserId: true, lead: { select: { assignedUserId: true } } },
   });
   if (!conv) return;
   // Grund enthält oft Chattext (Zitat): ohne WhatsApp-Marker für Hinweis und Push (lib/wa-format.ts)
   reason = waOhneMarker(reason);
+  const now = new Date();
   await prisma.conversation.update({
     where: { id: conv.id },
-    data: { needsAttention: true, attentionReason: reason.slice(0, 200), attentionAt: new Date() },
+    // attentionSince: Beginn der Wartephase (lib/antwort-eskalation.ts), bleibt bei weiteren Nachrichten stehen
+    data: { needsAttention: true, attentionReason: reason.slice(0, 200), attentionAt: now, ...(!conv.needsAttention || !conv.attentionSince ? { attentionSince: now } : {}) },
   });
   if (conv.needsAttention || opts.push === false) return; // schon markiert → kein zweiter Push
   const payload = {

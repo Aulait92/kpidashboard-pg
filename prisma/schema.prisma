@@ -1465,6 +1465,11 @@ model Conversation {
   needsAttention       Boolean   @default(false)
   attentionReason      String?
   attentionAt          DateTime?
+  // Beginn der aktuellen Wartephase (Ole, 25.11.2026, lib/antwort-eskalation.ts): gesetzt, wenn needsAttention neu
+  // gesetzt wird (attentionAt wandert mit jeder weiteren Nachricht mit). Push an den Inhaber nach 30 Minuten ohne
+  // menschliche Antwort, höchstens einmal je Wartephase (attentionEscalatedAt >= attentionSince).
+  attentionSince       DateTime?
+  attentionEscalatedAt DateTime?
   windowExpiresAt      DateTime? // Ende des 24h-Service-Fensters
   lastMessageAt        DateTime?
   // „STOPP“ per WhatsApp (lib/whatsapp/stopp.ts): ab hier keine Nachrichten mehr an diese Nummer (Assistent,
