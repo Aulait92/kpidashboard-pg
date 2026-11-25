@@ -122,14 +122,15 @@ export async function importAusgangsrechnungen(zeilen: AusgangsrechnungZeile[], 
   return { neu, aktualisiert };
 }
 
-// ── Geschäftsbereiche (Ole, 25.11.2026): Anfang 2026 Funnelprojekte (VENTIS, Bahmann …), ab Juni Pay-per-Lead, ab
-// November Software & Betreuung. Fest gesetzter Bereich (Spalte „bereich“) gewinnt, sonst dieser Vorschlag.
+// ── Geschäftsbereiche (Ole, 25.11.2026): Anfang 2026 Funnelprojekte (VENTIS, Bahmann …), ab Juni Pay-per-Lead, jetzt
+// Software & Betreuung. Fest gesetzter Bereich (Spalte „bereich“) gewinnt, sonst dieser Vorschlag. Software & Betreuung
+// nur mit angenommenem Angebot „Software“ bzw. „Betreuung“ (nicht Pay-per-Lead), ab dessen Erstellung (Ole: Rutsch,
+// verrata24 und Tobias D'Angelo sind in der App, aber Pay-per-Lead).
 export const BEREICHE = { funnel: "Funnelprojekte", ppl: "Pay-per-Lead", software: "Software & Betreuung", sonstiges: "Sonstiges" } as const;
 export type Bereich = keyof typeof BEREICHE;
 export const istBereich = (x: unknown): x is Bereich => typeof x === "string" && x in BEREICHE;
 
 const PPL_AB = "2026-06-01";
-const SOFTWARE_AB = "2026-11-01";
 const FUNNEL_KUNDEN = /ventis|bahmann|futterpro/i;
 const SONSTIGE_KUNDEN = /digistore/i;
 const FUELLWOERTER = new Set(["allianz", "allianzvertretung", "versicherung", "hauptvertretung", "generalvertretung", "vertretung", "agentur", "gmbh", "team", "beratungs", "vertriebs"]);
@@ -142,18 +143,14 @@ export function appKundeZu<T extends { name: string }>(kunde: string, appKunden:
 }
 
 /**
- * Bereich-Vorschlag für eine Rechnung. Software & Betreuung: ab November an einen App-Kunden, frühestens 2 Tage vor dessen
- * Anlage. Gutschriften von Lead-Käufern: Pay-per-Lead. Vor Juni und bekannte Projektkunden: Funnelprojekte.
+ * Bereich-Vorschlag für eine Rechnung. softwareKunden: Namen aus angenommenen Angeboten mit Paket „Software“ oder
+ * „Betreuung“, seit = Erstellung des Angebots. Rechnung an so einen Kunden ab dann: Software & Betreuung.
+ * Vor Juni und bekannte Projektkunden: Funnelprojekte. Sonst (auch Gutschriften von Lead-Käufern): Pay-per-Lead.
  */
-export function bereichVorschlag(r: { kunde: string; datum: string; typ: string }, appKunden: { name: string; seit: string }[]): Bereich {
+export function bereichVorschlag(r: { kunde: string; datum: string; typ: string }, softwareKunden: { name: string; seit: string }[]): Bereich {
   if (SONSTIGE_KUNDEN.test(r.kunde)) return "sonstiges";
   if (FUNNEL_KUNDEN.test(r.kunde)) return "funnel";
   if (r.datum < PPL_AB) return "funnel";
-  const app = appKundeZu(r.kunde, appKunden);
-  if (app && r.datum >= SOFTWARE_AB) {
-    const ab = new Date(`${app.seit}T00:00:00Z`);
-    ab.setUTCDate(ab.getUTCDate() - 2);
-    if (r.datum >= ab.toISOString().slice(0, 10)) return "software";
-  }
+  if (softwareKunden.some((k) => r.datum >= k.seit && appKundeZu(r.kunde, [k]))) return "software";
   return "ppl";
 }

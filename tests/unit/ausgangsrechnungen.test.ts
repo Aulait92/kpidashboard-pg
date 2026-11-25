@@ -30,10 +30,10 @@ describe("Papierkram-CSV", () => {
 });
 
 describe("Bereich-Vorschlag (Ole, 25.11.2026: Funnelprojekte, dann Pay-per-Lead, jetzt Software & Betreuung)", () => {
+  // Namen aus angenommenen Software-Angeboten, seit = Erstellung des Angebots
   const app = [
-    { name: "Allianz Hauptvertretung Marco Rutsch", seit: "2026-07-07" },
-    { name: "verrata24 GmbH", seit: "2026-11-16" },
-    { name: "Tobias D'Angelo", seit: "2026-11-22" },
+    { name: "Allianz Versicherung Anid Schwarzkopf HAUPTVERTRETUNG", seit: "2026-11-13" },
+    { name: "Allianz Hauptvertretung Marco Rutsch", seit: "2026-12-01" },
   ];
   const v = (kunde: string, datum: string, typ = "Rechnung") => bereichVorschlag({ kunde, datum, typ }, app);
   it("Projektkunden und alles vor Juni: Funnelprojekte", () => {
@@ -41,11 +41,12 @@ describe("Bereich-Vorschlag (Ole, 25.11.2026: Funnelprojekte, dann Pay-per-Lead,
     expect(v("Bahmann Coaching GmbH", "2026-06-05")).toBe("funnel");
     expect(v("Irgendwer", "2026-03-08")).toBe("funnel");
   });
-  it("ab November an App-Kunden: Software & Betreuung, vorher Pay-per-Lead", () => {
-    expect(v("Marco Rutsch Allianzvertretung", "2026-11-02")).toBe("software");
-    expect(v("Marco Rutsch Allianzvertretung", "2026-07-07")).toBe("ppl");
-    expect(v("verrata24 GmbH", "2026-11-16")).toBe("software");
-    expect(v("Tobias D'Angelo", "2026-11-16")).toBe("ppl");
+  it("Software & Betreuung nur mit angenommenem Software-Angebot, ab dessen Erstellung", () => {
+    expect(v("Allianz Hauptvertretung Anid Schwarzkopf", "2026-11-20")).toBe("software");
+    expect(v("Allianz Hauptvertretung Anid Schwarzkopf", "2026-11-09")).toBe("ppl");
+    expect(v("Marco Rutsch Allianzvertretung", "2026-11-02")).toBe("ppl");
+    expect(v("Marco Rutsch Allianzvertretung", "2026-12-05")).toBe("software");
+    expect(v("verrata24 GmbH", "2026-11-16")).toBe("ppl");
     expect(v("PKV-Hilfe GmbH", "2026-11-10")).toBe("ppl");
   });
   it("Gutschriften: Lead-Käufer Pay-per-Lead, Digistore Sonstiges", () => {

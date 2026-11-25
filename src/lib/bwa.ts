@@ -81,14 +81,16 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
     const [rechnungen, hvk, appKunden] = await Promise.all([
       prisma.ausgangsrechnung.findMany({ where: { datum: { gte: from } }, select: { nummer: true, datum: true, kunde: true, netto: true, typ: true, bereich: true, status: true } }),
       prisma.hvkInvoice.findMany({ where: { periodEnd: { gte: fromQ } }, select: { invoiceNo: true, invoiceDate: true, periodEnd: true, netCents: true } }),
-      // Nur Software-Kunden (Ole, 25.11.2026): Pay-per-Lead-Käufer mit Bestellkonto in der App (Nico Yagci, verrata24,
-      // Marco Rutsch) sind keine Software-Kunden; ihre Rechnungen bleiben Pay-per-Lead.
-      prisma.customer.findMany({
-        where: { isTest: false, plan: { in: ["software", "service"] }, leadSubscriptions: { none: {} } },
-        select: { name: true, createdAt: true },
+      // Software & Betreuung nur mit angenommenem Angebot „Software“ oder „Betreuung“, ab dessen Erstellung (Ole, 25.11.2026:
+      // Pay-per-Lead-Käufer mit Konto in der App wie Nico Yagci, verrata24, Marco Rutsch bleiben Pay-per-Lead)
+      prisma.offer.findMany({
+        where: { status: "accepted", isTest: false, package: { in: ["software", "service"] } },
+        select: { company: true, acceptedCompany: true, contactName: true, createdAt: true },
       }),
     ]);
-    const kundenSeit = appKunden.map((k) => ({ name: k.name, seit: k.createdAt.toISOString().slice(0, 10) }));
+    const kundenSeit = appKunden.flatMap((o) =>
+      [o.acceptedCompany, o.company, o.contactName].filter((n): n is string => !!n).map((name) => ({ name, seit: o.createdAt.toISOString().slice(0, 10) })),
+    );
     for (const r of rechnungen) {
       const m = r.datum.toISOString().slice(0, 7);
       if (!inRange(m) || !Number(r.netto)) continue;
