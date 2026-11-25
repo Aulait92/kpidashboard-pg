@@ -2,7 +2,7 @@
   "name": "performancegrowth-app",
   "private": true,
   "version": "1.0.0",
-  "description": "App-Store-App (iOS/Android) f\u00fcr den Kundenbereich von performancegrowth \u2013 Capacitor-H\u00fclle um app.performancegrowth.de mit nativen Funktionen.",
+  "description": "App-Store-App (iOS/Android) für den Kundenbereich von performancegrowth – Capacitor-Hülle um app.performancegrowth.de mit nativen Funktionen.",
   "scripts": {
     "add:ios": "cap add ios",
     "add:android": "cap add android",
@@ -23,7 +23,8 @@
     "@capacitor/share": "8.0.3",
     "@capacitor/splash-screen": "8.0.2",
     "@capacitor/status-bar": "8.0.4",
-    "@capawesome/capacitor-badge": "8.0.4"
+    "@capawesome/capacitor-badge": "8.0.4",
+    "@capgo/capacitor-native-biometric": "8.9.3"
   },
   "devDependencies": {
     "@capacitor/assets": "4.0.0",

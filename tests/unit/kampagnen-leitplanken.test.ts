@@ -3,7 +3,15 @@
 // Bildidee nur in festen Kategorien, bereinigte Muster, Anweisungen ohne Namen und Kennzahlen, feste Ausgabeprüfung,
 // alte Kontexte, Sperre bei Widerspruch, Werbebibliothek. Der Ablauf mit Datenbank steht in
 // tests/integration/kampagnen-leitplanken.test.ts.
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+// Unit-Tests laufen ohne Datenbank (vitest.config.ts). Seit lib/anzeigenlernen.ts den Widerspruch aus der Datenbank
+// liest (24.11.2026), wird das Kundenfeld hier ersetzt: niemand widersprochen, aufgezeichnet wird, wonach gefragt
+// wurde. Der echte Datenbankweg steht in tests/integration/lern-sperre-anschluss.test.ts.
+const kundenfeld = vi.hoisted(() => ({ gefragt: [] as string[][] }));
+vi.mock("@/lib/anzeigenlernen", () => ({
+  vomLernenAusgenommen: async (ids: string[]) => (kundenfeld.gefragt.push(ids), new Set<string>()),
+}));
 import { BILDIDEE_FELDER, BILDIDEE_WERTE, bildideeAusBild, bildideeText, gueltigeBildidee, validateBildidee } from "@/lib/kampagnen/bildidee";
 import {
   HINWEIS_ENTFERNT,
@@ -500,8 +508,11 @@ describe("Widerspruch gegen das gemeinsame Anzeigenlernen", () => {
   const quelle = async (id: string) => (id === QUELLE.id ? QUELLE : null);
 
   it("Abfrage: vorerst niemand ausgenommen; ersetzbar; nur gefragte IDs kommen zurück", async () => {
+    kundenfeld.gefragt.length = 0;
     expect(await vomLernenAusgenommen(["a", "b"])).toEqual(new Set());
     expect(await ausgenommeneUnter(["a", null, "b", "a", undefined])).toEqual(new Set());
+    // Standard-Abfrage geht an das Kundenfeld (lib/anzeigenlernen.ts), ohne leere Werte und Doppelte
+    expect(kundenfeld.gefragt).toEqual([["a", "b"], ["a", "b"]]);
     const gefragt: string[][] = [];
     const sperre = async (ids: string[]) => (gefragt.push(ids), new Set(["b", "fremd"]));
     expect(await ausgenommeneUnter(["a", null, "b", "a"], sperre)).toEqual(new Set(["b"]));

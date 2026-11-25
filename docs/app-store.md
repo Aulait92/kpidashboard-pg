@@ -87,9 +87,38 @@ kein grauer Tipp-Blitz, Knöpfe geben beim Drücken leicht nach (97 %).
 - **Kalender verbinden** öffnet im System-Browser (Safari/Chrome) mit einem
   Einmal-Link (5 Minuten gültig, nur einmal nutzbar). Nach dem Verbinden zurück in
   die App wechseln – die Seite lädt sich beim Zurückkehren neu.
-- **Face-ID-Sperre**: bewusst weggelassen. Der Login bleibt wie im Browser
-  angemeldet; eine App-Sperre per Face ID kann später mit einem
-  Biometrie-Plugin ergänzt werden, falls Kunden das wünschen.
+- **Face ID und angemeldet bleiben** (Ole, 25.11.2026: „In der App muss man sich bei
+  jedem Öffnen einloggen. Und Face ID wäre auch gut“): Das WebView auf dem iPhone hält
+  das Sitzungs-Cookie nicht zuverlässig über einen Neustart der App. Deshalb legt die
+  App nach dem Login einen eigenen Geräte-Schlüssel im Schlüsselbund ab, nur nach
+  Face ID lesbar (Plugin `@capgo/capacitor-native-biometric`, `accessControl`
+  BIOMETRY_ANY). Beim Öffnen und nach mehr als einer Minute im Hintergrund:
+  Sperrbildschirm → Face ID → Schlüssel einlösen → neue Sitzung (auf `/login` direkt
+  weiter zum Ziel).
+  - Server: `src/lib/app-geraete-login.ts`, Modell `AppGeraeteLogin`, Routen
+    `/api/app/geraete-login` (ausgeben/beenden, mit Sitzung) und
+    `/api/app/geraete-login/einloesen` (ohne Sitzung, 30 Versuche je IP / 15 Min.).
+    Nur der Hash liegt in der Datenbank; jede Nutzung tauscht den Schlüssel aus;
+    90 Tage ohne Nutzung gültig; höchstens 10 Geräte je Login. Gilt nur mit gleicher
+    Sitzungsversion: „Überall abmelden“, Passwortwechsel und 2FA-Änderungen beenden
+    Face ID auf allen Geräten. Einlösen ersetzt den 2FA-Schritt wie ein vertrautes
+    Gerät (ausgegeben wird nur an eine vollständig angemeldete Sitzung).
+  - App: `src/components/app-sperre.tsx` (Sperre, automatisch einrichten auf dem
+    iPhone), `src/lib/native-bridge.ts` (Abschnitt Face ID). Das Inline-Skript in
+    `src/app/layout.tsx` verdeckt die Seite schon vor dem ersten Bild
+    (`html.pg-gesperrt`) und lässt den Startbildschirm stehen.
+  - Ausschalten: **Einstellungen → Anmeldung & Sicherheit → Face ID** (Karte nur in
+    der App). Abmelden beendet Face ID auf dem Gerät. „Mit Passwort anmelden“ auf der
+    Sperre meldet ab.
+  - Wirkt erst mit dem neuen App-Build (Plugin + `NSFaceIDUsageDescription` in
+    `Info.plist`). Ältere Builds ohne Plugin verhalten sich wie bisher.
+  - Neuigkeit (`ProductUpdate`) erst mit der Freigabe dieses Builds im App Store anlegen
+    (publishedAt = Freigabe), Vorschlag: „Die iPhone-App öffnet sich jetzt mit Face ID,
+    ohne jedes Mal das Passwort. Ausschalten unter **Einstellungen → Anmeldung &
+    Sicherheit**.“ Webseite: Eintrag in `docs/webseite-offen.md` vom 25.11.2026.
+  - Test ohne iPhone: Playwright mit App-User-Agent und nachgebautem
+    `window.Capacitor.Plugins.NativeBiometric`; Integrationstest
+    `tests/integration/app-geraete-login.test.ts`.
 - Der Admin-Bereich funktioniert in der App ebenfalls, ist aber nicht das Ziel.
 - In dieser Umgebung gibt es weder Xcode noch Android-SDK: gebaut wird nur in
   Codemagic.
