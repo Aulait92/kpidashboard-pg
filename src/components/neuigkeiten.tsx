@@ -1,7 +1,8 @@
 "use client";
 
 import { Badge, buttonClass } from "@/components/ui";
-import { groupByMonth, KIND_LABEL, type UpdateKind, type UpdateView } from "@/lib/neuigkeiten-shared";
+import { ChevronDown } from "lucide-react";
+import { KIND_LABEL, wochenBloecke, type UpdateKind, type UpdateView } from "@/lib/neuigkeiten-shared";
 
 const KIND_TONE: Record<UpdateKind, "success" | "brand" | "info"> = { neu: "success", verbessert: "brand", behoben: "info" };
 const dayLabel = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "numeric", month: "long" }).format(new Date(iso));
@@ -98,35 +99,59 @@ function UpdateKompakt({ u }: { u: UpdateView }) {
   );
 }
 
+/** Aufklappbarer Block mit kompakten Einträgen (weitere Einträge einer Woche oder eine ältere Woche). */
+function Block({ titel, items, unread, data }: { titel: string; items: UpdateView[]; unread: Set<string>; data: string }) {
+  const neu = items.filter((u) => unread.has(u.id)).length;
+  return (
+    <details className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white" data-update-block={data}>
+      <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-4 py-3 text-[15px] font-medium [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0 flex-1">{titel}</span>
+        {neu ? <span className="shrink-0 text-xs font-semibold text-[color:var(--brand)]">{neu} ungelesen</span> : null}
+        <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" aria-hidden />
+      </summary>
+      <ul className="space-y-2 border-t border-[color:var(--border)] p-3">
+        {items.map((u) => (
+          <UpdateKompakt key={u.id} u={u} />
+        ))}
+      </ul>
+    </details>
+  );
+}
+
+const anzahl = (n: number) => `${n} ${n === 1 ? "Neuigkeit" : "Neuigkeiten"}`;
+
 /**
- * Die neuesten (mindestens 5, alle ungelesenen) ausführlich, ältere nach Monat zugeklappt (UX, Ole 15.11.2026:
- * die Seite war über 16.000 Pixel lang).
+ * Wochenweise (Usability-Check 25.11.2026, lib/neuigkeiten-shared.ts wochenBloecke): In der neuesten Woche höchstens 3
+ * Einträge ausführlich, die übrigen dieser Woche in einem Block „Weitere Verbesserungen“. Ältere Wochen je ein
+ * aufklappbarer Block. Vorher stand jeder Eintrag einzeln da (85 in 8 Tagen).
  */
-export function UpdatesList({ items, unreadIds = [] }: { items: UpdateView[]; unreadIds?: string[] }) {
+export function UpdatesList({ items, unreadIds = [], nowIso }: { items: UpdateView[]; unreadIds?: string[]; nowIso?: string }) {
   if (!items.length) {
     return <p className="rounded-[var(--radius-lg)] border border-dashed border-[color:var(--border)] p-6 text-center text-sm text-[color:var(--muted)]">Noch keine Neuigkeiten.</p>;
   }
   const unread = new Set(unreadIds);
-  const n = Math.max(5, items.filter((u) => unread.has(u.id)).length);
-  const neu = items.slice(0, n);
-  const aelter = items.slice(n);
+  const [aktuell, ...aelter] = wochenBloecke(items, nowIso ? new Date(nowIso) : new Date());
   return (
     <div className="space-y-6">
-      <ul className="space-y-3">
-        {neu.map((u) => (
-          <UpdateEntry key={u.id} u={u} unread={unread.has(u.id)} />
-        ))}
-      </ul>
-      {groupByMonth(aelter).map((g) => (
-        <section key={g.month}>
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">{g.month}</h2>
-          <ul className="space-y-2">
-            {g.items.map((u) => (
-              <UpdateKompakt key={u.id} u={u} />
+      {aktuell ? (
+        <section className="space-y-3" data-update-woche={aktuell.montag}>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">{aktuell.label}</h2>
+          <ul className="space-y-3">
+            {aktuell.einzeln.map((u) => (
+              <UpdateEntry key={u.id} u={u} unread={unread.has(u.id)} />
             ))}
           </ul>
+          {aktuell.weitere.length ? <Block titel={`${anzahl(aktuell.weitere.length).replace("Neuigkeit", "weitere Neuigkeit")}`} items={aktuell.weitere} unread={unread} data="weitere" /> : null}
         </section>
-      ))}
+      ) : null}
+      {aelter.length ? (
+        <section className="space-y-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Frühere Wochen</h2>
+          {aelter.map((w) => (
+            <Block key={w.montag} titel={`${w.label} · ${anzahl(w.einzeln.length + w.weitere.length)}`} items={[...w.einzeln, ...w.weitere]} unread={unread} data={w.montag} />
+          ))}
+        </section>
+      ) : null}
     </div>
   );
 }

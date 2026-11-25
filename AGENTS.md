@@ -22,6 +22,10 @@ mit `INSERT INTO "ProductUpdate" (...) VALUES (...) ON CONFLICT ("id") DO NOTHIN
 - Kein Eintrag für: reine Admin-Funktionen, interne Technik, Sicherheits-Updates ohne sichtbare Änderung,
   kleine Korrekturen ohne spürbaren Unterschied. Fehlerbehebungen nur, wenn Kunden den Fehler bemerkt haben.
 - Mehrere kleine Änderungen eines Tages zu einem Eintrag zusammenfassen.
+- Höchstens 3 Neuigkeiten je Woche (Ole, 25.11.2026): nur Spürbares als eigener Eintrag, Kleinigkeiten in einer
+  Wochenzusammenfassung („Kleinere Verbesserungen dieser Woche“, ein Eintrag, Punkte als Absätze). Die Seite zeigt je
+  Woche höchstens 3 einzeln, den Rest aufklappbar (`wochenBloecke` in `src/lib/neuigkeiten-shared.ts`). Admin-Interna
+  nie als Kunden-Neuigkeit.
 
 ## Webseite mitpflegen (Ole, 14.11.2026)
 
