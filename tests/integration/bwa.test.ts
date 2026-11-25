@@ -46,19 +46,17 @@ describe("BWA aus der Datenbank", () => {
     // laufender Monat: tatsächlich 3 × 40 €, nicht hochgerechnet
     expect(mine("umsatz:ppl", "2026-11")).toBe(120);
     expect(mine("umsatz:ppl", "2026-10")).toBe(40);
-    // Steuerberater: 297,50 brutto inkl. 19 % → 250 netto, Gruppe = Regel-Bezeichnung ohne Klammer
-    // (in der gemeinsamen Test-DB ggf. unter „Sonstiges“ zusammengefasst)
+    // Steuerberater: 297,50 brutto inkl. 19 % → 250 netto, immer in der einen Zeile „Steuerberater“ (Ole, 25.11.2026),
+    // auch als kleiner Posten nie unter „Sonstiges“
     const stb = b.items.find((i) => i.label === `GC RE ${tag}`)!;
-    expect([`betrieb:Steuerberater ${tag}`, "betrieb:Sonstiges"]).toContain(stb.line);
-    expect(stb).toMatchObject({ month: "2026-10", net: 250, gross: 297.5, href: "/admin/neu/zahlen/kosten/zuordnen" });
-    if (stb.line === "betrieb:Sonstiges") expect(stb.detail).toContain(`Steuerberater ${tag}`);
+    expect(stb).toMatchObject({ line: "betrieb:Steuerberater", month: "2026-10", net: 250, gross: 297.5, href: "/admin/neu/zahlen/kosten/zuordnen" });
     expect(mine("direkt:software", "2026-11")).toBe(8.1);
     expect(mine("akquise:tools", "2026-11")).toBe(300);
     // offene Buchung zählt nicht, aber im Hinweis
     expect(b.items.some((i) => i.label === `Offen ${tag}`)).toBe(false);
     expect(b.hints.openExpenses).toBeGreaterThanOrEqual(1);
     // Zeilen der Tabelle enthalten die Posten
-    const row = b.bwa.rows.find((r) => r.key === `betrieb:Steuerberater ${tag}` || r.key === "betrieb:Sonstiges");
+    const row = b.bwa.rows.find((r) => r.key === "betrieb:Steuerberater");
     expect(row).toBeTruthy();
     expect(b.ranges.map((r) => r.key)).toContain("12m");
   });

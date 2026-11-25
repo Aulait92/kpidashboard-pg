@@ -419,6 +419,49 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `Regel „${muster}“ → ${aktion} gespeichert, auf ${n} offene Umsätze angewendet.` };
     },
   },
+  bank_regel_ust: {
+    beschreibung:
+      "USt-Einstellung einer Bankregel ändern (inkl. 19 % USt bzw. ohne) und alle schon zugeordneten Buchungen dieser Regel neu rechnen; Kostenart und Status bleiben. vorschau=true rechnet nur. Standardregel ohne DB-Regel wird mit gleichem Muster angelegt.",
+    felder: { muster: "Regel-Muster wie gespeichert oder eindeutiger Teil davon (q=bank-regeln)", inklUst: "true = Betrag enthält 19 % USt, false = ohne", vorschau: "true = nur rechnen, nichts ändern" },
+    run: async (p) => {
+      if (typeof p.inklUst !== "boolean" && p.inklUst !== "true" && p.inklUst !== "false") return { ok: false, error: "inklUst: true oder false." };
+      const inklUst = p.inklUst === true || p.inklUst === "true";
+      const vorschau = p.vorschau === true || p.vorschau === "true";
+      const { regelUstSetzen } = await import("@/lib/bank/regel-ust");
+      const r = await regelUstSetzen({ muster: text(p.muster, 80), inklUst, vorschau });
+      if (!r.ok) return r;
+      const e = r.ergebnis;
+      if (!vorschau) {
+        await audit("bank.regel_ust", {
+          entity: "CostRule",
+          entityId: e.regel.id,
+          details: { muster: e.regel.muster, inklUst: { from: e.regel.inklUstVorher, to: inklUst }, buchungen: e.buchungen, geaendert: e.geaendert, nettoVorher: e.nettoVorher, nettoNachher: e.nettoNachher, angelegt: e.regel.angelegt },
+          actor: OPS_ACTOR,
+        });
+      }
+      return {
+        ok: true,
+        info: `${vorschau ? "Vorschau" : "Gespeichert"}: Regel „${e.regel.muster}“ ${inklUst ? "inkl. USt" : "ohne USt"}, ${e.buchungen} Buchungen, netto ${e.nettoVorher.toFixed(2)} → ${e.nettoNachher.toFixed(2)} € (2026: ${e.jahr2026.nettoVorher.toFixed(2)} → ${e.jahr2026.nettoNachher.toFixed(2)} €).`,
+        daten: e,
+      };
+    },
+  },
+  bank_ruecklastschriften_verrechnen: {
+    beschreibung:
+      "Rücklastschriften (Gutschrift mit „Rückgabegrund“) mit ihrer Lastschrift gleicher End-to-End-Referenz verrechnen: beide „ignoriert“ (zurückgegeben bzw. Rücklastschrift), zählen nicht als Kosten. vorschau=true rechnet nur. Rückgabe-Entgelte der Bank bleiben Kosten.",
+    felder: { vorschau: "true = nur rechnen, nichts ändern" },
+    run: async (p) => {
+      const vorschau = p.vorschau === true || p.vorschau === "true";
+      const { ruecklastschriftenVerrechnen } = await import("@/lib/bank/ruecklastschriften");
+      const r = await ruecklastschriftenVerrechnen({ vorschau });
+      if (!vorschau) await audit("bank.ruecklastschriften", { details: { paare: r.paare, neu: r.neuVerrechnet, ohneLastschrift: r.ohneLastschrift, brutto: r.summeBrutto, nettoBisher: r.summeNettoBisher }, actor: OPS_ACTOR });
+      return {
+        ok: true,
+        info: `${vorschau ? "Vorschau" : "Verrechnet"}: ${r.paare} Paare (${r.neuVerrechnet} neu), ${r.ohneLastschrift} ohne Lastschrift, ${r.summeBrutto.toFixed(2)} € brutto, bisher als Kosten ${r.summeNettoBisher.toFixed(2)} € netto.`,
+        daten: r,
+      };
+    },
+  },
   bank_zuordnen: {
     beschreibung: "Importierte Umsätze eines CSV-Kontos (z. B. n26) nach Gegenpartei einer Kostenart zuordnen: ppl, software, ki, akquise, betrieb oder ignore; legt keine Regel an",
     felder: { konto: "Kurzname, z. B. n26", muster: "Teil der Gegenpartei, z. B. outbrain", kostenart: "ppl | software | ki | akquise | betrieb | ignore" },

@@ -7,7 +7,7 @@ import { addMonths, monthKey, monthRange } from "@/lib/revenue-ledger";
 import { FIRST_MONTH, loadKpiSettings, loadLedger, recurringShare } from "@/lib/zahlen";
 import { PRICE_LIST } from "@/lib/offer-pricing";
 import { monthlyFeeCosts } from "@/lib/whatsapp/fees";
-import { netCost } from "@/lib/bank/rules";
+import { bankNetto } from "@/lib/bank/rules";
 import { buildBwa, groupSmallBetrieb, type Bwa, type BwaInput, type BwaItem } from "@/lib/bwa-shared";
 
 /** Ab hier rechnet die BWA (Ole, 24.11.2026: auch die Umsätze vor dem Pay-per-Lead-Start im Juni). */
@@ -37,15 +37,30 @@ export function bwaMonths(param: string | undefined, now = new Date()): { key: s
 }
 
 const STEUERBERATER = /steuerberat|phdr|m(?:ue|ü)ller\s*treuhand|stbg/i;
+export const STEUERBERATER_ZEILE = "betrieb:Steuerberater";
+
+/** Steuerberater-Zahlung? Lastschrift („GC RE PHDRMUELLERSTBG“), Überweisung („PhDr. Mueller Treuhand“), Regel, Notiz. */
+export function istSteuerberater(...texte: (string | null | undefined)[]): boolean {
+  return STEUERBERATER.test(texte.filter(Boolean).join(" ").replace(/\s+/g, " "));
+}
 
 /** Anzeigename einer Betriebs-Gruppe: Regel-Bezeichnung ohne Klammerzusatz, sonst Gegenpartei. */
-export function betriebGroup(label: string | null | undefined, counterparty: string | null | undefined): string {
-  // Alle Steuerberater-Zahlungen in eine Zeile (Ole, 25.11.2026), egal ob per Regel oder nach Empfänger
-  if (STEUERBERATER.test(`${label ?? ""} ${counterparty ?? ""}`)) return "Steuerberater";
+export function betriebGroup(label: string | null | undefined, counterparty: string | null | undefined, purpose?: string | null): string {
+  // Alle Steuerberater-Zahlungen in eine Zeile (Ole, 25.11.2026), egal ob per Regel, nach Empfänger oder Verwendungszweck
+  if (istSteuerberater(label, counterparty, purpose)) return "Steuerberater";
   const l = (label ?? "").replace(/\s*\(.*\)\s*$/, "").trim();
   if (l && l !== "Standardregel") return l.slice(0, 60);
   const c = (counterparty ?? "").replace(/\s+/g, " ").trim();
   return (c || "Ohne Empfänger").slice(0, 60);
+}
+
+/** BWA-Zeile einer zugeordneten Bankbuchung. Steuerberater immer „betrieb:Steuerberater“, auch bei anderer Kostenart. */
+export function bwaZeile(t: { costPurpose: string | null; counterparty: string | null; purpose: string | null; ruleLabel?: string | null }): string {
+  if (istSteuerberater(t.ruleLabel, t.counterparty, t.purpose)) return STEUERBERATER_ZEILE;
+  if (t.costPurpose === "ppl") return "direkt:ppl";
+  if (t.costPurpose === "software" || t.costPurpose === "ki") return "direkt:software";
+  if (t.costPurpose === "akquise") return "akquise:tools";
+  return `betrieb:${betriebGroup(t.ruleLabel, t.counterparty, t.purpose)}`;
 }
 
 export async function loadBwa(param?: string, now = new Date()): Promise<BwaData> {
@@ -117,7 +132,8 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
     GROUP BY 1, 2`;
   for (const c of other) {
     if (!inRange(c.month) || !(c.amount > 0)) continue;
-    items.push({ month: c.month, line: "betrieb:Sonstige Kosten (manuell)", label: c.note ?? "Kosten", net: r2(c.amount) });
+    // Steuerberater von Hand erfasst (Notiz) in dieselbe Zeile wie die Abbuchungen
+    items.push({ month: c.month, line: istSteuerberater(c.note) ? STEUERBERATER_ZEILE : "betrieb:Sonstige Kosten (manuell)", label: c.note ?? "Kosten", net: r2(c.amount) });
   }
 
   // ── WhatsApp-Gebühren (nur wenn im Preis enthalten → direkte Kosten) ──
@@ -142,15 +158,17 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
     },
     orderBy: { bookingDate: "asc" },
   });
+  // Zurückgegebene Lastschriften (Rücklastschrift, noch nicht verrechnet) zählen nicht
+  const zurueck = await (await import("@/lib/bank/ruecklastschriften")).zurueckgegebeneLastschriften(bank);
   for (const t of bank) {
     const m = t.bookingDate.toISOString().slice(0, 7);
-    if (!inRange(m)) continue;
+    if (!inRange(m) || zurueck.has(t.id)) continue;
     // Beleg aus GetMyInvoices: echtes Netto statt Schätzung, wenn Betrag in EUR zum Umsatz passt
     const b = t.beleg;
-    const belegNetto = b && b.waehrung === "EUR" && b.netto != null && b.brutto != null && Math.abs(Number(b.brutto) + Number(t.amount)) <= 0.02 ? r2(Number(b.netto)) : null;
-    const net = belegNetto ?? netCost(Number(t.amount), t.vatIncluded);
-    const line =
-      t.costPurpose === "ppl" ? "direkt:ppl" : t.costPurpose === "software" || t.costPurpose === "ki" ? "direkt:software" : t.costPurpose === "akquise" ? "akquise:tools" : `betrieb:${betriebGroup(t.rule?.label, t.counterparty)}`;
+    const nb = bankNetto(Number(t.amount), t.vatIncluded, b);
+    const belegNetto = nb.laut === "beleg" ? nb.netto : null;
+    const net = nb.netto;
+    const line = bwaZeile({ costPurpose: t.costPurpose, counterparty: t.counterparty, purpose: t.purpose, ruleLabel: t.rule?.label });
     items.push({
       month: m,
       line,
@@ -178,7 +196,15 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
       if (share <= 0) continue;
       const v = r2(n(rc.monthlyAmount) * share);
       if (!(v > 0)) continue;
-      const line = rc.purpose === "ppl" ? "direkt:ppl" : rc.purpose === "software" ? "direkt:software" : rc.purpose === "akquise" ? "akquise:tools" : `betrieb:${rc.name.slice(0, 60)}`;
+      const line = istSteuerberater(rc.name)
+        ? STEUERBERATER_ZEILE
+        : rc.purpose === "ppl"
+          ? "direkt:ppl"
+          : rc.purpose === "software"
+            ? "direkt:software"
+            : rc.purpose === "akquise"
+              ? "akquise:tools"
+              : `betrieb:${rc.name.slice(0, 60)}`;
       items.push({ month: m, line, label: rc.name, net: v, detail: "laufende Kosten (von Hand)", href: "/admin/neu/zahlen/kosten" });
     }
   }

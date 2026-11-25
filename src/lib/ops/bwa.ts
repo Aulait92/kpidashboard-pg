@@ -42,6 +42,11 @@ export async function bwaDiagnose(p: URLSearchParams) {
     umsatzJeKunde,
     metaKosten: { ausApi: metaApi.map((x) => ({ monat: x.month, betrag: r2(x.amount) })), abbuchungenBank: metaBank.map((x) => ({ monat: x.month, betrag: r2(x.amount) })) },
     hinweise: d.hints,
+    // Rücklastschriften: zurückgegebene Lastschriften zählen in der BWA nicht (auch vor dem Verrechnen)
+    ruecklastschriften: await (async () => {
+      const r = await (await import("@/lib/bank/ruecklastschriften")).ruecklastschriftenVerrechnen({ vorschau: true });
+      return { paare: r.paare, nochZuVerrechnen: r.neuVerrechnet, ohneLastschrift: r.ohneLastschrift, summeBrutto: r.summeBrutto, jeMonat2026: r.jeMonat2026 };
+    })(),
   };
 }
 

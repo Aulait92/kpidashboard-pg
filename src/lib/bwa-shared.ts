@@ -75,6 +75,9 @@ export function sectionOf(line: string): BwaSection {
  * Betriebs-Posten unter `smallShare` der Betriebskosten im Zeitraum werden zu
  * „Sonstiges“ (Zeile betrieb:Sonstiges) zusammengefasst.
  */
+/** Betriebszeilen, die nie unter „Sonstiges“ zusammengefasst werden (Ole, 25.11.2026). */
+export const BETRIEB_FEST = new Set(["betrieb:Steuerberater"]);
+
 export function groupSmallBetrieb(items: BwaItem[], months: string[], smallShare = 0.01): BwaItem[] {
   const inRange = items.filter((i) => months.includes(i.month));
   const betrieb = inRange.filter((i) => sectionOf(i.line) === "betrieb");
@@ -82,7 +85,8 @@ export function groupSmallBetrieb(items: BwaItem[], months: string[], smallShare
   if (sum <= 0) return inRange;
   const perLine = new Map<string, number>();
   for (const i of betrieb) perLine.set(i.line, (perLine.get(i.line) ?? 0) + i.net);
-  const small = new Set([...perLine.entries()].filter(([, v]) => v < sum * smallShare).map(([k]) => k));
+  // Feste Betriebszeilen (Steuerberater) bleiben immer sichtbar
+  const small = new Set([...perLine.entries()].filter(([k, v]) => v < sum * smallShare && !BETRIEB_FEST.has(k)).map(([k]) => k));
   // Nur zusammenfassen, wenn es mehr als einen kleinen Posten gibt
   if (small.size < 2) return inRange;
   return inRange.map((i) => {
