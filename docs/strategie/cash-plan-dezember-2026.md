@@ -36,3 +36,21 @@ Annahme bis 8.12., Zahlungsziel 15.12., Überweisung. Instantly-Kampagnen jetzt 
 1. Offene Forderungen (Summe, Fälligkeit je Kunde)
 2. Steuerberater: USt-Nachzahlung 2026 und Vorauszahlungen bis 10.01. (Betrag, Datum)
 3. Freigaben Stufe A: Jahresend-Angebot, Vorkasse Deibel, PPL-Vorbestellung, Instantly-Start
+
+## Update 25.11. abends (Ole)
+Neu: Sascha Niehues sagt heute zu, Jens Haferstroh morgen. Termin 30.11. mit 4 Signal-Iduna-Vertretern (Teamstart: Einrichtung 490 € je Person zu viert, 990 €/Monat, 3 Monate Mindestlaufzeit, Annahme bis 04.12., gemeinsamer Start).
+
+Cash-Wirkung bis 31.12. (brutto, Annahme Einrichtung und erster Monat im Dezember fällig, Zahlungsziel 15.12.):
+| Deal | monatlich (ohne Vorkasse) | mit 6 Monaten Vorkasse |
+|---|---|---|
+| Signal Iduna zu viert | 4 × (583 € Einrichtung + 1.178 € 1. Monat) = 7.044 € | nicht angeboten |
+| Jens Haferstroh (Start Januar) | Einrichtung ≈ 2.370 € | ≈ 7.720 € |
+| Sascha Niehues (Start 1.1., Abrechnung am 15.) | Einrichtung ≈ 2.370 €, falls bei Annahme fällig, sonst 0 € | ≈ 7.660 € |
+
+Szenarien Kontostand 31.12. (Basis CFO 6.500 €, Jens dort mit ca. 1.500 € gewichtet):
+- A konservativ, alles monatlich, SI zu viert: ≈ 6.500 + 11.800 − 1.500 = 16.800 €
+- B Jens und Sascha mit 6 Monaten Vorkasse, SI zu viert: ≈ 6.500 + 22.400 − 1.500 = 27.400 €
+- C wie B plus Andy Deibel 6 Monate (13.090 €) oder Holger-Vorziehen: über 30.000 €
+Frei verfügbar: von jedem neuen Eingang rund 16 % (USt) abziehen, offene Lead-USt 2026 (6.200 bis 14.000 €) zusätzlich.
+
+Abhängigkeiten SI-Start: App-Kalender ohne Online-Kalender für Nicht-Allianz (Auftrag 25.11.), 4 WhatsApp-Kanäle (ab dem 6. aktiven Kanal je 49 €/Monat bei 360dialog), gemeinsames Startdatum noch im Dezember, sonst fällt der 1. Monat in den Januar.
