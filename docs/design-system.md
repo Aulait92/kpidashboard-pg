@@ -14,8 +14,11 @@ Karten oder Chips.
 3. **Nichts Leeres.** Jede Liste hat einen `EmptyState`, jede Seite beim Laden
    ein `Skeleton`.
 4. **Icons nur aus `lucide-react`.** Keine Emojis in der Oberfläche.
-5. **Deutsch, kurz, in Du-Form.** Verben auf Buttons („Anrufen", „Termin
-   buchen"), keine Fachbegriffe/Anglizismen.
+5. **Deutsch, kurz, in Sie-Form** (Vermittler-Oberfläche; Texte an Leads nach
+   `Customer.leadAddress`). Verben auf Buttons („Anrufen", „Termin buchen"),
+   keine Fachbegriffe/Anglizismen.
+
+Ablauf, Prüfung (SUS 90+) und Screenshots: Skill `.claude/skills/pg-design/`.
 
 ## Tokens (`src/app/globals.css`)
 | Token | Wert | Verwendung |

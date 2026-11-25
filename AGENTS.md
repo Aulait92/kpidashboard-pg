@@ -93,6 +93,9 @@ schnell erlernbar, nicht umständlich, sicher bedienbar, ohne Vorwissen nutzbar)
 Rückmeldung nennen. Unter 90: erst nachbessern (weniger Elemente, klarere Beschriftung, eine Hauptaktion, bessere
 Standardwerte), dann committen. Die wöchentliche UX-Auswertung der Sitzungsaufnahmen prüft, ob das in der Praxis hält.
 
+Skill (25.11.2026): Für jede Arbeit an einer Oberfläche den Skill `pg-design` laden (`.claude/skills/pg-design/`:
+Bausteine, Ablauf, Screenshot-Skripte, SUS-Prüfung); technische Prüfung der `.tsx`-Dateien mit `web-design-guidelines`.
+
 Prüfung vor dem Commit:
 - Screenshot Desktop und Handy (390 px) der betroffenen Seite ansehen und ehrlich fragen: Ist die Seite übersichtlicher
   oder voller geworden? Würde ein Vermittler ohne Erklärung verstehen, was zu tun ist?
