@@ -54,3 +54,11 @@ Szenarien Kontostand 31.12. (Basis CFO 6.500 €, Jens dort mit ca. 1.500 € ge
 Frei verfügbar: von jedem neuen Eingang rund 16 % (USt) abziehen, offene Lead-USt 2026 (6.200 bis 14.000 €) zusätzlich.
 
 Abhängigkeiten SI-Start: App-Kalender ohne Online-Kalender für Nicht-Allianz (Auftrag 25.11.), 4 WhatsApp-Kanäle (ab dem 6. aktiven Kanal je 49 €/Monat bei 360dialog), gemeinsames Startdatum noch im Dezember, sonst fällt der 1. Monat in den Januar.
+
+## Update 25.11. spät: Sascha Niehues
+Einrichtung 690 € netto (821 € brutto) im Januar, erster Monatsbetrag im Februar. Dezember-Cash von Sascha: 0 €.
+Neue Szenarien Kontostand 31.12.:
+- A alles monatlich (SI zu viert, Jens Einrichtung): ≈ 14.400 €
+- B Jens 6 Monate Vorkasse, SI zu viert: ≈ 19.700 €
+- C wie B plus Andy Deibel 6 Monate (13.090 €): ≈ 32.800 €; mit Andy Jahr (23.562 €): ≈ 43.300 €
+Lücke ohne Andy: rund 10.000 bis 15.000 €; schließbar über Andy, PPL-Januar-Vorbestellung, Holger vorziehen, Anid-Vorkasse.
