@@ -80,7 +80,14 @@ export async function belegePostfachAbholen(o: { erneut?: boolean } = {}): Promi
   const { Resend } = await import("resend");
   const r = new Resend(apiKey);
   const res = await r.emails.receiving.list({ limit: 100 });
+  // Schlüssel ohne Leserecht: einmal melden (Admin › Heute, Systemzustand), nicht bei jedem Lauf alle 15 Minuten
+  const leserecht = await import("@/lib/mail/resend-empfang");
+  if (res.error && leserecht.istFehlendesLeserecht(res.error)) {
+    await leserecht.meldeLeserechtFehlt("cron-belege-postfach");
+    return { gesehen: 0, verarbeitet: 0 };
+  }
   if (res.error || !res.data) throw new Error(`resend_receiving_list:${res.error?.name ?? "leer"} (Schlüssel: ${process.env.RESEND_EMPFANG_API_KEY?.trim() ? "RESEND_EMPFANG_API_KEY" : "RESEND_API_KEY"})`);
+  await leserecht.meldeLeserechtOk();
   const fuerBelege = res.data.data.filter((m) => (m.to ?? []).some((a) => istBelegAdresse(a)));
   if (!fuerBelege.length) return { gesehen: 0, verarbeitet: 0 };
   // erneut: Mails ohne Ergebnis („neu 0, doppelt 0“) noch einmal verarbeiten, z. B. nach einer Verbesserung der Erkennung

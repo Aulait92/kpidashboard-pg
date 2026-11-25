@@ -14,6 +14,7 @@ import { emitLeadAction } from "@/components/next-step";
 import { bookForLeadAction, leadSlotsAction } from "@/app/buyer/lead-buchung-actions";
 import { manualAppointmentAction } from "@/app/buyer/lead-manual-actions";
 import { cn } from "@/lib/utils";
+import { gebeugt } from "@/lib/ansprache";
 
 const OPEN_EVENT = "pg:lead-booking";
 type Slot = { start: string; end: string };
@@ -231,7 +232,7 @@ export function LeadBookingHost() {
     router.refresh();
   };
   return (
-    <Sheet open onClose={() => setTarget(null)} title={target.name ? `Termin mit ${target.name}` : "Termin buchen"}>
+    <Sheet open onClose={() => setTarget(null)} title={target.name ? `Termin mit ${gebeugt(target.name)}` : "Termin buchen"}>
       <div className="max-h-[75vh] space-y-4 overflow-y-auto p-5" data-lead-booking>
         <SlotPicker leadId={target.leadId} onBooked={done} onNoCalendar={() => setNoCalendar(true)} />
         {noCalendar ? (

@@ -3,6 +3,8 @@
 // abschaltbar (User.nextStepReminder). Läuft im zentralen Cron (alle 5 Minuten) zwischen 8 und 12 Uhr;
 // die Sperre je Tag (User.nextStepReminderDay, bedingtes Update) verhindert doppelte Erinnerungen.
 //
+// Termine, zu denen der Push „Wie lief der Termin?“ schon angekommen ist, zählen hier nicht mit (Ole, 25.11.2026).
+//
 // Nicht an reine Pay-per-Lead-Kunden (ohne Software/Betreuung, customer-package.ts), Ole 18.11.2026.
 //
 // Zuständig: Berater für ihre zugeteilten Leads. Inhaber: eigene und nicht zugeteilte Leads (ohne Team: alle).
@@ -11,7 +13,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { NUR_PPL_WHERE } from "@/lib/customer-package";
 import { sendCustomerMail } from "@/lib/email";
 import { appUrl } from "@/lib/whatsapp/event-text";
-import { NEXT_STEP_TASK_NOTE, resultMissingWhere, withoutNextStepWhere } from "@/lib/lead-next-step";
+import { NEXT_STEP_TASK_NOTE, pastOpenAppointmentWhere, resultMissingWhere, withoutNextStepWhere } from "@/lib/lead-next-step";
 import { prisma } from "@/lib/prisma";
 import { sendToUser } from "@/lib/push";
 
@@ -92,12 +94,18 @@ async function remindUser(
       : (teamSize.get(u.customerId) ?? 1) > 1
         ? { customerId: u.customerId, OR: [{ assignedUserId: u.id }, { assignedUserId: null }] }
         : { customerId: u.customerId };
-  const [missing, resultMissing, tasks] = await Promise.all([
+  // Leads, deren offene Termine alle schon per Push „Wie lief der Termin?“ angekommen sind (lib/termin-ergebnis-push.ts):
+  // nicht noch einmal in der Sammel-Erinnerung (Ole, 25.11.2026). Kam ein Push nicht an, bleibt der Lead hier.
+  const perPush = { appointments: { none: { ...pastOpenAppointmentWhere(now), ergebnisPushOkAt: null } } };
+  const [missingAlle, resultMissingAlle, tasks, erledigtPerPush] = await Promise.all([
     prisma.lead.count({ where: { AND: [scope, withoutNextStepWhere(now)] } }),
     prisma.lead.count({ where: { AND: [scope, resultMissingWhere(now)] } }),
     // Aufgaben „Nächsten Schritt festlegen“ von gestern zählen ebenfalls (Dialog ohne Wahl geschlossen)
     prisma.lead.count({ where: { AND: [scope, { followUpNote: NEXT_STEP_TASK_NOTE, followUpAt: { lte: now } }] } }),
+    prisma.lead.count({ where: { AND: [scope, resultMissingWhere(now), perPush] } }),
   ]);
+  const missing = missingAlle - erledigtPerPush;
+  const resultMissing = resultMissingAlle - erledigtPerPush;
   const total = missing + tasks;
   if (total === 0) return false;
   const t = reminderText(total, resultMissing);

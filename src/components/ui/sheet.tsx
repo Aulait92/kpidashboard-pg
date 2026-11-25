@@ -27,6 +27,7 @@ export function Sheet({
   message,
   children,
   footer,
+  schliessenText = "Abbrechen",
 }: {
   open: boolean;
   onClose: () => void;
@@ -35,6 +36,8 @@ export function Sheet({
   children: React.ReactNode;
   /** Eigene Fußzeile statt „Abbrechen“ (z. B. „Fertig“, wenn Änderungen automatisch gespeichert werden) */
   footer?: React.ReactNode;
+  /** Text des Schließen-Knopfs unten, z. B. „Schließen“, wenn schon gespeichert ist (nichts abzubrechen) */
+  schliessenText?: string;
 }) {
   // Nach unten wischen schließt (Ole, 16.11.2026: „Ich kann hier nicht runterwischen“), nur am Griff bzw. an der
   // Kopfzeile, damit das Scrollen der Liste nicht ausgelöst wird.
@@ -96,7 +99,7 @@ export function Sheet({
             onClick={onClose}
             className="h-12 w-full shrink-0 border-t border-[color:var(--border)] text-sm font-medium text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)]"
           >
-            Abbrechen
+            {schliessenText}
           </button>
         )}
       </div>

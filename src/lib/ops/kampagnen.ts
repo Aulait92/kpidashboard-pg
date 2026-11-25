@@ -1,7 +1,9 @@
 // Diagnose-Abfrage „kampagnen“ (Ole, 23.11.2026: neue Kampagne eines Kunden mit der alten vergleichen). Nur lesend, live aus
 // Meta: Kampagnen des Kunden-Werbekontos mit Einstellungen und Gesamtzahlen, darunter Anzeigengruppen (Ziel, Zielgruppe,
 // Lernphase) und Anzeigen (Status, Prüfung, Text, Formular) mit Zahlen.
-//   GET /api/ops/diagnose?q=kampagnen&kunde=<Kunden-ID>[&suche=<Teil des Kampagnennamens>]
+//   GET /api/ops/diagnose?q=kampagnen&kunde=<Kunden-ID>[&suche=<Teil des Kampagnennamens>][&heute=1]
+// &heute=1 (Ole, 25.11.2026): zusätzlich „heute“ mit Leads und Ausgaben seit 0 Uhr (Meta date_preset today, Zeitzone des
+// Werbekontos) je Kampagne und aktiver Anzeige. Der bisherige Umfang bleibt unverändert.
 
 import { prisma } from "@/lib/prisma";
 import { cleanToken, redactTokens } from "@/lib/meta-leads";
@@ -37,6 +39,50 @@ function zahlen(i: Ins | undefined) {
 async function insights(id: string): Promise<Ins | undefined> {
   const r = await get(`${id}/insights`, { fields: INSIGHTS, date_preset: "maximum" }).catch(() => null);
   return (r?.data as Ins[] | undefined)?.[0];
+}
+
+/** Leads aus den Meta-Aktionen (wie zahlen). */
+function leadsAus(actions: { action_type: string; value: string }[] | undefined): number {
+  const act = Object.fromEntries((actions ?? []).map((a) => [a.action_type, Number(a.value)]));
+  return act["lead"] ?? act["leadgen_grouped"] ?? act["onsite_conversion.lead_grouped"] ?? 0;
+}
+
+export type HeuteZeile = { campaign_id?: string; campaign_name?: string; ad_id?: string; ad_name?: string; spend?: string; actions?: { action_type: string; value: string }[] };
+export type KampagneKurz = { id: unknown; name: unknown; status: unknown; gruppen: { anzeigen: { id: unknown; name: unknown; status: unknown }[] }[] };
+
+/**
+ * „heute“ (rein): je Kampagne (gezeigte und alle mit Ausgaben heute) Leads und Ausgaben seit 0 Uhr, darunter jede aktive
+ * Anzeige (auch ohne Ausgaben heute) und jede Anzeige mit Ausgaben heute.
+ */
+export function heuteZusammenfassen(kampagnen: KampagneKurz[], jeKampagne: HeuteZeile[], jeAnzeige: HeuteZeile[]) {
+  const geld = (v: string | undefined) => Math.round(Number(v ?? 0) * 100) / 100;
+  const kRows = new Map(jeKampagne.filter((r) => r.campaign_id).map((r) => [String(r.campaign_id), r]));
+  const ids = [...new Set([...kampagnen.map((c) => String(c.id)), ...kRows.keys()])];
+  return ids.map((id) => {
+    const c = kampagnen.find((k) => String(k.id) === id);
+    const r = kRows.get(id);
+    const aktive = (c?.gruppen ?? []).flatMap((g) => g.anzeigen).filter((a) => a.status === "ACTIVE");
+    const adRows = jeAnzeige.filter((a) => String(a.campaign_id) === id);
+    const adIds = [...new Set([...aktive.map((a) => String(a.id)), ...adRows.map((a) => String(a.ad_id))])];
+    return {
+      id,
+      name: c?.name ?? r?.campaign_name ?? null,
+      status: c?.status ?? null,
+      leads: leadsAus(r?.actions),
+      ausgaben: geld(r?.spend),
+      anzeigen: adIds.map((adId) => {
+        const a = aktive.find((x) => String(x.id) === adId);
+        const z = adRows.find((x) => String(x.ad_id) === adId);
+        return { id: adId, name: a?.name ?? z?.ad_name ?? null, aktiv: !!a, leads: leadsAus(z?.actions), ausgaben: geld(z?.spend) };
+      }),
+    };
+  });
+}
+
+async function heuteInsights(acc: string, level: "campaign" | "ad"): Promise<HeuteZeile[]> {
+  const fields = level === "campaign" ? "campaign_id,campaign_name,spend,actions" : "campaign_id,ad_id,ad_name,spend,actions";
+  const r = await get(`${acc}/insights`, { level, fields, date_preset: "today", limit: "500" });
+  return (r.data as HeuteZeile[] | undefined) ?? [];
 }
 
 function zielgruppe(t: Record<string, unknown> | undefined) {
@@ -102,7 +148,14 @@ export async function kampagnenDiagnose(p: URLSearchParams) {
       const q = (r as { questions?: { type: string; key?: string; label?: string; options?: { value: string }[] }[] }).questions;
       formulare.push({ ...r, questions: q?.map((x) => ({ typ: x.type, key: x.key, label: x.label, optionen: x.options?.map((o) => o.value) })) });
     }
-    return { kunde: k.name, konto: acc, kampagnenGesamt: camps.length, alleNamen: camps.map((c) => `${c.name} (${c.effective_status})`), kampagnen: out, formulare };
+    const basis = { kunde: k.name, konto: acc, kampagnenGesamt: camps.length, alleNamen: camps.map((c) => `${c.name} (${c.effective_status})`), kampagnen: out, formulare };
+    if (p.get("heute") !== "1") return basis;
+    // Seit 0 Uhr (Zeitzone des Werbekontos): je Kampagne und Anzeige
+    const fuerHeute: KampagneKurz[] = out;
+    const heute = await Promise.all([heuteInsights(acc, "campaign"), heuteInsights(acc, "ad")])
+      .then(([jeK, jeA]) => heuteZusammenfassen(fuerHeute, jeK, jeA))
+      .catch((e: unknown) => ({ fehler: e instanceof Error ? e.message : String(e) }));
+    return { ...basis, heute };
   } catch (e) {
     return { kunde: k.name, fehler: e instanceof Error ? e.message : String(e) };
   }

@@ -60,10 +60,15 @@ export const ERSTINFO_KOPF = "[Erstinformation als PDF]";
 /**
  * Wurde in dieser Unterhaltung schon das PDF der Erstinformation geschickt? Als eigenes Dokument oder im Kopf des
  * Erstanschreibens (v4, dann steht ERSTINFO_KOPF am Anfang des gespeicherten Textes). So geht es nie doppelt raus.
+ * Nicht zugestellte (Status „failed“) zählen nicht: dann ein neuer Versuch (höchstens ERSTINFO_MAX_VERSUCHE, erstinfo-pdf.ts).
  */
-export function hasErstinfoPdf(messages: { direction?: string | null; kind?: string | null; body?: string | null }[]): boolean {
+export function hasErstinfoPdf(messages: { direction?: string | null; kind?: string | null; body?: string | null; status?: string | null }[]): boolean {
   return messages.some(
-    (m) => m.direction !== "inbound" && ((m.kind === "document" && /Erstinformation/.test(m.body ?? "")) || (m.kind === "template" && (m.body ?? "").startsWith(ERSTINFO_KOPF))),
+    (m) =>
+      m.direction !== "inbound" &&
+      // Nicht zugestellt (Status „failed“): Der Lead hat sie nie bekommen (Ole, 25.11.2026, lib/whatsapp/erstinfo-pdf.ts)
+      m.status !== "failed" &&
+      ((m.kind === "document" && /Erstinformation/.test(m.body ?? "")) || (m.kind === "template" && (m.body ?? "").startsWith(ERSTINFO_KOPF))),
   );
 }
 

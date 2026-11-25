@@ -49,6 +49,7 @@ import { SCHUTZ_SPARTEN, schutzFragenStand, type VorsorgeThema } from "@/lib/sch
 import { beitraegeVollstaendig, ersteOffene, naechsteOffene, preiseStand, zeilenStand, type ZeilenStand } from "@/lib/angebot-ablauf";
 import { AngebotSendenSheet } from "@/components/angebot-senden";
 import { ANGEBOT_HINWEIS } from "@/lib/angebot-senden";
+import { gebeugt } from "@/lib/ansprache";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 const geld = (n: number | null) => (n == null ? "" : n.toFixed(2).replace(".", ","));
@@ -246,7 +247,7 @@ export function VorbereitungNeu(p: {
       {/* Kopf: wer, wann, wie, was. Eine Hauptaktion. */}
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight">Termin mit {p.kopf.name}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Termin mit {gebeugt(p.kopf.name)}</h1>
           <div className="mt-2 flex flex-wrap gap-1.5" data-termin-chips>
             <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-2.5 text-[13px] font-medium text-[color:var(--brand-dark)]">
               <CalendarDays className="h-3.5 w-3.5" />

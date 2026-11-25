@@ -10,7 +10,7 @@ import { STATUS_COMPONENTS } from "@/lib/status";
 import { activeIncidents, currentStatus } from "@/lib/status-server";
 import { placesDailyLimit, placesKey, placesUsedToday } from "@/lib/vertrieb/contact-enrich";
 import { NEU } from "./navigation";
-import { herzschlag, kontingent, sortiere, werbekosten, zugang, zustellung, type Ampel, type Pruefung } from "./systemzustand";
+import { herzschlag, kontingent, mailEingang, sortiere, werbekosten, zugang, zustellung, type Ampel, type Pruefung } from "./systemzustand";
 
 const BANK_WARN_TAGE = 7;
 const LINKEDIN_WARN_TAGE = 14;
@@ -38,6 +38,10 @@ export async function ladeSystemzustand(now = new Date()): Promise<Pruefung[]> {
     }),
     sicher("jobs", "Hintergrund-Jobs", STATUS, "Status", async () => herzschlag((await beats).find((b) => b.key === "cron"), HEARTBEAT_MAX_AGE_MIN.cron, now)),
     sicher("sync", "Abgleich Werbedaten", STATUS, "Status", async () => herzschlag((await beats).find((b) => b.key === "sync"), HEARTBEAT_MAX_AGE_MIN.sync, now)),
+    sicher("mail-eingang", "Mail-Eingang (Resend)", ANBINDUNGEN, "Anbindungen", async () => {
+      const { EMPFANG_HEARTBEAT, empfangsSchluesselName } = await import("@/lib/mail/resend-empfang");
+      return mailEingang((await beats).find((b) => b.key === EMPFANG_HEARTBEAT), empfangsSchluesselName());
+    }),
     sicher("werbekosten", "Werbekosten je Anzeige", `${NEU}/leads/werbekonten`, "Werbekonten", async () => {
       const z = await prisma.adSpendDaily.findFirst({ orderBy: { date: "desc" }, select: { date: true } });
       return werbekosten(z?.date ?? null, now);

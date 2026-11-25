@@ -37,6 +37,7 @@ import { avatarFarbe, initialen } from "@/lib/chat-ansicht";
 import { ChatAvatar, ChatVerlauf } from "@/components/chat/chat-verlauf";
 import { DateiKarte, DeliveryStatus, etikettAdmin } from "@/components/chat/chat-admin";
 import { dateienImVerlauf } from "@/lib/support-zugriff";
+import { erneutGesendet } from "@/lib/chat-zustellung";
 import { waOhneMarker } from "@/lib/wa-format";
 
 // Chats (WhatsApp): Liste, Verlauf und Lead-Seitenleiste. Gemeinsam für /admin/whatsapp (Chat per ?c=) und den
@@ -377,6 +378,7 @@ const ACTIVE_SELECT = {
       sentBy: true,
       sentByUserId: true,
       status: true,
+      purpose: true,
       createdAt: true,
       // Dateien im Chat (lib/chat-dateien.ts): Name, Art, Größe; mediaId/mediaLink nur für „Support-Zugriff“
       mediaId: true,
@@ -437,6 +439,9 @@ async function ActiveChat({ active, now, backHref }: { active: Active; now: numb
     active.messages,
     new Date(now),
   );
+
+  // „nicht zugestellt, erneut gesendet“ (lib/chat-zustellung.ts)
+  const erneut = erneutGesendet(active.messages);
 
   return (
     <>
@@ -503,7 +508,7 @@ async function ActiveChat({ active, now, backHref }: { active: Active; now: numb
           sicht="admin"
           unbekannteZeigen
           etikett={etikettAdmin}
-          fuss={(m) => (m.direction === "outbound" ? <DeliveryStatus status={m.status} /> : null)}
+          fuss={(m) => (m.direction === "outbound" ? <DeliveryStatus status={m.status} erneut={erneut.has(m.id)} /> : null)}
           datei={(m) => {
             const d = dateien.get(m.id);
             return d ? <DateiKarte d={d} /> : null;

@@ -27,6 +27,7 @@ import { loadHalteKonto } from "@/lib/halteangebote-server";
 import { addMonthsIso, fmtIso, naechsteNachtraeglicheAbbuchung, naechsteRegulaereRechnung } from "@/lib/vertrag-laufzeit";
 import { abrechnungsplan } from "@/lib/abrechnungstag";
 import { bestandVisible } from "@/lib/bestand/sichtbar";
+import { anbieterAnzeigeName } from "@/lib/erstinformation-shared";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Konto & Rechnungen | performancegrowth" };
@@ -57,6 +58,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     where: { id: ctx.customerId },
     select: {
       name: true,
+      erstinformation: { select: { firma: true, name: true } },
       plan: true,
       retainerMonthly: true,
       retainerStart: true,
@@ -157,7 +159,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader back="/buyer/einstellungen" title="Konto & Rechnungen" subtitle={customer.name} />
+      <PageHeader back="/buyer/einstellungen" title="Konto & Rechnungen" subtitle={anbieterAnzeigeName(customer.erstinformation, customer.name)} />
       <FreePeriodNotices customerId={ctx.customerId} readOnly={ctx.preview} />
       <div className="space-y-5">
         <Card>

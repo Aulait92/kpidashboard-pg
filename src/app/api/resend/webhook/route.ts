@@ -36,7 +36,11 @@ export async function POST(req: Request): Promise<Response> {
     }
     await verarbeiteResendEreignis(event);
   } catch (err) {
-    reportError(err, "resend-webhook", { type: event.type ?? "" });
+    // Schlüssel ohne Leserecht (lib/mail/resend-empfang.ts): einmal melden statt bei jeder Wiederholung; 500 bleibt,
+    // damit Resend es erneut versucht und die Mail nach dem Schlüsseltausch ankommt
+    const { istFehlendesLeserecht, meldeLeserechtFehlt } = await import("@/lib/mail/resend-empfang");
+    if (istFehlendesLeserecht(err)) await meldeLeserechtFehlt("resend-webhook");
+    else reportError(err, "resend-webhook", { type: event.type ?? "" });
     return new Response("Fehler bei der Verarbeitung", { status: 500 });
   }
   return Response.json({ received: true });

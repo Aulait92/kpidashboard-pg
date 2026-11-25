@@ -39,6 +39,7 @@ import { cn } from "@/lib/utils";
 import { CallOutcomeSheet, useCallReturn, useLeadResult } from "@/components/call-outcome";
 import { abschlussEinTipp } from "@/components/abschluss-nachher";
 import { emitLeadAction, LostSheet, useStepDone } from "@/components/next-step";
+import { gebeugt } from "@/lib/ansprache";
 
 // Kopf des Lead-Details: Status antippen → Phase wählen; darunter eine Reihe
 // mit den Aktionen. Alles Seltene steckt unter „Mehr".
@@ -734,7 +735,7 @@ function ChatStartSheet({
         ) : (
           <>
             <p className="text-[color:var(--muted)]">
-              Mit {name ?? "diesem Lead"} gibt es noch keinen Chat. Wir senden die freigegebene Erstnachricht (passend zur Ansprache) an +{phone}. Antwortet der Lead, geht es im Chat weiter.
+              Mit {gebeugt(name) ?? "diesem Lead"} gibt es noch keinen Chat. Wir senden die freigegebene Erstnachricht (passend zur Ansprache) an +{phone}. Antwortet der Lead, geht es im Chat weiter.
             </p>
             {error ? <p className="rounded-[var(--radius-sm)] bg-rose-50 px-3 py-2 text-rose-800">{error}</p> : null}
             <Button variant="primary" size="md" icon={MessageCircle} className="w-full" disabled={pending} onClick={go}>

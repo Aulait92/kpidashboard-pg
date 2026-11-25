@@ -190,3 +190,12 @@ export function anredeZeile(an: Ansprache, k: AnredeKontakt | null | undefined):
 export function begruessung(ansprache: Ansprache, name: string | null | undefined): string {
   return anredeZeile(ansprache, { fullName: name }).replace(/,$/, "");
 }
+
+/**
+ * Name nach Präposition (Usability-Check 25.11.2026): Dativ (von, mit, bei, an) und Akkusativ (für) heißen bei „Herr“
+ * beide „Herrn“: „Abschluss mit Herrn Jung“, „für Herrn Jung“. „Frau“ und Namen ohne Anrede bleiben unverändert.
+ */
+export function gebeugt<T extends string | null | undefined>(name: T): T {
+  if (!name) return name;
+  return name.replace(/^(\s*)Herr(?=\s+\S)/, "$1Herrn") as T;
+}

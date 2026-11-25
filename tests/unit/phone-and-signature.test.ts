@@ -48,3 +48,16 @@ describe("verifyMetaSignature", () => {
     expect(verifyMetaSignature(body, `sha256=${sig}`)).toBe(false);
   });
 });
+
+describe("Ländervorwahl doppelt (Ole, 25.11.2026)", () => {
+  it("49 vor der Handynummer mitgetippt: einmal 49", () => {
+    expect(normalizePhone("+49491791410364")).toBe("491791410364");
+    expect(normalizePhone("+49 49 1517 1234567")).toBe("4915171234567");
+    expect(normalizePhone("0049491791410364")).toBe("491791410364");
+    expect(normalizePhone("49491791410364")).toBe("491791410364");
+  });
+  it("Festnetz mit Vorwahl 049x bleibt", () => {
+    expect(normalizePhone("+49 491 123456")).toBe("49491123456");
+    expect(normalizePhone("0491 12345678")).toBe("4949112345678");
+  });
+});

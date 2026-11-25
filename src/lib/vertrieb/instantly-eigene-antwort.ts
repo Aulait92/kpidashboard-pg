@@ -10,7 +10,7 @@
 // Ist schon ein Termin geplant, gibt es kein Nachfassen, nur die Antwort-Aufgaben werden erledigt.
 
 import { prisma } from "@/lib/prisma";
-import { reportError } from "@/lib/monitoring";
+import { InstantlyRateLimitError, meldeInstantlyFehler } from "@/lib/vertrieb/instantly-drossel";
 import { addWorkdays } from "@/lib/vertrieb/dates";
 import { berlinAt } from "@/lib/calendar/lead-times";
 import type { ApiEmail } from "@/lib/vertrieb/instantly";
@@ -67,7 +67,9 @@ export async function eigeneAntwortenAbgleichen(now = new Date()): Promise<numbe
       if (!mail) continue;
       if (await verarbeite(a.contactId, mail, now)) n++;
     } catch (err) {
-      reportError(err, "instantly-eigene-antwort", { contact: a.contactId });
+      // 429 höchstens einmal je Lauf; gedrosselt: Rest im nächsten Lauf
+      meldeInstantlyFehler(err, "instantly-eigene-antwort", { contact: a.contactId });
+      if (err instanceof InstantlyRateLimitError) break;
     }
   }
   return n;

@@ -15,6 +15,7 @@ import { isErneutNote } from "@/lib/lead-erneut";
 import { CALL_PAUSE_MAX_MS } from "@/lib/telefonat";
 import { kontaktFromLead } from "@/lib/lead-anrede";
 import { leadLabel } from "@/lib/showup";
+import { ohneDoppeltesNachfassen } from "@/lib/angebot-senden";
 import { wartetStand } from "@/lib/showup-server";
 
 const TZ = "Europe/Berlin";
@@ -291,7 +292,13 @@ export async function loadInbox(ctx: TeamCtx & { preview?: boolean; demo?: boole
   // (lib/lead-followup.ts wiedervorlageVorTerminErledigen); wird der Termin abgesagt, steht sie wieder da.
   const mitTermin = new Set([...upcoming.map((a) => a.leadId), ...laterAppts.map((a) => a.leadId), ...outcomeLeadIds].filter((x): x is string => !!x));
   const zeigen = (f: { id: string; followUpNote: string | null; appointments: unknown[] }) => !(wiedervorlageHinterTermin(f.followUpNote) && (f.appointments.length > 0 || mitTermin.has(f.id)));
-  const wiedervorlagen = followUps.filter(zeigen);
+  // Je Lead nur der neueste Termin
+  const angeboteJeLead = angebote.filter((t, i) => angebote.findIndex((x) => x.leadId === t.leadId) === i);
+  // Wer unter „Angebote senden“ steht, nicht zusätzlich mit „Angebot nachfassen“ (Usability-Check 25.11.2026)
+  const wiedervorlagen = ohneDoppeltesNachfassen(
+    followUps.filter(zeigen),
+    angeboteJeLead.map((t) => t.leadId).filter((x): x is string => !!x),
+  );
 
   // Auch für die Anrufliste: was der Assistent schon weiß (Ole, 16.11.2026)
   const convIds = [
@@ -373,9 +380,7 @@ export async function loadInbox(ctx: TeamCtx & { preview?: boolean; demo?: boole
         attendance: a.attendance,
         label: leadLabel(kontaktFromLead(a.lead)),
       })),
-    // Je Lead nur der neueste Termin
-    angebote: angebote
-      .filter((t, i) => angebote.findIndex((x) => x.leadId === t.leadId) === i)
+    angebote: angeboteJeLead
       .map((t) => ({ id: t.id, startsAt: t.startsAt.toISOString(), mode: t.mode, leadId: t.leadId!, name: t.lead?.name ?? "Lead" })),
     openCalls: openCalls.map((l) => ({ leadId: l.id, name: l.name ?? "Lead", source: l.source, at: l.callStartedAt!.toISOString() })),
     chats: chats.map((c) => ({

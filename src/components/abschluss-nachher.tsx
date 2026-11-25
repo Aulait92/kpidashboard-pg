@@ -23,6 +23,7 @@ import { mailSelbstGesendetAction } from "@/app/buyer/postfach/actions";
 import { MailWege } from "@/components/mail-wege";
 import type { AbschlussStand } from "@/lib/abschluss-server";
 import { cn } from "@/lib/utils";
+import { gebeugt } from "@/lib/ansprache";
 
 const EVENT = "abschluss:eingetragen";
 
@@ -120,11 +121,11 @@ export function AbschlussNachherInhalt({ leadId, onDone }: { leadId: string; onD
       if (stimmt) await abschlussBeitragAction(leadId, null);
       if (glueckAktiv) {
         const r = await glueckwunschAction(leadId);
-        toast.show(r.ok ? { message: r.gesendet ? `Glückwunsch an ${stand.label} gesendet` : "Abschluss gespeichert" } : { message: r.error, tone: "error" });
+        toast.show(r.ok ? { message: r.gesendet ? `Glückwunsch an ${gebeugt(stand.label)} gesendet` : "Abschluss gespeichert" } : { message: r.error, tone: "error" });
       }
       if (dankeAn) {
         const r = await dankeMailAction(leadId);
-        toast.show(r.ok ? { message: `Danke-Mail an ${stand.label} gesendet` } : { message: r.error, tone: "error" });
+        toast.show(r.ok ? { message: `Danke-Mail an ${gebeugt(stand.label)} gesendet` } : { message: r.error, tone: "error" });
       }
       router.refresh();
       onDone();
@@ -193,7 +194,7 @@ export function AbschlussNachherInhalt({ leadId, onDone }: { leadId: string; onD
             <span className="text-sm">
               <span className="font-medium">Glückwunsch per WhatsApp senden</span>
               <span className="mt-0.5 block text-xs text-[color:var(--muted)]">
-                {g.offen ? null : g.vorlage ? "Als freigegebene WhatsApp-Vorlage (letzte Nachricht über 24 Stunden her)." : `Geht nur bis 24 Stunden nach der letzten Nachricht von ${stand.label}.`}
+                {g.offen ? null : g.vorlage ? "Als freigegebene WhatsApp-Vorlage (letzte Nachricht über 24 Stunden her)." : `Geht nur bis 24 Stunden nach der letzten Nachricht von ${gebeugt(stand.label)}.`}
               </span>
             </span>
           </label>
@@ -255,7 +256,7 @@ export function AbschlussNachherInhalt({ leadId, onDone }: { leadId: string; onD
 
       <AbschlussSheet
         open={aendern}
-        title={`Abschluss mit ${stand.label}`}
+        title={`Abschluss mit ${gebeugt(stand.label)}`}
         source={stand.source}
         onClose={() => setAendern(false)}
         onSave={(v, sp) => {
@@ -285,7 +286,7 @@ export function AbschlussNachherHost() {
     return () => window.removeEventListener(EVENT, on);
   }, []);
   return (
-    <Sheet open={!!offen} onClose={() => setOffen(null)} title={offen ? `${offen.name}: Abschluss gespeichert` : ""}>
+    <Sheet open={!!offen} onClose={() => setOffen(null)} title={offen ? `${offen.name}: Abschluss gespeichert` : ""} schliessenText="Schließen">
       <div className="p-5">{offen ? <AbschlussNachherInhalt key={offen.leadId} leadId={offen.leadId} onDone={() => setOffen(null)} /> : null}</div>
     </Sheet>
   );

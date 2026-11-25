@@ -5,6 +5,7 @@
 import { prisma } from "@/lib/prisma";
 import { ANTWORT_DOMAIN, antwortEingangAn } from "@/lib/mail/antwort-adresse";
 import { leadMailAdresse } from "@/lib/mail/lead-absender";
+import { EMPFANG_HEARTBEAT, empfangsSchluesselName } from "@/lib/mail/resend-empfang";
 
 export async function mailEingangDiagnose(params: URLSearchParams) {
   const tage = Math.min(90, Math.max(1, Number(params.get("tage")) || 7));
@@ -26,6 +27,12 @@ export async function mailEingangDiagnose(params: URLSearchParams) {
     absender: leadMailAdresse() ? "gesetzt" : "fehlt",
     webhookSignatur: process.env.RESEND_WEBHOOK_SECRET ? "gesetzt" : "fehlt",
     resendSchluessel: process.env.RESEND_API_KEY ? "gesetzt" : "fehlt",
+    // Lesen empfangener Mails braucht „Full access“ (lib/mail/resend-empfang.ts)
+    leseSchluessel: empfangsSchluesselName() ?? "fehlt",
+    leserecht: await prisma.systemHeartbeat
+      .findUnique({ where: { key: EMPFANG_HEARTBEAT }, select: { ok: true, at: true } })
+      .then((h) => (h ? { ok: h.ok, at: h.at.toISOString() } : null))
+      .catch(() => null),
     leadsMitAntwortadresse: codes,
     tage,
     jeErgebnis: Object.fromEntries(jeErgebnis.map((r) => [r.ergebnis, r._count._all])),

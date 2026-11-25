@@ -100,7 +100,7 @@ export type DateiKontext = {
   /** Produkt bzw. Quelle des Leads (Lead.source) */
   leadSource?: string | null;
   /** Unterlagen der Policen-Ablage je Nachricht (LeadDocument.messageId) */
-  ablage?: Map<string, { mimeType: string; size: number }>;
+  ablage?: Map<string, { mimeType: string; size: number; fileName?: string | null }>;
   /** Support-Nummer von performancegrowth: kein Vermittler, kein Support-Zugriff */
   supportChat?: boolean;
   /** Anzeigenamen: Lead (Vorname), Vermittler (für Nachrichten aus der WhatsApp-App), Logins (sentByUserId) */
@@ -195,6 +195,71 @@ export function dateiInfo(m: DateiNachricht & { sentByUserId?: string | null }, 
     details: [...teile, zeit].join(" · "),
     zugriff,
   };
+}
+
+// ─── Vermittler: Dateien im eigenen Chat ───────────────────────────────
+
+/** Ab hier speichert Message Name, Art, Größe und Medien-ID (Ole, 25.11.2026). */
+export const ALT_HINWEIS = "Vor dem 25.11. gesendet, nicht gespeichert";
+
+/**
+ * Datei im Kundenbereich (Nachrichten, Ole 25.11.2026). Der Vermittler sieht seine eigenen Chat-Dateien mit Name, Art,
+ * Größe und Zeit und darf sie öffnen (seine Daten, kein Support-Protokoll). Regeln wie die Policen-Ablage für Vermittler
+ * (lib/policen/server.ts): Gesundheitsbezug nur mit Zwei-Faktor-Login; Unterlagen der Policen-Ablage öffnet er im Kontakt
+ * (dort Zwei-Faktor-Pflicht, Virenprüfung, Protokoll), im Chat nur der Verweis dorthin. In der Admin-Vorschau („Als Kunde
+ * ansehen“) kein Öffnen und geschützte Unterlagen ohne Namen (wie listUnterlagen mit preview).
+ * oeffnen: frei = Knopf „Öffnen“ · zwei_faktor = Knopf, der Abruf verlangt den Zwei-Faktor-Login · null = kein Knopf.
+ */
+export type VermittlerDatei = {
+  messageId: string;
+  titel: string;
+  art: string;
+  /** „PDF · 120 KB · 25.11., 14:03“ */
+  details: string;
+  /** Gesundheitsbezug bzw. Policen-Ablage (Schloss statt Datei-Symbol) */
+  geschuetzt: boolean;
+  oeffnen: "frei" | "zwei_faktor" | null;
+  hinweis: string | null;
+  /** Policen-Ablage: Weg zu den Unterlagen im Kontakt */
+  kontaktHref: string | null;
+};
+
+const hatMetadaten = (m: DateiNachricht) => !!(m.mediaId || m.mediaLink || m.mediaName || m.mediaMime || m.mediaSize);
+
+export function dateiFuerVermittler(m: DateiNachricht, k: DateiKontext & { leadId?: string | null; vorschau?: boolean }): VermittlerDatei | null {
+  if (!istDateiNachricht(m.kind)) return null;
+  const now = k.now ?? new Date();
+  const zeit = kurzZeit(m.createdAt);
+  const ablage = k.ablage?.get(m.id);
+  const rohName = m.mediaName?.trim() || ablage?.fileName?.trim() || (m.sentBy === "bot" ? nameAusText(m.body) : null);
+  const grund = schutzGrund(m, k, rohName);
+  const geschuetzt = !!grund;
+  const art = dateiArt(m.mediaMime ?? ablage?.mimeType, rohName, m.kind);
+  const groesse = groesseText(m.mediaSize ?? ablage?.size ?? null);
+  const ersatz = art === "Bild" ? "Bild" : art === "Video" ? "Video" : "Datei";
+  // Admin-Vorschau: geschützt ohne Namen
+  const titel = k.vorschau && geschuetzt ? GESCHUETZT_LABEL : (rohName ?? ersatz);
+  // Art nicht doppelt („Datei · Datei“), wenn der Name unbekannt ist
+  const details = [titel === art ? null : art, groesse, zeit].filter(Boolean).join(" · ");
+  const basis = { messageId: m.id, titel, art, details, geschuetzt, oeffnen: null, hinweis: null, kontaktHref: null } satisfies VermittlerDatei;
+
+  // Policen-Ablage bzw. eingehende Datei im Lead-Chat: Inhalt nur in den Unterlagen im Kontakt
+  if (grund === "ablage") {
+    if (ablage) return { ...basis, hinweis: "Liegt in den Unterlagen im Kontakt", kontaktHref: k.leadId && !k.vorschau ? `/buyer/leads/${k.leadId}#dokumente` : null };
+    return { ...basis, hinweis: hatMetadaten(m) ? "Nicht in den Unterlagen gespeichert" : ALT_HINWEIS };
+  }
+  if (k.vorschau) return basis;
+  if (m.mediaLink) return { ...basis, oeffnen: geschuetzt ? "zwei_faktor" : "frei" };
+  if (!m.mediaId) return { ...basis, hinweis: hatMetadaten(m) ? "Inhalt nicht gespeichert" : ALT_HINWEIS };
+  if (now.getTime() - m.createdAt.getTime() > MEDIA_ID_TAGE * 86_400_000) return { ...basis, hinweis: `Nicht mehr abrufbar (älter als ${MEDIA_ID_TAGE} Tage)` };
+  return { ...basis, oeffnen: geschuetzt ? "zwei_faktor" : "frei" };
+}
+
+/** Vorschau in der Chatliste: „Datei: Angebot.pdf“ statt „[document]“. */
+export function dateiVorschau(m: { kind?: string | null; body: string | null; mediaName?: string | null }): string | null {
+  if (!istDateiNachricht(m.kind) || !istDateiPlatzhalter(m.body)) return null;
+  const art = m.kind === "image" ? "Bild" : m.kind === "video" ? "Video" : "Datei";
+  return m.mediaName?.trim() && !textMitGesundheitsbezug(m.mediaName) ? `${art}: ${m.mediaName.trim()}` : art;
 }
 
 // ─── Support-Zugriff: Grund, Mitteilung ────────────────────────────────

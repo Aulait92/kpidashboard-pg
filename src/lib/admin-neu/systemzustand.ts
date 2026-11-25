@@ -43,6 +43,14 @@ export function zugang(z: { status: string; bis: Date | null; fehler?: string | 
   return { ampel: "ok", text: tage != null ? `Verbunden, noch ${tage} Tage gültig.` : "Verbunden." };
 }
 
+/** Mail-Eingang bei Resend (lib/mail/resend-empfang.ts): Leserecht des Schlüssels laut letztem Abruf. */
+export function mailEingang(hb: { ok: boolean; note: string | null } | undefined, schluessel: string | null): { ampel: Ampel; text: string } {
+  if (!schluessel) return { ampel: "aus", text: "Kein Resend-Schlüssel gesetzt." };
+  if (hb && !hb.ok) return { ampel: "fehler", text: hb.note ?? "Schlüssel ohne Leserecht." };
+  if (!hb) return { ampel: "ok", text: `Noch kein Abruf gemeldet (Schlüssel: ${schluessel}).` };
+  return { ampel: "ok", text: `Liest empfangene Mails (Schlüssel: ${schluessel}).` };
+}
+
 /** Werbekosten-Abgleich (AdSpendDaily): neuester Tag höchstens 2 Tage alt. */
 export function werbekosten(neuester: Date | null, now: Date): { ampel: Ampel; text: string } {
   if (!neuester) return { ampel: "warnung", text: "Noch keine Werte: erste Zahlen nach dem nächsten Abgleich (täglich früh morgens)." };

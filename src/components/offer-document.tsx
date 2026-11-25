@@ -163,6 +163,11 @@ export function offerProducts(products: unknown): OfferProduct[] {
     : [];
 }
 
+/** Werbebudget-Zeile nur mit Produkten und Budget (Usability-Check 25.11.2026: „Werbebudget etwa 0 €“). */
+export function hatWerbebudget(products: { dailyBudget: number }[], monthlyBudget: number): boolean {
+  return products.length > 0 && monthlyBudget > 0;
+}
+
 const TZ = "Europe/Berlin";
 const date = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: TZ, day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
@@ -212,6 +217,7 @@ function MonthlyOverview({
           {cell("netto", eur(feeNet))}
           {cell("brutto", eur(withVat(feeNet)))}
         </div>
+        {adNet > 0 ? (
         <div className={`${row} border-t border-[#2563EB]/10`}>
           <span className="col-span-2 sm:col-span-1">
             Werbebudget <span className="text-[#6B7280]">(zahlen Sie direkt an Meta)</span>
@@ -219,6 +225,7 @@ function MonthlyOverview({
           {cell("netto", `≈ ${eur(adNet)}`)}
           {cell("brutto", `≈ ${eur(withVat(adNet))}*`)}
         </div>
+        ) : null}
         <div className={`${row} border-t-2 border-[#2563EB]/30 font-semibold text-[#111827]`}>
           <span className="col-span-2 sm:col-span-1">Gesamt pro Monat</span>
           {cell("netto", `≈ ${eur(totalNet)}`, true)}
@@ -490,6 +497,10 @@ export function OfferDocument({
             </Tr>
           )}
           {/* Ole, 16.11.2026: Produkte nur mit Namen; das Budget steht unter „Werbebudget“, damit es sich nicht wie unser Preis liest */}
+          {/* Ohne Produkte (Usability-Check 25.11.2026) keine leere Zeile; mit Wahl bei der Annahme nur der Hinweis */}
+          {products.length === 0 ? (
+            produkteOpen ? <Tr k="Produkte">Produkte und Tagesbudget wählen Sie unten bei der Annahme.</Tr> : null
+          ) : (
           <Tr k="Produkte">
             {products.length === 1 ? (
               <span className="font-medium text-[#111827]">{products[0].name}</span>
@@ -503,6 +514,7 @@ export function OfferDocument({
               </ul>
             )}
           </Tr>
+          )}
           {add.hasSeats ? (
             <Tr k="Verkäufer">
               {add.seats} {add.seats === 1 ? "aktiver Verkäufer" : "aktive Verkäufer"}, davon {add.seatsIncluded} inklusive. Aktiv ist, wer Leads bekommt.
@@ -517,6 +529,8 @@ export function OfferDocument({
               als Zusatzpaket: {bestandPacksText()}.
             </Tr>
           ) : null}
+          {/* „Werbebudget etwa 0 €“ (Usability-Check 25.11.2026): ohne Produkte bzw. Budget keine Zeile */}
+          {hatWerbebudget(products, list.monthlyBudget) ? (
           <Tr k="Werbebudget">
             {products.length === 1 ? (
               <>
@@ -536,6 +550,7 @@ export function OfferDocument({
             {budgetSatz ? <Note>{budgetSatz}</Note> : null}
             {produkteOpen ? <Note>Vorschlag: Produkte und Tagesbudget wählen Sie unten bei der Annahme.</Note> : null}
           </Tr>
+          ) : null}
           {offer.startDate ? (
             <Tr k="Start">
               {billingDiffers

@@ -72,6 +72,9 @@ export async function handleFailedStatus(waMessageId: string, errors: StatusErro
   // Terminnachricht im Vertrieb (Support-Nummer): derselbe Text per SMS (lib/sms/ersatz.ts)
   const { smsErsatz, smsErsatzZweck } = await import("@/lib/sms/ersatz");
   if (smsErsatzZweck(msg.purpose)) out.sms = await smsErsatz(waMessageId, error.code, now);
+  // Terminerinnerung an einen Lead nicht zustellbar: kurze SMS-Erinnerung, einmal je Erinnerung (lib/sms/termin-erinnerung-server.ts)
+  const { istTerminErinnerung } = await import("@/lib/sms/termin-erinnerung");
+  if (istTerminErinnerung(msg.purpose)) out.sms = await (await import("@/lib/sms/termin-erinnerung-server")).terminSmsErsatz(waMessageId, error, now);
   const conv = msg.conversation;
 
   if (error.art === "kein_whatsapp") {
@@ -415,7 +418,10 @@ export async function nachNummernKorrektur(leadId: string, now = new Date()): Pr
     // Kam das Erstanschreiben nie an, geht es zuerst raus, auch mit Termin (Ole, 22.11.2026: „die erste Nachricht war doch,
     // wann die Versicherung ausläuft, die war doch gut“; nach der Buchung ohne Terminfrage, lib/whatsapp/outreach.ts)
     const erstOffen = !["sent", "sent_booked"].includes(lead.outreachStatus ?? "");
-    await prisma.lead.update({ where: { id: lead.id }, data: { waUnavailableAt: null, outreachAt: null, outreachStatus: null } });
+    // Atomar (Ole, 25.11.2026, doppelte Erstnachricht): Doppelklick auf „Hat doch WhatsApp“ bzw. Speichern und Knopf
+    // gleichzeitig: nur der erste Aufruf hebt die Sperre auf und schreibt an
+    const frei = await prisma.lead.updateMany({ where: { id: lead.id, waUnavailableAt: { not: null } }, data: { waUnavailableAt: null, outreachAt: null, outreachStatus: null } });
+    if (!frei.count) return "nichts";
     await prisma.conversation.updateMany({ where: { customerId: lead.customerId, leadId: lead.id }, data: { botActive: true } });
     const termin = await prisma.appointment.findFirst({
       where: { leadId: lead.id, status: "booked", startsAt: { gt: now } },

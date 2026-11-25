@@ -7,11 +7,11 @@
 // Fehler bleiben offen (instantlyGesperrtAt = NULL) und der Instantly-Cron wiederholt alle 15 Minuten.
 import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
+import { instantlyFetch } from "@/lib/vertrieb/instantly-drossel";
 import { contactIdsByEmails } from "@/lib/vertrieb/contact-merge";
 import { emailGesperrt, geloeschteAdressen } from "@/lib/vertrieb/sperrliste";
 import { AUSKUNFT_AUFGABE, SPERR_GRUND_LABEL, auskunftsAufgabe, sperrGrundAusAntwort, type SperrGrund } from "@/lib/vertrieb/nie-kontaktieren";
 
-const API = "https://api.instantly.ai/api/v2";
 /** Nach so vielen Fehlversuchen versucht der Cron es nicht mehr (Diagnose zeigt „fehlgeschlagen“). */
 export const MAX_SPERR_VERSUCHE = 20;
 /** Interessenstatus „Not Interested“ in Instantly */
@@ -23,16 +23,8 @@ export function instantlySchreibbar(): boolean {
 }
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  let res: Response;
-  for (let attempt = 0; ; attempt++) {
-    res = await fetch(API + path, {
-      ...init,
-      headers: { Authorization: `Bearer ${process.env.INSTANTLY_API_KEY}`, "Content-Type": "application/json", ...init?.headers },
-      cache: "no-store",
-    });
-    if (res.status !== 429 || attempt >= 3) break;
-    await new Promise((r) => setTimeout(r, 4000));
-  }
+  // Drossel und Retry-After (lib/vertrieb/instantly-drossel.ts)
+  const res = await instantlyFetch(path, init, { versuche: 3 });
   if (!res.ok) throw new Error(`Instantly ${path.split("?")[0]}: ${res.status} ${(await res.text().catch(() => "")).slice(0, 200)}`);
   const text = await res.text();
   return (text ? JSON.parse(text) : {}) as T;

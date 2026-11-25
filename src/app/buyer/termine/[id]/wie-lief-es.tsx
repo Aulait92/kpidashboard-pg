@@ -16,6 +16,7 @@ import { AngebotSendenSheet } from "@/components/angebot-senden";
 import { NextStepButton } from "@/components/next-step";
 import { undoInboxAction } from "@/app/buyer/inbox-actions";
 import { terminAbschlussAction } from "./actions";
+import { gebeugt } from "@/lib/ansprache";
 
 export function WieLiefEs({
   appointmentId,
@@ -93,7 +94,7 @@ export function WieLiefEs({
 
   return (
     <Card className="p-5" tone="attention" data-wie-lief-es="frage">
-      <p className="text-lg font-semibold">Wie lief der Termin mit {label}?</p>
+      <p className="text-lg font-semibold">Wie lief der Termin mit {gebeugt(label)}?</p>
       {readOnly ? null : (
         <>
           <div className="mt-3 grid gap-2 sm:flex sm:flex-wrap">

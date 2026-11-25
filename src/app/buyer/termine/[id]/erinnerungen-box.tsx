@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/toast";
 import { nachrichtenAktion } from "@/app/buyer/nachrichtenplan-actions";
 import type { Bestaetigung, ErinnerungsZeile } from "@/lib/termin-seite";
 import { cn } from "@/lib/utils";
+import { gebeugt } from "@/lib/ansprache";
 
 const KNOPF = "inline-flex min-h-9 shrink-0 items-center gap-1 rounded-[var(--radius-sm)] px-2 text-[13px] font-medium hover:bg-[color:var(--surface-sunken)] disabled:opacity-50";
 
@@ -60,7 +61,7 @@ export function ErinnerungenBox({
   return (
     <Card className="mb-5" data-termin-erinnerungen>
       <div className="px-5 py-3.5 text-sm">
-        <h2 className="mb-2 text-[13px] font-semibold text-[color:var(--muted)]">Erinnerungen an {label}</h2>
+        <h2 className="mb-2 text-[13px] font-semibold text-[color:var(--muted)]">Erinnerungen an {gebeugt(label)}</h2>
         {bestaetigung ? (
           <p
             className={cn("flex items-center gap-2 font-medium", bestaetigung.ton === "ok" ? "text-emerald-700" : bestaetigung.ton === "verschieben" ? "text-rose-700" : "text-amber-800")}

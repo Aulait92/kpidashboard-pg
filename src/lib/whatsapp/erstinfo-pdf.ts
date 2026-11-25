@@ -39,50 +39,78 @@ import type { Ansprache } from "@/lib/ansprache";
 
 export type ErstinfoPdfResult = "sent" | "already" | "incomplete" | "window_closed" | "not_possible" | "failed";
 
-/** PDF der Erstinformation in eine Unterhaltung schicken, falls noch nicht geschehen. Wirft bei Versandfehlern nicht. */
+/**
+ * Höchstens so viele Versuche mit dem PDF je Unterhaltung (Ole, 25.11.2026, Fall 24.11.: Erstinformation 18:43 „nicht
+ * zugestellt“, 18:45 noch einmal). Meldet Meta „nicht zugestellt“ (Status failed), hat der Lead die Erstinformation nicht:
+ * genau ein neuer Versuch beim nächsten Anlass (Verlauf: „nicht zugestellt, erneut gesendet“, lib/chat-zustellung.ts).
+ * Scheitern beide, bleibt der Link als Rückfall (sendErstinfo).
+ */
+export const ERSTINFO_MAX_VERSUCHE = 2;
+
+/**
+ * PDF der Erstinformation in eine Unterhaltung schicken, falls noch nicht geschehen. Wirft bei Versandfehlern nicht.
+ * Unter Sperre je Unterhaltung (pg_advisory_xact_lock): Laufen zwei Antworten des Assistenten gleichzeitig (zwei schnelle
+ * Nachrichten des Leads, „Assistent stumm“-Nachversuch, Erstanschreiben im offenen Fenster), geht das PDF nur einmal raus.
+ * Die Transaktion hält nur die Sperre; geschrieben wird sofort (keine Zeilensperren während des Versands).
+ */
 export async function sendErstinfoPdf(opts: { conversationId: string; an?: Ansprache; advisorName?: string }): Promise<ErstinfoPdfResult> {
   let step = "laden";
   try {
-    const conv = await prisma.conversation.findUnique({
-      where: { id: opts.conversationId },
-      select: { id: true, customerId: true, contactPhone: true, windowExpiresAt: true, optedOutAt: true, messages: { where: { kind: { in: ["document", "template"] } }, select: { direction: true, kind: true, body: true } } },
-    });
-    if (!conv || conv.optedOutAt) return "not_possible";
-    if (hasErstinfoPdf(conv.messages)) return "already";
-    if (!conv.windowExpiresAt || conv.windowExpiresAt.getTime() <= Date.now()) return "window_closed";
-    const account = await prisma.whatsAppAccount.findUnique({ where: { customerId: conv.customerId }, select: { status: true, apiKeyEnc: true } });
-    if (!account || account.status !== "connected" || !account.apiKeyEnc) return "not_possible";
-    const { erstinfoPdfFuerWhatsApp, erstinfoPdfStand, erstinfoUrlFor } = await import("@/lib/erstinformation");
-    step = "pdf";
-    let pdf: { link: string; filename: string; size?: number } | null = await erstinfoPdfFuerWhatsApp(conv.customerId);
-    if (!pdf) {
-      // Angaben unvollständig: PDF im aktuellen Stand (derselbe Inhalt wie die öffentliche Seite) statt nur des Links
-      const stand = await erstinfoPdfStand(conv.customerId);
-      if (!stand) return "incomplete";
-      console.warn(`[whatsapp] Erstinformation unvollständig, PDF im aktuellen Stand customer=${conv.customerId} fehlt=${stand.fehlt.join(",") || "-"}`);
-      pdf = stand;
-    }
-    const page = await erstinfoUrlFor(conv.customerId);
-    step = "senden";
-    const res = await sendDocument(decryptSecret(account.apiKeyEnc), conv.contactPhone, { link: pdf.link, filename: pdf.filename, caption: ERSTINFO_PDF_CAPTION });
-    await prisma.message.create({
-      data: {
-        conversationId: conv.id,
-        direction: "outbound",
-        kind: "document",
-        body: `${ERSTINFO_PDF_CAPTION}\n${pdf.filename}\n${page}`,
-        waMessageId: res.messageId,
-        status: "sent",
-        sentBy: "bot",
-        // Datei im Admin-Chat (lib/chat-dateien.ts): Name, Typ, Größe und die Adresse, unter der Meta das PDF geladen hat
-        mediaName: pdf.filename,
-        mediaMime: "application/pdf",
-        mediaSize: pdf.size ?? null,
-        mediaLink: pdf.link,
+    return await prisma.$transaction(
+      async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`erstinfo-pdf:${opts.conversationId}`}))`;
+        const conv = await tx.conversation.findUnique({
+          where: { id: opts.conversationId },
+          select: {
+            id: true,
+            customerId: true,
+            contactPhone: true,
+            windowExpiresAt: true,
+            optedOutAt: true,
+            messages: { where: { kind: { in: ["document", "template"] } }, select: { direction: true, kind: true, body: true, status: true } },
+          },
+        });
+        if (!conv || conv.optedOutAt) return "not_possible";
+        // Zugestellt bzw. unterwegs: nie ein zweites Mal. Nicht zugestellt: höchstens ERSTINFO_MAX_VERSUCHE Versuche.
+        if (hasErstinfoPdf(conv.messages)) return "already";
+        if (conv.messages.filter((m) => hasErstinfoPdf([{ ...m, status: null }])).length >= ERSTINFO_MAX_VERSUCHE) return "failed";
+        if (!conv.windowExpiresAt || conv.windowExpiresAt.getTime() <= Date.now()) return "window_closed";
+        const account = await tx.whatsAppAccount.findUnique({ where: { customerId: conv.customerId }, select: { status: true, apiKeyEnc: true } });
+        if (!account || account.status !== "connected" || !account.apiKeyEnc) return "not_possible";
+        const { erstinfoPdfFuerWhatsApp, erstinfoPdfStand, erstinfoUrlFor } = await import("@/lib/erstinformation");
+        step = "pdf";
+        let pdf: { link: string; filename: string; size?: number } | null = await erstinfoPdfFuerWhatsApp(conv.customerId);
+        if (!pdf) {
+          // Angaben unvollständig: PDF im aktuellen Stand (derselbe Inhalt wie die öffentliche Seite) statt nur des Links
+          const stand = await erstinfoPdfStand(conv.customerId);
+          if (!stand) return "incomplete";
+          console.warn(`[whatsapp] Erstinformation unvollständig, PDF im aktuellen Stand customer=${conv.customerId} fehlt=${stand.fehlt.join(",") || "-"}`);
+          pdf = stand;
+        }
+        const page = await erstinfoUrlFor(conv.customerId);
+        step = "senden";
+        const res = await sendDocument(decryptSecret(account.apiKeyEnc), conv.contactPhone, { link: pdf.link, filename: pdf.filename, caption: ERSTINFO_PDF_CAPTION });
+        await prisma.message.create({
+          data: {
+            conversationId: conv.id,
+            direction: "outbound",
+            kind: "document",
+            body: `${ERSTINFO_PDF_CAPTION}\n${pdf.filename}\n${page}`,
+            waMessageId: res.messageId,
+            status: "sent",
+            sentBy: "bot",
+            // Datei im Chat (lib/chat-dateien.ts): Name, Typ, Größe und die Adresse, unter der Meta das PDF geladen hat
+            mediaName: pdf.filename,
+            mediaMime: "application/pdf",
+            mediaSize: pdf.size ?? null,
+            mediaLink: pdf.link,
+          },
+        });
+        await prisma.conversation.update({ where: { id: conv.id }, data: { lastMessageAt: new Date() } });
+        return "sent";
       },
-    });
-    await prisma.conversation.update({ where: { id: conv.id }, data: { lastMessageAt: new Date() } });
-    return "sent";
+      { maxWait: 30_000, timeout: 60_000 },
+    );
   } catch (err) {
     console.error(`[whatsapp] Erstinformation als PDF (${step})`, err instanceof Error ? err.message.slice(0, 300) : err);
     return step === "laden" ? "not_possible" : "failed";
@@ -99,9 +127,10 @@ export async function sendErstinfo(opts: { conversationId: string; an?: Ansprach
   try {
     const conv = await prisma.conversation.findUnique({
       where: { id: opts.conversationId },
-      select: { customerId: true, contactPhone: true, messages: { where: { direction: "outbound" }, select: { body: true } } },
+      select: { customerId: true, contactPhone: true, messages: { where: { direction: "outbound" }, select: { body: true, status: true } } },
     });
-    if (!conv || conv.messages.some((m) => hasErstinfoLink(m.body))) return r;
+    // Nicht zugestellte zählen nicht (auch ein nicht zugestelltes PDF trägt die Adresse im gespeicherten Text)
+    if (!conv || conv.messages.some((m) => m.status !== "failed" && hasErstinfoLink(m.body))) return r;
     const { erstinfoUrlFor } = await import("@/lib/erstinformation");
     const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
     await sendWhatsAppMessage({ customerId: conv.customerId, to: conv.contactPhone, body: erstinfoZeile(opts.advisorName, await erstinfoUrlFor(conv.customerId)), sentBy: "bot" });

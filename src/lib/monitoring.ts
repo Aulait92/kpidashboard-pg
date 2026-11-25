@@ -7,6 +7,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { scrubBreadcrumb, scrubSentryEvent } from "@/lib/sentry-redact";
+import { istErwartbaresEreignis } from "@/lib/sentry-filter";
 
 let initialized = false;
 
@@ -36,7 +37,8 @@ export function initSentry() {
       stackFrameVariables: false,
     },
     // Cookies, Header, Body, Query, Nutzer und geheime Link-Tokens im Pfad entfernen (src/lib/sentry-redact.ts).
-    beforeSend: (event) => scrubSentryEvent(event, { server: true }),
+    // Erwartbare Anfragefehler (kaputter Router-State-Kopf, lib/sentry-filter.ts) verwerfen, sonst wie bisher
+    beforeSend: (event) => (istErwartbaresEreignis(event) ? null : scrubSentryEvent(event, { server: true })),
     beforeSendTransaction: (event) => scrubSentryEvent(event, { server: true }),
     beforeBreadcrumb: (crumb) => scrubBreadcrumb(crumb),
   });

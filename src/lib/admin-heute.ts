@@ -6,6 +6,7 @@ import { ADMIN_CHAT_SICHTBAR } from "@/lib/whatsapp/nur-leads";
 import { prisma } from "@/lib/prisma";
 import { REASON_LABEL, type EscalationReason } from "@/lib/support";
 import { HEARTBEAT_MAX_AGE_MIN, type HeartbeatKey } from "@/lib/heartbeat";
+import { EMPFANG_HEARTBEAT } from "@/lib/mail/resend-empfang";
 import { onboardingProgressFor } from "@/lib/onboarding";
 import { stuckSetups } from "@/lib/selbst-einrichtung";
 import { shortName, isTerminReview } from "@/lib/vertrieb/crm";
@@ -255,6 +256,22 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
     }
   }
 
+  // Resend ohne Leserecht (lib/mail/resend-empfang.ts): Antworten per E-Mail, Termin-Weiterleitung und Belege kommen nicht an
+  const empfang = heartbeats.find((h) => h.key === EMPFANG_HEARTBEAT);
+  if (empfang && !empfang.ok) {
+    items.push({
+      key: "hb:resend-empfang",
+      area: "System",
+      tone: "bad",
+      icon: "alert",
+      title: "Mail-Eingang liest keine Mails",
+      detail: `${empfang.note ?? "Resend-Schlüssel ohne Leserecht."} Bis dahin kommen Antworten per E-Mail, weitergeleitete Termine und Belege nicht an.`,
+      action: { label: "Systemzustand", href: "/admin/neu/werkzeuge/zustand" },
+      since: empfang.at,
+      later: TOMORROW,
+    });
+  }
+
   // Bank & Karten: neue Ausgaben ohne Zuordnung (fehlen sonst in Marge/Kosten)
   const bankOpen = await prisma.bankTransaction.count({ where: { status: "neu" } }).catch(() => 0);
   if (bankOpen > 0) {
@@ -427,6 +444,17 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       later: { label: "Erledigt", days: 3 },
     });
   }
+
+  // Buchungsseite eines Kunden seit über 3 Std. (tagsüber) ohne freie Zeiten (Cron speichert „leer seit“,
+  // lib/buchungsseite-leer-server.ts; Ole 25.11.2026)
+  items.push(
+    ...(await import("@/lib/buchungsseite-leer-server")
+      .then((m) => m.ladeBuchungsseitenLeer(now))
+      .catch((err: unknown) => {
+        reportError(err, "admin-heute-buchungsseite");
+        return [] as HeuteItem[];
+      })),
+  );
 
   // ── Leads / Pay-per-Lead ───────────────────────────────
   if (unassigned.length) {

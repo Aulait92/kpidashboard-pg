@@ -55,6 +55,12 @@ export async function register() {
 
 export const onRequestError: Instrumentation.onRequestError = async (err, request, context) => {
   if (!process.env.SENTRY_DSN && !process.env.NEXT_PUBLIC_SENTRY_DSN) return;
+  // Kaputter Router-State-Kopf (Bots, veraltete Tabs): fehlerhafte Anfrage, kein Fehler der App (lib/sentry-filter.ts)
+  const { istKaputterRouterState } = await import("@/lib/sentry-filter");
+  if (istKaputterRouterState(err)) {
+    console.warn(`[anfrage] kaputter Router-State-Kopf auf ${request.path.split("?")[0]}, ignoriert`);
+    return;
+  }
   const Sentry = await import("@sentry/nextjs");
   Sentry.captureRequestError(err, request, context);
 };

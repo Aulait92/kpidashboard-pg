@@ -20,6 +20,7 @@ import { fmtDay, LaterDateSheet } from "@/components/later-date-sheet";
 import { emitLeadAction, emitNotReachedOffer, LostSheet, useStepDone } from "@/components/next-step";
 import { BedarfSheet } from "@/components/bedarf-sheet";
 import { callStartedAction } from "@/app/buyer/telefonat-actions";
+import { gebeugt } from "@/lib/ansprache";
 
 /** Rückkehr erst nach mind. 3 s zählt (kein Fehlalarm), höchstens 10 Min. */
 const MIN_MS = 3_000;
@@ -270,5 +271,5 @@ export function CallOutcomeSheet({
       />
     );
   }
-  return <ActionSheet open onClose={close} title={`Wie lief es mit ${t.name}?`} message="Ein Tipp, den Rest trägt die App ein." actions={actions} />;
+  return <ActionSheet open onClose={close} title={`Wie lief es mit ${gebeugt(t.name)}?`} message="Ein Tipp, den Rest trägt die App ein." actions={actions} />;
 }
