@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { KontaktRahmen } from "@/components/kontakt-rahmen";
 
+const rahmen = (leadId: string) => ({ leadId, children: "x" });
 const quelle = (p: string) => readFileSync(path.resolve(__dirname, "../..", p), "utf8");
 
 /** Nachstellen des Wechsels: React baut einen Teilbaum nur neu auf, wenn sich Typ oder Schlüssel ändern. */
@@ -23,8 +24,8 @@ describe("Kontaktwechsel auf Heute", () => {
     // derselbe Kontakt (z. B. nach Neuladen der Daten) behält den Zustand
     expect(wirdNeuAufgebaut(a, KontaktRahmen({ leadId: "lead-a", children: "y" }))).toBe(false);
     // Rahmen auf der Seite selbst ebenfalls mit Schlüssel
-    const el1 = createElement(KontaktRahmen, { key: "lead-a", leadId: "lead-a", children: "x" });
-    const el2 = createElement(KontaktRahmen, { key: "lead-b", leadId: "lead-b", children: "x" });
+    const el1 = createElement(KontaktRahmen, { key: "lead-a", ...rahmen("lead-a") });
+    const el2 = createElement(KontaktRahmen, { key: "lead-b", ...rahmen("lead-b") });
     expect(wirdNeuAufgebaut(el1, el2)).toBe(true);
   });
 

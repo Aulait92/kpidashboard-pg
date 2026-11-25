@@ -92,7 +92,7 @@ describe("Heute ohne doppelte Personen", () => {
     const nurNachfassen = await lead({ status: "Angebot gesendet", followUpAt: new Date(now - 2 * DAY), followUpNote: "Angebot nachfassen" });
 
     const inbox = await loadInbox({ customerId, userId: null, teamRole: "owner" });
-    const senden = inbox.angebote.map((g) => g.leadId);
+    const senden = (inbox.angebote ?? []).map((g) => g.leadId);
     const wv = inbox.followUps.map((f) => f.leadId);
     expect(senden).toContain(doppelt.id);
     expect(wv).not.toContain(doppelt.id);
