@@ -36,8 +36,12 @@ export function bwaMonths(param: string | undefined, now = new Date()): { key: s
   return { key: String(y), months: monthRange(`${y}-01`, last) };
 }
 
+const STEUERBERATER = /steuerberat|phdr|m(?:ue|ü)ller\s*treuhand|stbg/i;
+
 /** Anzeigename einer Betriebs-Gruppe: Regel-Bezeichnung ohne Klammerzusatz, sonst Gegenpartei. */
 export function betriebGroup(label: string | null | undefined, counterparty: string | null | undefined): string {
+  // Alle Steuerberater-Zahlungen in eine Zeile (Ole, 25.11.2026), egal ob per Regel oder nach Empfänger
+  if (STEUERBERATER.test(`${label ?? ""} ${counterparty ?? ""}`)) return "Steuerberater";
   const l = (label ?? "").replace(/\s*\(.*\)\s*$/, "").trim();
   if (l && l !== "Standardregel") return l.slice(0, 60);
   const c = (counterparty ?? "").replace(/\s+/g, " ").trim();
@@ -58,20 +62,25 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
   const settings = await loadKpiSettings();
   const nachRechnungen = (await prisma.ausgangsrechnung.count()) > 0;
   if (nachRechnungen) {
-    const [rechnungen, hvk] = await Promise.all([
-      prisma.ausgangsrechnung.findMany({ where: { datum: { gte: from } }, select: { nummer: true, datum: true, kunde: true, netto: true } }),
+    const { bereichVorschlag, istBereich } = await import("@/lib/ausgangsrechnungen");
+    const [rechnungen, hvk, appKunden] = await Promise.all([
+      prisma.ausgangsrechnung.findMany({ where: { datum: { gte: from } }, select: { nummer: true, datum: true, kunde: true, netto: true, typ: true, bereich: true } }),
       prisma.hvkInvoice.findMany({ where: { periodEnd: { gte: fromQ } }, select: { invoiceNo: true, invoiceDate: true, periodEnd: true, netCents: true } }),
+      prisma.customer.findMany({ where: { isTest: false, plan: { not: "internal" } }, select: { name: true, createdAt: true } }),
     ]);
+    const kundenSeit = appKunden.map((k) => ({ name: k.name, seit: k.createdAt.toISOString().slice(0, 10) }));
     for (const r of rechnungen) {
       const m = r.datum.toISOString().slice(0, 7);
       if (!inRange(m) || !Number(r.netto)) continue;
-      items.push({ month: m, line: "umsatz:rechnungen", label: r.kunde, net: r2(Number(r.netto)), detail: r.nummer });
+      const datum = r.datum.toISOString().slice(0, 10);
+      const bereich = istBereich(r.bereich) ? r.bereich : bereichVorschlag({ kunde: r.kunde, datum, typ: r.typ }, kundenSeit);
+      items.push({ month: m, line: `umsatz:${bereich}`, label: r.kunde, net: r2(Number(r.netto)), detail: `${r.nummer}${istBereich(r.bereich) ? "" : " · Bereich vorgeschlagen"}` });
     }
     for (const h of hvk) {
       const m = (h.invoiceDate ?? h.periodEnd).toISOString().slice(0, 7);
       // Beträge aus Sicht von HvK: gekaufte Leads negativ, Reklamationen positiv → Umsatz ist das Gegenteil
       if (!inRange(m) || !h.netCents) continue;
-      items.push({ month: m, line: "umsatz:hvk", label: "Heinrich von Kleist (Gutschrift)", net: r2(-h.netCents / 100), detail: h.invoiceNo });
+      items.push({ month: m, line: "umsatz:ppl", label: "Heinrich von Kleist (Gutschrift)", net: r2(-h.netCents / 100), detail: h.invoiceNo });
     }
   } else {
     const { ledger, pplCounts } = await loadLedger(now, { firstMonth: BWA_AB });
@@ -192,8 +201,10 @@ export async function loadBwa(param?: string, now = new Date()): Promise<BwaData
     fixedLines: [
       ...(nachRechnungen
         ? [
-            { section: "umsatz" as const, line: "umsatz:rechnungen", label: "Ausgangsrechnungen" },
-            { section: "umsatz" as const, line: "umsatz:hvk", label: "Pay-per-Lead HvK (Gutschriften)" },
+            { section: "umsatz" as const, line: "umsatz:funnel", label: "Funnelprojekte" },
+            { section: "umsatz" as const, line: "umsatz:ppl", label: "Pay-per-Lead (inkl. HvK-Gutschriften)" },
+            { section: "umsatz" as const, line: "umsatz:software", label: "Software & Betreuung" },
+            { section: "umsatz" as const, line: "umsatz:sonstiges", label: "Sonstige Umsätze" },
           ]
         : [
             { section: "umsatz" as const, line: "umsatz:software", label: "Software" },

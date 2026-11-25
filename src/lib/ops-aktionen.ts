@@ -325,6 +325,20 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `${zeilen.length} Rechnungen: ${r.neu} neu, ${r.aktualisiert} aktualisiert.` };
     },
   },
+  ausgangsrechnung_bereich: {
+    beschreibung: "Geschäftsbereich von Ausgangsrechnungen für die BWA festlegen (funnel, ppl, software, sonstiges; leer = Vorschlag)",
+    felder: { nummern: "Rechnungsnummern (Liste)", bereich: "funnel | ppl | software | sonstiges | leer" },
+    run: async (p) => {
+      const { istBereich } = await import("@/lib/ausgangsrechnungen");
+      const nummern = Array.isArray(p.nummern) ? p.nummern.filter((x): x is string => typeof x === "string").slice(0, 500) : [];
+      const bereich = p.bereich === "" || p.bereich == null ? null : p.bereich;
+      if (!nummern.length) return { ok: false, error: "nummern fehlt." };
+      if (bereich !== null && !istBereich(bereich)) return { ok: false, error: "bereich muss funnel, ppl, software oder sonstiges sein." };
+      const r = await prisma.ausgangsrechnung.updateMany({ where: { nummer: { in: nummern } }, data: { bereich } });
+      await audit("bwa.rechnung_bereich", { details: { nummern, bereich }, actor: OPS_ACTOR });
+      return { ok: true, info: `${r.count} von ${nummern.length} Rechnungen auf ${bereich ?? "Vorschlag"} gesetzt.` };
+    },
+  },
   umsatz_nachtrag_loeschen: {
     beschreibung: "Einen von Claude angelegten Umsatz-Nachtrag (ManualRevenue) wieder löschen",
     felder: { id: "ID des Nachtrags (Ergebnis von umsatz_nachtragen)" },
