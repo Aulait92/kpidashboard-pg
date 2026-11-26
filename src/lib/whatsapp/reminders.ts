@@ -99,9 +99,9 @@ export async function sendBookingConfirmation(opts: {
   const who = await ansprechpartner({ customerId: opts.customerId, leadId: opts.leadId, phone: opts.to, name: opts.name });
   const kontakt = who.kontakt;
   // Verschieben per Knopf „Termin verschieben“ (v4) bzw. per Chat (ältere Vorlagen: Satz im Parameter)
-  const lead = opts.leadId ? await prisma.lead.findUnique({ where: { id: opts.leadId }, select: { source: true } }).catch(() => null) : null;
-  const { istKfzProdukt } = await import("@/lib/whatsapp/produkt-fragen");
-  const kfz = istKfzProdukt(lead?.source ?? "") ? kfzUnterlagenSatz(an) : null;
+  // Kfz-Unterlagen nicht mehr in der Bestätigung (Ole, 26.11.2026: „zu früh, erstmal den Lead zum Antworten bringen“).
+  // Die Bitte um Fahrzeugschein und Rechnung kommt in der Strecke nach „Ja, gern“ (lib/policen/bitte.ts).
+  const kfz: string | null = null;
   const params = [firstNameOf(opts.name), formatWhenDE(opts.startsAt), modeLabel(opts.mode), [linkOrHint(opts.mode, opts.meetUrl, an, opts.ort), kfz].filter(Boolean).join(" ")];
   const legacyParams = [...params.slice(0, 3), `${params[3]} ${chatHint(an)}`];
   // „Guten Tag Frau Schneider, Ihr Videocall mit Herrn Kannapinn ist bestätigt: …“ (Nennungsregel, lib/vermittler-nennung.ts)

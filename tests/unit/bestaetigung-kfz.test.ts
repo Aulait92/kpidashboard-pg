@@ -15,10 +15,11 @@ describe("kfzUnterlagenSatz", () => {
       expect(hatGedankenstrich(t)).toBe(false);
     }
   });
-  it("wird in der Bestätigung genutzt (Feld {{4}} und freier Text)", async () => {
+  it("nicht mehr in der Bestätigung (Ole, 26.11.2026: erst den Lead zum Antworten bringen, Bitte kommt in der Strecke)", async () => {
     const { readFileSync } = await import("node:fs");
     const src = readFileSync("src/lib/whatsapp/reminders.ts", "utf8");
-    expect(src).toContain("istKfzProdukt(lead?.source");
-    expect(src).toContain("${kfz ?? prepHint(an)}");
+    expect(src).not.toContain("istKfzProdukt(lead?.source");
+    const bitte = readFileSync("src/lib/policen/bitte.ts", "utf8");
+    expect(bitte).toContain("Fahrzeugschein (Vorderseite)");
   });
 });
