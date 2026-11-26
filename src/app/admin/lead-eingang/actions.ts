@@ -55,6 +55,8 @@ export async function assignFormAction(fd: FormData) {
     create: { formId, pageId, formName, customerId, productKey, leadPrice, ...bezugFeld, questionLabels: questionLabels ?? undefined },
     update: { pageId: pageId ?? undefined, formName: formName ?? undefined, customerId, productKey, leadPrice, ...bezugFeld, active: true, ...(questionLabels ? { questionLabels } : {}) },
   });
+  // Von Hand angelegtes Formular mit Einwilligung per Knopf: Nachweis übernehmen (lib/einwilligung-knopf-server.ts)
+  await (await import("@/lib/einwilligung-knopf-server")).knopfEinwilligungNachtragen(formId);
   await audit("leadsource.assign", { entity: "LeadSource", entityId: formId, customerId, details: { productKey, leadPrice: leadPrice ? Number(leadPrice) : null } });
   // Ein Formular hat genau ein Ziel: gehörte es bisher dem Vertrieb, jetzt nicht mehr
   await prisma.vertriebLeadForm.updateMany({ where: { formId, active: true }, data: { active: false } });
