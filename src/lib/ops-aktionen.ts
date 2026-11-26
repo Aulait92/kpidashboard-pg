@@ -155,6 +155,37 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `${c.name}: Kalender von ${k.user.displayName ?? "Berater"} ist jetzt auch Agentur-Kalender. Buchungsseite /book/${slug}` };
     },
   },
+  anzeige_texte_setzen: {
+    beschreibung:
+      "Texte einer pausierten Meta-Anzeige im Werbekonto des Kunden ersetzen (Ole, 26.11.2026: eigene Copys statt KI-Texte). Kopiert das Creative (Bild, Formular, Knopf bleiben), setzt Haupttext, Überschrift, ggf. Beschreibung und verknüpft die Anzeige neu. Nur bei Status PAUSED.",
+    felder: { customerId: "Kunden-ID", adId: "ID der Anzeige", message: "Haupttext", headline: "Überschrift", description: "Beschreibung (optional)" },
+    run: async (p) => {
+      const c = await kunde(text(p.customerId));
+      if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+      const konto = (await prisma.customer.findUnique({ where: { id: c.id }, select: { metaAdAccountId: true } }))?.metaAdAccountId;
+      if (!konto) return { ok: false, error: "Kein Werbekonto hinterlegt." };
+      const act = konto.startsWith("act_") ? konto : `act_${konto}`;
+      const adId = text(p.adId).replace(/\D/g, "");
+      const message = String(p.message ?? "").trim();
+      const headline = String(p.headline ?? "").trim();
+      if (!adId || !message || !headline) return { ok: false, error: "adId, message und headline nötig." };
+      const { graphApi } = await import("@/lib/kampagnen/builder");
+      const ad = await graphApi.get<{ account_id: string; status: string; name: string; creative?: { id: string } }>(adId, { fields: "account_id,status,name,creative{id}" });
+      if (`act_${ad.account_id}` !== act) return { ok: false, error: "Anzeige gehört nicht zum Werbekonto des Kunden." };
+      if (ad.status !== "PAUSED") return { ok: false, error: `Anzeige ist nicht pausiert (${ad.status}).` };
+      if (!ad.creative?.id) return { ok: false, error: "Anzeige ohne Creative." };
+      const cr = await graphApi.get<{ name?: string; object_story_spec?: { page_id: string; link_data?: Record<string, unknown> } }>(ad.creative.id, { fields: "name,object_story_spec" });
+      const spec = cr.object_story_spec;
+      if (!spec?.link_data) return { ok: false, error: "Creative ohne link_data (nur Bildanzeigen werden unterstützt)." };
+      const link_data: Record<string, unknown> = { ...spec.link_data, message, name: headline };
+      const beschreibung = String(p.description ?? "").trim();
+      if (beschreibung) link_data.description = beschreibung;
+      const neu = await graphApi.post<{ id: string }>(`${act}/adcreatives`, { name: `${cr.name ?? ad.name} | Text ${new Date().toISOString().slice(0, 10)}`.slice(0, 200), object_story_spec: { page_id: spec.page_id, link_data } });
+      await graphApi.post(adId, { creative: { creative_id: neu.id } });
+      await audit("meta.anzeige_texte", { customerId: c.id, details: { adId, creative: neu.id }, actor: OPS_ACTOR });
+      return { ok: true, info: `${c.name}: Anzeige ${ad.name} hat neue Texte (Creative ${neu.id}), weiter pausiert.` };
+    },
+  },
   app_kalender_einschalten: {
     beschreibung:
       "Kunden ohne Online-Kalender umstellen („Ich habe keinen Online-Kalender“): App-Kalender an, Termine als Einladung per Mail, freie Zeiten aus den Beratungszeiten, eigene Termine per Weiterleitung; bleibt an, auch ohne Allianz oder Kalender-Link",
