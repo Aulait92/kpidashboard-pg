@@ -12,6 +12,8 @@ describe("anredeAusVorname", () => {
     expect(anredeAusVorname("Anna-Lena")).toBe("Frau");
     expect(anredeAusVorname("Klaus Maria")).toBeNull();
     expect(anredeAusVorname("Hans-Xyz")).toBeNull();
+    expect(anredeAusVorname("Rachid")).toBe("Herr");
+    expect(anredeZeile("sie", { fullName: "Rachid El Oufy" })).toBe("Guten Tag Herr El Oufy,");
   });
   it("zweideutige oder unbekannte Vornamen bleiben ohne Anrede", () => {
     for (const n of ["Andrea", "Kim", "Kai", "Luca", "Toni", "Sascha", "Alex", "Robin", "Nicola", "Simone", "Gabriele", "Deniz", "", null]) {

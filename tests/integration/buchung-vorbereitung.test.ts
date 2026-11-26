@@ -437,7 +437,7 @@ describe("Ops-Aktion buchung_vorbereitung_nachsenden", () => {
     const los = await fuehreAktionAus("buchung_vorbereitung_nachsenden", { customerId, leadId: x.lead.id });
     expect(los).toMatchObject({ ok: true });
     expect(letzte(x.phone)?.template?.name).toBe("pg_booking_prep_nudge_v2_sie");
-    expect(params(letzte(x.phone))[0]).toBe("Rachid El Oufy");
+    expect(params(letzte(x.phone))[0]).toBe("Herr El Oufy");
     expect(await merker(x.conversationId, STRECKE.vorbereitungNachfrage)).toHaveLength(1);
   });
 });

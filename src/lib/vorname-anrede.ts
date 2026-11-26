@@ -43,6 +43,7 @@ murat mustafa niklas nico niko nikolai nikolaus nils noah norbert olaf ole olive
 philipp rainer ralf ralph reinhard reinhold richard robert roland rolf roman rüdiger ruediger rudolf samuel sebastian
 siegfried simon stefan steffen stephan sven thilo thomas thorsten tilo tim timo tobias tom torsten ulrich uwe valentin
 viktor vincent volker walter werner wilhelm willi wolfgang yusuf
+abdul abdullah bilal hamza hassan hussein ibrahim ismail karim khalid mohamed mohammad mohammed muhammad nabil omar rachid raschid rashid samir tarik tariq walid yasin yassin youssef
 `;
 
 const liste = (s: string) => new Set(s.split(/\s+/).filter(Boolean));
