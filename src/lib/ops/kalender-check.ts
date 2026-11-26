@@ -79,6 +79,25 @@ export async function kalenderCheckDiagnose(p: URLSearchParams) {
       : null,
     jeTerminArt,
     ics: !!agent?.availabilityIcsUrlEnc,
+    // Team und eigene Kalender je Login (Ole, 26.11.2026: „hat Lisa schon ihren Kalender verbunden?“); E-Mail gekürzt
+    team: await prisma.user
+      .findMany({
+        where: { customerId },
+        orderBy: { createdAt: "asc" },
+        select: { displayName: true, email: true, teamRole: true, receivesLeads: true, lastLoginAt: true, advisorCalendar: { select: { provider: true, status: true } } },
+      })
+      .then((us) =>
+        us.map((u) => ({
+          name: u.displayName,
+          email: `${u.email.slice(0, 3)}…@${u.email.split("@")[1] ?? ""}`,
+          rolle: u.teamRole,
+          bekommtLeads: u.receivesLeads,
+          zuletztEingeloggt: u.lastLoginAt,
+          eigenerKalender: u.advisorCalendar ? `${u.advisorCalendar.provider} / ${u.advisorCalendar.status}` : null,
+        })),
+      )
+      .catch((e) => ({ fehler: e instanceof Error ? e.message.slice(0, 120) : "Fehler" })),
+    agenturKalender: conn ? `${conn.provider} / ${conn.status}` : null,
     buchungsKalender: kalender,
     vorschlaegeBuchungsseite: vorschlaege,
   };
