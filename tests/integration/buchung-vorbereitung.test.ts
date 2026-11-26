@@ -402,6 +402,30 @@ describe("„Weiter auf WhatsApp“ von der Buchungsseite", () => {
     await prisma.conversation.update({ where: { id: y.conversationId }, data: { botActive: false } });
     expect(await waWeiterMoeglich({ id: y.termin.id, customerId, conversationId: y.conversationId, leadId: y.lead.id })).toBe(false);
   });
+
+  it("Splittest wa_weiter_knopf: Zuteilung je Lead, der Klick zählt als Ziel (einmal), in beiden Fassungen", async () => {
+    const { variante, experimentStats, zuteilen, experimenteCacheLeeren } = await import("@/lib/experimente");
+    experimenteCacheLeeren();
+    await prisma.whatsAppAccount.update({ where: { customerId }, data: { phoneNumber: "+49 151 2345678" } });
+    const vorher = await experimentStats("wa_weiter_knopf");
+    const gesehen = { a: 0, b: 0 };
+    for (let i = 0; i < 6; i++) {
+      const x = await lead();
+      const token = `mt-${uid()}`;
+      await prisma.appointment.update({ where: { id: x.termin.id }, data: { manageToken: token } });
+      const v = await variante("wa_weiter_knopf", x.lead.id);
+      expect(v).toBe(zuteilen("wa_weiter_knopf", x.lead.id));
+      gesehen[v]++;
+      if (i < 3) {
+        expect(await waWeiterKlick(token)).toMatch(/^https:\/\/wa\.me\//);
+        await waWeiterKlick(token);
+      }
+    }
+    const nachher = await experimentStats("wa_weiter_knopf");
+    expect(nachher.a.n + nachher.b.n - vorher.a.n - vorher.b.n).toBe(6);
+    expect(nachher.a.ziel + nachher.b.ziel - vorher.a.ziel - vorher.b.ziel).toBe(3);
+    expect(gesehen.a + gesehen.b).toBe(6);
+  });
 });
 
 describe("Fragen-Engine (Allianz-Sparten, Privatschutz als Bündel)", () => {

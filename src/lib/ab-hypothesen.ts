@@ -49,4 +49,7 @@ export const SPLITTEST_HYPOTHESE: Record<string, string> = {
   absage_nachfassen:
     "Wer nach einer Absage gleich zwei konkrete neue Zeiten sieht, muss nichts überlegen und bucht öfter neu als nach der offenen Frage nach einem neuen Termin.",
   termin_zusage: "Endet die Buchungsbestätigung mit der Zusage-Frage „Kann Herr Kannapinn fest mit Ihnen rechnen?“ [Ja, sicher] [Lieber andere Zeit], erscheinen mehr Leads zum Termin.",
+  // Ole 26.11.2026 (lib/experimente.ts wa_weiter_knopf, Block src/app/book/[slug]/wa-weiter.tsx)
+  wa_weiter_knopf:
+    "Sieht der Knopf aus wie WhatsApp, nennt er die Aufgabe mit Zeitaufwand („Jetzt Fragen beantworten (1 Minute)“) und steht er mit einem fast fertigen Fortschritt direkt unter der Terminkarte im ersten Bildschirm, klicken mehr Leads nach der Buchung weiter auf WhatsApp.",
 };

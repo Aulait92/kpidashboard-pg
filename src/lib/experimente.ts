@@ -27,6 +27,8 @@ export type Ziel =
   | "termin_verschoben"
   | "komplettcheck_ja"
   | "erschienen"
+  /** Klick auf „Weiter auf WhatsApp“ der Buchungsseite (lib/whatsapp/buchung-whatsapp.ts waWeiterKlick, einmal je Termin) */
+  | "wa_weiter_klick"
   // Eigener Funnel (lib/funnel/server.ts), Einheit Besucher-ID
   | "funnel_lead"
   | "ppl_erreicht"
@@ -147,6 +149,15 @@ export const EXPERIMENTE = {
     ziel: "termin_gebucht",
     a: "Standard (Ole): „Schade, dass es mit dem Termin nicht geklappt hat. Sollen wir einen neuen Termin mit Herrn Kannapinn finden?“ [Ja, neuer Termin] [Kein Bedarf mehr]; als Vorlage followup_absage (bis zur Meta-Freigabe followup_noshow)",
     b: "Neu: gleich, aber direkt mit zwei konkreten Zeiten „Passt Ihnen Di 10 Uhr oder Mi 16 Uhr für einen neuen Termin mit Herrn Kannapinn?“ (Zeit-Knöpfe); als Vorlage followup mit zwei Terminvorschlägen",
+  },
+  // „Weiter auf WhatsApp“ auf der Erfolgsansicht der Buchungsseite (Ole, 26.11.2026 freigegeben; Lernbuch
+  // docs/firma/ab-tests.md, Hypothese lib/ab-hypothesen.ts, Block src/app/book/[slug]/wa-weiter.tsx). Einheit Lead-ID,
+  // sonst Chat- bzw. Termin-ID, zugeteilt nur, wenn der Block erscheint; Ziel über die Klick-Route (waWeiterKlick).
+  wa_weiter_knopf: {
+    titel: "Buchungsseite /book: Knopf „Weiter auf WhatsApp“ nach der Buchung",
+    ziel: "wa_weiter_klick",
+    a: "Bisher: Block „Ihr Angebot schneller bekommen“ unter dem Bestätigungssatz, Knopf in Markenfarbe „Weiter auf WhatsApp“",
+    b: "Neu: Block direkt unter der Terminkarte, Fortschritt (Termin gebucht, Komplettcheck, offen: Angaben fürs Angebot), grüner Knopf mit WhatsApp-Logo „Jetzt Fragen beantworten (1 Minute)“, am Rechner QR-Code",
   },
   // „Entscheidet noch jemand mit?“ vor dem Terminvorschlag: kein Splittest mehr (Ole, 22.11.2026: immer eigene Frage vor der
   // Buchung), siehe docs/firma/ab-tests.md.

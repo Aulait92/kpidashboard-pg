@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { LeadLegalFooter } from "@/components/lead-legal-footer";
 import { a, asAnsprache, type Ansprache } from "@/lib/ansprache";
-import { CheckCircle2, Clock, Mail, MapPin, MessageCircle, Phone, Video } from "lucide-react";
+import { CheckCircle2, Clock, Mail, MapPin, Phone, Video } from "lucide-react";
 import { agenturOrt, loadTerminFormate } from "@/lib/termin-formate-server";
 import { TERMIN_FORMATE_STANDARD } from "@/lib/termin-formate";
 import { kontaktWege, vermittlerKontakt, type VermittlerKontakt } from "@/lib/buchung-ohne-kalender";
@@ -15,6 +15,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { bookingDurationMin, suggestSlots, type Slot } from "@/lib/calendar";
 import { bookPublicAction, komplettcheckBuchungAction } from "./actions";
 import { Gezeigt } from "./gezeigt";
+import { WaWeiterBlock } from "./wa-weiter";
 import { randomUUID } from "node:crypto";
 import { variante, type Variante } from "@/lib/experimente";
 import { nowMs } from "@/lib/now";
@@ -214,6 +215,24 @@ export default async function BookingPage({ params, searchParams }: Props) {
           kcFrage = komplettcheckFrage(an, person, istFamilie(formularAus(lead?.formData), lead?.needData), v, lead?.source).replace(/^Danke! /, "");
         }
       }
+      // Splittest wa_weiter_knopf (Ole, 26.11.2026, lib/experimente.ts): Zuteilung nur, wenn der Block erscheint; Einheit
+      // wie beim Komplettcheck (Lead, sonst Chat, sonst Termin). Ziel wa_weiter_klick zählt die Klick-Route
+      // (lib/whatsapp/buchung-whatsapp.ts waWeiterKlick mit Lead-, Chat- und Termin-ID).
+      const waZeigen = waWeiter && !!personNom;
+      const waV: Variante = waZeigen ? await variante("wa_weiter_knopf", appt.leadId ?? appt.conversationId ?? appt.id) : "a";
+      const waHref = `/book/manage/${appt.manageToken}/whatsapp`;
+      // Fassung b am Rechner: QR-Code mit der absoluten Klick-Route (gezählt wie der Knopf); ohne Adresse Hinweis statt Code
+      const waQr =
+        waZeigen && waV === "b"
+          ? await import("@/lib/public-url")
+              .then((m) => m.publicBaseOrNull())
+              .then((base) => (base ? import("qrcode").then((q) => q.default.toDataURL(`${base}${waHref}`, { margin: 1, width: 176 })) : null))
+              .catch(() => null)
+          : null;
+      const waB = waZeigen && waV === "b";
+      const waBlock = waZeigen && personNom ? (
+        <WaWeiterBlock an={an} variante={waV} person={personNom} href={waHref} komplettcheck={appt.komplettcheck === true} qr={waQr} />
+      ) : null;
       return (
         <Shell customerId={conn?.customerId}>
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200">
@@ -237,6 +256,8 @@ export default async function BookingPage({ params, searchParams }: Props) {
               Uhr
             </div>
           </div>
+          {/* Fassung b: Block direkt unter der Terminkarte, damit der Knopf auf dem Handy ohne Scrollen sichtbar ist */}
+          {waB ? waBlock : null}
           <p className="mt-4 text-sm leading-relaxed text-[color:var(--muted)]">
             {/* Nur-Handynummer-Buchung: E-Mail-Adresse nie anzeigen, nur sagen, wohin die Einladung geht */}
             {istVonFormular(sp.von) ? (
@@ -244,7 +265,9 @@ export default async function BookingPage({ params, searchParams }: Props) {
                 {a(an, "Die Einladung geht an die E-Mail-Adresse aus deiner Anfrage.", "Die Einladung geht an die E-Mail-Adresse aus Ihrer Anfrage.")}
               </span>
             ) : null}
-            {appt.mode === "video"
+            {waB
+              ? bestaetigungKurz(an, appt.mode, appt.ort)
+              : appt.mode === "video"
               ? a(an, "Die Bestätigung mit dem Link zum Videocall bekommst du per WhatsApp und E-Mail.", "Die Bestätigung mit dem Link zum Videocall bekommen Sie per WhatsApp und E-Mail.")
               : appt.mode === "onsite"
                 ? `${appt.ort ? `Adresse: ${appt.ort}. ` : ""}${a(an, "Die Bestätigung bekommst du per WhatsApp und E-Mail.", "Die Bestätigung bekommen Sie per WhatsApp und E-Mail.")}`
@@ -263,27 +286,12 @@ export default async function BookingPage({ params, searchParams }: Props) {
                 </button>
               </div>
             </form>
-          ) : sp.kc === "1" ? (
+          ) : sp.kc === "1" && !waB ? (
             <p className="mt-4 text-sm font-medium text-emerald-700" data-komplettcheck-ja>
               {a(an, "Super, im Termin wird auch geschaut, ob du irgendwo doppelt zahlst.", "Super, im Termin wird auch geschaut, ob Sie irgendwo doppelt zahlen.")}
             </p>
           ) : null}
-          {waWeiter && personNom ? (
-            <div className="mt-5 rounded-xl bg-[color:var(--brand-soft)] p-4" data-wa-weiter>
-              <h2 className="text-[15px] font-semibold leading-snug">{a(an, "Dein Angebot schneller bekommen", "Ihr Angebot schneller bekommen")}</h2>
-              <p className="mt-1 text-sm leading-relaxed">
-                {a(
-                  an,
-                  `Beantworte jetzt ein paar kurze Fragen per WhatsApp, dann kann ${personNom} dein Angebot schon vorbereiten.`,
-                  `Beantworten Sie jetzt ein paar kurze Fragen per WhatsApp, dann kann ${personNom} Ihr Angebot schon vorbereiten.`,
-                )}
-              </p>
-              {/* Über die eigene Route: Klick messen, dann weiter zu wa.me mit vorbefülltem Text */}
-              <a href={`/book/manage/${appt.manageToken}/whatsapp`} className={buttonClass("primary", "md", "mt-3 h-12 w-full text-base")} data-wa-weiter-knopf>
-                <MessageCircle className="h-5 w-5" /> Weiter auf WhatsApp
-              </a>
-            </div>
-          ) : null}
+          {waB ? null : waBlock}
           {appt.mode === "video" && appt.meetUrl ? (
             <a href={appt.meetUrl} className={buttonClass(kcFrage || waWeiter ? "secondary" : "primary", "md", "mt-4 w-full")}>
               <Video className="h-4 w-4" /> Link zum Videocall
@@ -609,6 +617,13 @@ function OhneKalender({ an, kontakt }: { an: Ansprache; kontakt: VermittlerKonta
       ) : null}
     </div>
   );
+}
+
+/** Fassung b (Splittest wa_weiter_knopf): kurzer Satz zur Bestätigung, damit der WhatsApp-Knopf im ersten Bildschirm bleibt. */
+function bestaetigungKurz(an: Ansprache, mode: string, ort: string | null): string {
+  if (mode === "video") return "Bestätigung und Link zum Videocall kommen per WhatsApp und E-Mail.";
+  if (mode === "onsite") return `${ort ? `Adresse: ${ort}. ` : ""}Bestätigung kommt per WhatsApp und E-Mail.`;
+  return a(an, "Wir rufen dich an. Bestätigung kommt per WhatsApp und E-Mail.", "Wir rufen Sie an. Bestätigung kommt per WhatsApp und E-Mail.");
 }
 
 function Shell({ children, customerId }: { children: React.ReactNode; customerId?: string | null }) {
