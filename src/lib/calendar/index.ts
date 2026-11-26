@@ -272,6 +272,17 @@ export async function bookingPausedUntil(customerId: string, leadId?: string | n
  *   bekommen und ihren Kalender verbunden haben, wer am längsten keinen Lead
  *   bekam zuerst; dazu der Agentur-Kalender. Ohne Team: nur Agentur-Kalender.
  */
+/** Gleicher Refresh-Token (verschlüsselt gleich oder entschlüsselt gleich); Fehler beim Entschlüsseln = nicht gleich. */
+function gleichesToken(a: string | null, b: string | null): boolean {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  try {
+    return decryptSecret(a) === decryptSecret(b);
+  } catch {
+    return false;
+  }
+}
+
 export async function bookingKeys(customerId: string, leadId?: string | null): Promise<string[]> {
   if (leadId) {
     const lead = await prisma.lead.findUnique({
@@ -284,16 +295,18 @@ export async function bookingKeys(customerId: string, leadId?: string | null): P
   }
   const advisors = await prisma.user.findMany({
     where: { customerId, role: "BUYER", receivesLeads: true, advisorCalendar: { status: "connected" } },
-    select: { id: true, lastLeadAssignedAt: true, advisorCalendar: { select: { provider: true, accountEmail: true, calendarId: true } } },
+    select: { id: true, lastLeadAssignedAt: true, advisorCalendar: { select: { provider: true, accountEmail: true, calendarId: true, refreshTokenEnc: true } } },
     orderBy: [{ lastLeadAssignedAt: { sort: "asc", nulls: "first" } }, { createdAt: "asc" }],
   });
-  const main = await prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true, provider: true, accountEmail: true, calendarId: true } });
+  const main = await prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true, provider: true, accountEmail: true, calendarId: true, refreshTokenEnc: true } });
   const keys = advisors.map((a) => userCalendarKey(a.id));
   // Agentur-Kalender, der derselbe Kalender wie der einer Beraterin ist (ops beraterkalender_als_agentur,
   // Fall CL Capital Living 26.11.2026), nicht doppelt zählen: sonst gelten zusätzlich die Standard-Zeiten
   // der Agentur und Leads buchen außerhalb der Zeiten der Beraterin.
-  const gleich = (a: { provider: string; accountEmail: string | null; calendarId: string } | null) =>
-    !!a && !!main && a.provider === main.provider && !!a.accountEmail && a.accountEmail === main.accountEmail && a.calendarId === main.calendarId;
+  // Gleich = dieselben (1:1 kopierten) Zugangsdaten oder dasselbe Konto mit demselben Kalender.
+  const gleich = (a: { provider: string; accountEmail: string | null; calendarId: string; refreshTokenEnc: string | null } | null) =>
+    !!a && !!main && a.provider === main.provider && a.calendarId === main.calendarId &&
+    (gleichesToken(a.refreshTokenEnc, main.refreshTokenEnc) || (!!a.accountEmail && a.accountEmail === main.accountEmail));
   const doppelt = advisors.some((a) => gleich(a.advisorCalendar));
   if ((main?.status === "connected" && !doppelt) || keys.length === 0) keys.push(customerId);
   return keys;
