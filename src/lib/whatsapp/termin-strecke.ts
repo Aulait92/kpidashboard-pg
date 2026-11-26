@@ -27,6 +27,7 @@
 //
 // Außerdem: offener Terminvorschlag (für das Nachfassen nach 2 Std., lib/lead-sequences.ts) und freie Zeiten dafür.
 
+import { istVorabNachricht } from "@/lib/whatsapp/vorab";
 import Anthropic from "@anthropic-ai/sdk";
 import { jsonAusAntwort, jsonAusgabe } from "@/lib/ki-json";
 import type { Prisma } from "@/generated/prisma/client";
@@ -173,11 +174,14 @@ export const STRECKE = {
   partnerVorAntwort: "partner_antwort_vor",
   /**
    * Frage nach der Vorbereitung in der Bestätigung (Vorlage ab v5, Ole 26.11.2026; body.via: bestaetigung, ops) bzw. die
-   * Nachfrage am Folgetag (booking_prep_nudge) und die Antwort darauf (body.art: ja, termin)
+   * Nachfrage etwa 3 Std. später (booking_prep_nudge) und die Antwort darauf (body.art: ja, termin; body.via: buchungsseite
+   * = vorbefüllte Nachricht über „Weiter auf WhatsApp“)
    */
   vorbereitungFrage: "vorbereitung_frage",
   vorbereitungNachfrage: "vorbereitung_nachfrage",
   vorbereitungAntwort: "vorbereitung_antwort",
+  /** Klick auf „Weiter auf WhatsApp“ auf der Buchungsseite (body.appointmentId), Messung (Ole, 26.11.2026) */
+  waWeiterKlick: "buchungsseite_wa_klick",
   /** Fragen-Engine (lib/vorbereitung/fragen.ts): Frage gestellt (body.id), beantwortet (body.id, art), einmal nachgefragt */
   angabeFrage: "angabe_frage",
   angabeAntwort: "angabe_antwort",
@@ -1790,8 +1794,11 @@ export async function noch2FreieZeiten(customerId: string, leadId: string, alt: 
 //   Ja, gern          → die Strecke startet sofort: Fragen-Engine (falls Definition), dann Tierfragen bzw. Komplettcheck,
 //                       Partner, Angebotsfragen, Vertragsfrage, Policen-Bitte, Schluss (wie nach einer Buchung im Chat)
 //   Lieber im Termin  → „Alles klar, bis Montag!“, keine weiteren Fragen
-//   keine Antwort     → einmal am Folgetag (Mo bis Sa 8 bis 20 Uhr) die Vorlage booking_prep_nudge mit denselben Knöpfen,
-//                       dann Ruhe (runVorbereitungNachfassen)
+//   keine Antwort     → einmal etwa 3 Std. später (Ole, 26.11.2026; nur Mo bis Sa 8 bis 20 Uhr, sonst zum nächsten
+//                       erlaubten Zeitpunkt) die Vorlage booking_prep_nudge mit denselben Knöpfen, dann Ruhe
+//                       (runVorbereitungNachfassen)
+//   „Weiter auf WhatsApp“ auf der Buchungsseite → vorbefüllte Nachricht „Ja, gern beantworte ich die Fragen vorab.“
+//                       startet die Strecke wie „Ja, gern“ (vorbereitungUeberBuchungsseite), auch ohne gestellte Frage
 
 const DAY = 24 * HOUR;
 const berlinTag = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
@@ -1813,7 +1820,7 @@ async function terminZurZeit(conversationId: string, leadId: string | null, star
   return t?.id ?? null;
 }
 
-/** Frage nach der Vorbereitung gestellt (Bestätigung ab v5, Nachfrage am Folgetag bzw. Ops-Aktion): merken. */
+/** Frage nach der Vorbereitung gestellt (Bestätigung ab v5, Nachfrage bzw. Ops-Aktion): merken. */
 export async function vorbereitungGefragt(
   conversationId: string,
   o: { appointmentId: string | null; leadId: string | null; startsAt: Date },
@@ -1853,7 +1860,7 @@ export async function vorbereitungAntwort(conversationId: string, art: "ja" | "t
   if (!k?.termin) return false;
   const v = await vorbereitungStand(conversationId, k.termin.id);
   if (v.antwort) return true;
-  await merke(conversationId, STRECKE.vorbereitungAntwort, { appointmentId: k.termin.id, art });
+  if (!(await ersteAntwortMerken(conversationId, k.termin.id, { art }))) return true;
   if (k.leadId) {
     const { logLeadHistory } = await import("@/lib/lead-history");
     await logLeadHistory(k.leadId, "notiz", art === "ja" ? "Vorbereitung per WhatsApp: Fragen vorab gern" : "Vorbereitung per WhatsApp: lieber im Termin", { customerId: k.customerId, userId: null }).catch(() => null);
@@ -1868,6 +1875,48 @@ export async function vorbereitungAntwort(conversationId: string, art: "ja" | "t
 }
 
 export { vorbereitungAusText };
+
+/**
+ * Antwort auf die Vorbereitung merken; true nur für die erste Antwort zu diesem Termin. Zwei Nachrichten fast
+ * gleichzeitig (Knopf und vorbefüllte Nachricht): nur die zuerst gespeicherte startet die Strecke.
+ */
+async function ersteAntwortMerken(conversationId: string, appointmentId: string, payload: Record<string, unknown>): Promise<boolean> {
+  const m = await prisma.message.create({
+    data: { conversationId, direction: "internal", kind: STRECKE.vorbereitungAntwort, body: JSON.stringify({ appointmentId, ...payload }), sentBy: "bot" },
+    select: { id: true },
+  });
+  const erste = await prisma.message.findFirst({
+    where: { conversationId, direction: "internal", kind: STRECKE.vorbereitungAntwort, body: { contains: appointmentId } },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    select: { id: true },
+  });
+  return erste?.id === m.id;
+}
+
+/**
+ * Vorbefüllte Nachricht aus „Weiter auf WhatsApp“ auf der Buchungsseite („Ja, gern beantworte ich die Fragen vorab.“,
+ * lib/whatsapp/vorab.ts; Ole, 26.11.2026): startet die Vorbereitung sofort wie „Ja, gern“, mit kommendem Termin immer,
+ * auch wenn die Frage nach der Vorbereitung noch nicht (bzw. nur als Vorlage) gestellt wurde. Termin über den Chat bzw.
+ * den Lead (streckenKontext; der Chat hängt über die Nummer am Lead). Nie doppelt: Gibt es schon eine Antwort, antwortet
+ * der Assistent (false). Läuft die Strecke schon (Seite hat sie im offenen Fenster angestoßen), wird die offene Frage
+ * noch einmal gestellt; ist nichts mehr offen, antwortet der Assistent. Gateway: vor vorbereitungFreitext.
+ */
+export async function vorbereitungUeberBuchungsseite(conversationId: string, text: string | null | undefined, now = new Date()): Promise<boolean> {
+  if (!istVorabNachricht(text)) return false;
+  const k = await streckenKontext(conversationId, now);
+  if (!k?.termin) return false;
+  const v = await vorbereitungStand(conversationId, k.termin.id);
+  if (v.antwort) return false;
+  if (!(await ersteAntwortMerken(conversationId, k.termin.id, { art: "ja", via: "buchungsseite" }))) return true;
+  if (k.leadId) {
+    const { logLeadHistory } = await import("@/lib/lead-history");
+    await logLeadHistory(k.leadId, "notiz", "Vorbereitung per WhatsApp über die Buchungsseite gestartet", { customerId: k.customerId, userId: null }).catch(() => null);
+  }
+  await import("@/lib/experimente").then((m) => m.zielErreicht([k.leadId, conversationId, k.termin!.id], "vorbereitung_gestartet")).catch(() => null);
+  const gesendet = await starteVorbereitung(k, "Super, danke!");
+  await einladungPruefen(k, now);
+  return gesendet;
+}
 
 /**
  * Getippte Antwort, solange die Frage nach der Vorbereitung offen ist (gateway.ts vor dem Assistenten). true = erledigt.
@@ -1886,41 +1935,45 @@ export async function vorbereitungFreitext(conversationId: string, text: string 
   return vorbereitungAntwort(conversationId, art, now);
 }
 
-/** Strecke starten (nach „Ja, gern“): Fragen-Engine, danach der erste Schritt nach den Angaben. */
-async function starteVorbereitung(k: StreckenKontext, einleitung: string): Promise<void> {
-  if (await sendeAngabeFrage(k, einleitung)) return;
-  await weiterNachAngaben(k, einleitung);
-}
-
-/** Nach der Fragen-Engine: Komplettcheck (bzw. Tierfragen), war er schon beantwortet (Buchungsseite), der Schritt danach. */
-async function weiterNachAngaben(k: StreckenKontext, einleitung: string): Promise<void> {
-  if (!k.termin) return;
-  const stand = await streckenStand(k.conversationId, k.termin.id);
-  if (stand.abschlussAt) return;
-  // Komplettcheck schon entschieden (Buchungsseite, Ole 26.11.2026: „hat der Lead auch schon ausgewählt“): nicht noch
-  // einmal fragen, auch wenn der Merker im Chat fehlt (Termin ohne verknüpften Chat beim Klick)
-  if (stand.komplettBeantwortet || k.termin.komplettcheck !== null) {
-    if (stand.angebotsfragenAt || stand.vertragsfrageAt || stand.policenBitteAt || stand.langAngebotAt || stand.partnerFrageAt) return;
-    const ja = k.termin.komplettcheck === true;
-    await weiterNachKomplettcheck(k, einleitung, ja ? null : abschlussEinleitung(k.an, k.person, "komplett_nein"));
-    return;
-  }
-  if (stand.komplettFrageAt || stand.tierFrageLetzte) return;
-  const m = await ersteNachAngaben(k, einleitung);
-  await merke(k.conversationId, m.merker, { appointmentId: k.termin.id, ...(m.daten ?? {}) });
-  await sende(k, m.text, m.buttons);
+/** Strecke starten (nach „Ja, gern“): Fragen-Engine, danach der erste Schritt nach den Angaben. true = etwas gesendet. */
+async function starteVorbereitung(k: StreckenKontext, einleitung: string): Promise<boolean> {
+  if (await sendeAngabeFrage(k, einleitung)) return true;
+  return weiterNachAngaben(k, einleitung);
 }
 
 /**
- * Cron: Nachfrage zur Vorbereitung einmal am Folgetag (Ole, 26.11.2026). Bestätigung mit Frage (Merker
- * vorbereitung_frage) vom Vortag bzw. letzten Werktag, keine Antwort und keine Nachricht des Leads seitdem, Termin steht
- * noch und ist mindestens 2 Std. entfernt. Nur Mo bis Sa 8 bis 20 Uhr; danach Ruhe. Solange die Vorlage nicht
- * freigegeben ist (Fenster zu), geht nichts raus.
+ * Nach der Fragen-Engine: Komplettcheck (bzw. Tierfragen), war er schon beantwortet (Buchungsseite), der Schritt danach.
+ * true = etwas gesendet, false = die Strecke lief schon weiter bzw. ist fertig.
+ */
+async function weiterNachAngaben(k: StreckenKontext, einleitung: string): Promise<boolean> {
+  if (!k.termin) return false;
+  const stand = await streckenStand(k.conversationId, k.termin.id);
+  if (stand.abschlussAt) return false;
+  // Komplettcheck schon entschieden (Buchungsseite, Ole 26.11.2026: „hat der Lead auch schon ausgewählt“): nicht noch
+  // einmal fragen, auch wenn der Merker im Chat fehlt (Termin ohne verknüpften Chat beim Klick)
+  if (stand.komplettBeantwortet || k.termin.komplettcheck !== null) {
+    if (stand.angebotsfragenAt || stand.vertragsfrageAt || stand.policenBitteAt || stand.langAngebotAt || stand.partnerFrageAt) return false;
+    const ja = k.termin.komplettcheck === true;
+    await weiterNachKomplettcheck(k, einleitung, ja ? null : abschlussEinleitung(k.an, k.person, "komplett_nein"));
+    return true;
+  }
+  if (stand.komplettFrageAt || stand.tierFrageLetzte) return false;
+  const m = await ersteNachAngaben(k, einleitung);
+  await merke(k.conversationId, m.merker, { appointmentId: k.termin.id, ...(m.daten ?? {}) });
+  await sende(k, m.text, m.buttons);
+  return true;
+}
+
+/**
+ * Cron: Nachfrage zur Vorbereitung einmal etwa 3 Std. nach der Frage (Ole, 26.11.2026: früher als am Folgetag). Bestätigung
+ * mit Frage (Merker vorbereitung_frage), fällig ab nachfassAb (3 Std. später, nur Mo bis Sa 8 bis 20 Uhr, sonst zum
+ * nächsten erlaubten Zeitpunkt), keine Antwort und keine Nachricht des Leads seitdem, Termin steht noch und ist mindestens
+ * 2 Std. entfernt. Höchstens einmal, danach Ruhe. Solange die Vorlage nicht freigegeben ist (Fenster zu), geht nichts raus.
  */
 export async function runVorbereitungNachfassen(now = new Date()): Promise<{ gesendet: number; ohneVorlage: number }> {
   if (!inStreckenFenster(now)) return { gesendet: 0, ohneVorlage: 0 };
   const fragen = await prisma.message.findMany({
-    where: { direction: "internal", kind: STRECKE.vorbereitungFrage, createdAt: { gte: new Date(now.getTime() - 3 * DAY), lte: new Date(now.getTime() - 6 * HOUR) } },
+    where: { direction: "internal", kind: STRECKE.vorbereitungFrage, createdAt: { gte: new Date(now.getTime() - 3 * DAY), lte: new Date(now.getTime() - NACHFASSEN_NACH) } },
     orderBy: { createdAt: "asc" },
     take: 50,
     select: { conversationId: true, body: true, createdAt: true },
@@ -1929,7 +1982,7 @@ export async function runVorbereitungNachfassen(now = new Date()): Promise<{ ges
   let ohneVorlage = 0;
   for (const f of fragen) {
     const appointmentId = String(daten(f.body).appointmentId ?? "");
-    if (!appointmentId || !nachfassTag(f.createdAt, now)) continue;
+    if (!appointmentId || nachfassAb(f.createdAt).getTime() > now.getTime()) continue;
     try {
       const v = await vorbereitungStand(f.conversationId, appointmentId);
       if (v.antwort || v.nachfrageAt) continue;
@@ -1959,11 +2012,18 @@ export async function runVorbereitungNachfassen(now = new Date()): Promise<{ ges
   return { gesendet, ohneVorlage };
 }
 
-/** Ist heute der Folgetag (nächster Tag Mo bis Sa) nach der Frage? Sonntag zählt nicht. */
-export function nachfassTag(frageAt: Date, now: Date): boolean {
-  let tag = new Date(frageAt.getTime() + DAY);
-  if (new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", weekday: "short" }).format(tag) === "Sun") tag = new Date(tag.getTime() + DAY);
-  return berlinTag(tag) === berlinTag(now);
+/** Abstand der Nachfrage zur Frage (Ole, 26.11.2026). */
+export const NACHFASSEN_NACH = 3 * HOUR;
+
+/**
+ * Frühester Zeitpunkt der Nachfrage: 3 Std. nach der Frage, liegt das außerhalb von Mo bis Sa 8 bis 20 Uhr (Berlin),
+ * der nächste erlaubte Zeitpunkt (z. B. Frage Samstag 19 Uhr → Montag 8 Uhr).
+ */
+export function nachfassAb(frageAt: Date): Date {
+  let t = new Date(frageAt.getTime() + NACHFASSEN_NACH);
+  // in 15-Minuten-Schritten zum nächsten erlaubten Zeitpunkt (höchstens gut 2 Tage: Samstag 20 Uhr bis Montag 8 Uhr)
+  for (let i = 0; i < 4 * 24 * 3 && !inStreckenFenster(t); i++) t = new Date(Math.ceil((t.getTime() + 1) / (15 * 60_000)) * 15 * 60_000);
+  return t;
 }
 
 // ─── Fragen-Engine (lib/vorbereitung/fragen.ts) ──────────────────────────────────────────────────────────────────────
@@ -2253,7 +2313,7 @@ export async function vorbereitungNachsenden(
     const { sendVorbereitungNachfrage } = await import("@/lib/whatsapp/reminders");
     await sendVorbereitungNachfrage({ customerId: lead.customerId, to: conv.contactPhone, name: lead.name, leadId, startsAt: termin.startsAt });
     await vorbereitungGefragt(conv.id, { appointmentId: termin.id, leadId, startsAt: termin.startsAt }, "ops");
-    // Gleicher Wortlaut wie die Nachfrage am Folgetag: nicht ein zweites Mal schicken
+    // Gleicher Wortlaut wie die Nachfrage nach etwa 3 Std.: nicht ein zweites Mal schicken
     await vorbereitungGefragt(conv.id, { appointmentId: termin.id, leadId, startsAt: termin.startsAt }, "nachfrage");
   } else {
     const { sendBookingConfirmation } = await import("@/lib/whatsapp/reminders");

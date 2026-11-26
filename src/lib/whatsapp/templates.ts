@@ -45,7 +45,7 @@ export type NoticePurpose =
   | "outreach_kfz_wechsel"
   | "outreach_kfz_neu"
   | "booking_confirmation"
-  // Nachfassen am Folgetag, wenn der Lead auf die Frage in der Bestätigung (ab v5) nicht geantwortet hat (Ole, 26.11.2026)
+  // Nachfassen nach etwa 3 Stunden, wenn der Lead auf die Frage in der Bestätigung (ab v5) nicht geantwortet hat (Ole, 26.11.2026)
   | "booking_prep_nudge"
   | "reminder"
   | "reminder_soon"
@@ -87,7 +87,7 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   outreach_kfz_wechsel: "Erstanschreiben Kfz (Wechsel, jetziges Auto)",
   outreach_kfz_neu: "Erstanschreiben Kfz (neues Auto)",
   booking_confirmation: "Buchungsbestätigung",
-  booking_prep_nudge: "Terminvorbereitung: Nachfrage am Folgetag",
+  booking_prep_nudge: "Terminvorbereitung: Nachfrage nach etwa 3 Stunden",
   reminder: "Termin-Erinnerung",
   reminder_soon: "Termin gleich: passt alles?",
   reminder_start: "Termin in 15 Minuten: Link zum Videoraum",
@@ -331,7 +331,7 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
     du: "dein Termin bei [BeraterDat] ist bestätigt: {{2}} ({{3}}). {{4}} Wenn du mir vorab ein paar kurze Fragen beantwortest, kann [BeraterNom] dein Angebot schon vorbereiten und du bekommst es schneller. Dauert etwa eine Minute. Wollen wir kurz starten?",
     sie: "Ihr Termin bei [BeraterDat] ist bestätigt: {{2}} ({{3}}). {{4}} Wenn Sie mir vorab ein paar kurze Fragen beantworten, kann [BeraterNom] Ihr Angebot schon vorbereiten und Sie bekommen es schneller. Dauert etwa eine Minute. Wollen wir kurz starten?",
   },
-  // Einmal am Folgetag (Geschäftszeit), wenn auf die Frage in der Bestätigung keine Antwort kam (UTILITY, gleiche Knöpfe)
+  // Einmal etwa 3 Std. später (Mo bis Sa 8 bis 20 Uhr), wenn auf die Frage in der Bestätigung keine Antwort kam (UTILITY, gleiche Knöpfe)
   booking_prep_nudge: {
     du: "kurze Frage zu deinem Termin am {{2}}: Wenn du mir vorab ein paar kurze Fragen beantwortest, kann [BeraterNom] dein Angebot schon vorbereiten und du bekommst es schneller. Dauert etwa eine Minute. Wollen wir kurz starten?",
     sie: "kurze Frage zu Ihrem Termin am {{2}}: Wenn Sie mir vorab ein paar kurze Fragen beantworten, kann [BeraterNom] Ihr Angebot schon vorbereiten und Sie bekommen es schneller. Dauert etwa eine Minute. Wollen wir kurz starten?",
@@ -1030,11 +1030,11 @@ export const KNOPF = {
   gernPruefen: "Ja, gern prüfen",
   keinBedarf: "Kein Bedarf",
   gern: "Ja, gern",
-  /** Bestätigung ab v5 und Nachfrage am Folgetag: Vorbereitung lieber im Termin (Ole, 26.11.2026) */
+  /** Bestätigung ab v5 und Nachfrage nach etwa 3 Stunden: Vorbereitung lieber im Termin (Ole, 26.11.2026) */
   imTermin: "Lieber im Termin",
 } as const;
 
-/** Payloads der Knöpfe unter der Bestätigung ab v5 bzw. der Nachfrage am Folgetag (knopf.ts). */
+/** Payloads der Knöpfe unter der Bestätigung ab v5 bzw. der Nachfrage nach etwa 3 Stunden (knopf.ts). */
 export const VORBEREITUNG_PAYLOADS = ["vorbereitung:ja", "vorbereitung:termin"] as const;
 
 /**

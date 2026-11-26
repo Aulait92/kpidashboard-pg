@@ -2,7 +2,7 @@
 // umso mehr verdient der Vermittler“): Trichter der Lead-Reise je Vermittler, nur lesend und ohne Personendaten.
 //
 //   Lead → erste Antwort → Terminvorschlag erhalten → Terminvorschlag gelesen → Termin gebucht → Komplettcheck gefragt
-//        → Komplettcheck ja → Termin vorbei → erschienen
+//        → Komplettcheck ja → Vorbereitung gestartet → Vorbereitung fertig → Termin vorbei → erschienen
 //
 // Kohorte: Leads, die in den letzten N Tagen (Standard 30, höchstens 90) eingegangen sind (ohne Test-Leads), bei echten
 // Kunden (nicht Test, nicht intern, nicht archiviert, nicht Demo/Support). WhatsApp und Mail-Strecke zusammen:
@@ -11,6 +11,8 @@
 //   Vorschlag gelesen  Nachricht des Assistenten bis 2 Min. nach dem Merker mit Status „read“ bzw. Seite geöffnet
 //   gebucht            irgendein Termin des Leads (auch abgesagt), Weg über Appointment.bookedVia
 //   Komplettcheck      Appointment.komplettcheck (gefragt = nicht null)
+//   Vorbereitung       Merker „vorbereitung_antwort“ mit art „ja“ (gestartet) bzw. „strecke_abschluss“ (fertig) im Chat;
+//                      dazu „Weiter auf WhatsApp“ der Buchungsseite (Ole, 26.11.2026): Klicks und darüber gestartet
 //   erschienen         Appointment.attendance „erschienen“ (nur Termine, die vorbei sind)
 // Ausgabe je Vermittler als Kürzel (V1, V2, … nach Leads) mit der internen Kunden-ID, keine Namen von Personen.
 // Rein: journeyAuswerten (Unit-Test tests/unit/journey.test.ts).
@@ -27,11 +29,13 @@ export type JourneyLead = {
   antwort: boolean;
   vorschlag: boolean;
   vorschlagGelesen: boolean;
+  /** Vorbereitung im Chat gestartet bzw. fertig (Schluss der Strecke) */
+  vorbereitung?: { gestartet: boolean; fertig: boolean; waKlick: boolean; ueberBuchungsseite: boolean };
   /** Erster Termin des Leads (falls gebucht) */
   termin: { via: string | null; komplettcheck: boolean | null; vorbei: boolean; erschienen: boolean; stundenBisBuchung: number } | null;
 };
 
-export const STUFEN = ["leads", "ersteAntwort", "vorschlagErhalten", "vorschlagGelesen", "gebucht", "komplettcheckGefragt", "komplettcheckJa", "terminVorbei", "erschienen"] as const;
+export const STUFEN = ["leads", "ersteAntwort", "vorschlagErhalten", "vorschlagGelesen", "gebucht", "komplettcheckGefragt", "komplettcheckJa", "vorbereitungGestartet", "vorbereitungFertig", "terminVorbei", "erschienen"] as const;
 export type Stufe = (typeof STUFEN)[number];
 
 export type Trichter = Record<Stufe, number> & {
@@ -43,7 +47,13 @@ export type Trichter = Record<Stufe, number> & {
     komplettcheckJaJeTermin: number | null;
     komplettcheckJaJeGefragt: number | null;
     erschienenJeVorbei: number | null;
+    vorbereitungJeTermin: number | null;
+    vorbereitungFertigJeGestartet: number | null;
+    /** „Weiter auf WhatsApp“: Anteil der Klicks, nach denen die Vorbereitung startete */
+    waWeiterGestartetJeKlick: number | null;
   };
+  /** „Weiter auf WhatsApp“ auf der Buchungsseite: Klicks und darüber gestartete Vorbereitungen */
+  waWeiter: { klick: number; gestartet: number };
   /** Median Stunden vom Eingang bis zur Buchung */
   medianStundenBisTermin: number | null;
   /** Buchungen und Komplettcheck je Weg (bot, booking_page, mail_strecke, advisor, ohne) */
@@ -70,9 +80,12 @@ export function trichter(leads: readonly JourneyLead[]): Trichter {
     gebucht: t.length,
     komplettcheckGefragt: t.filter((x) => x.komplettcheck !== null).length,
     komplettcheckJa: t.filter((x) => x.komplettcheck === true).length,
+    vorbereitungGestartet: leads.filter((l) => l.vorbereitung?.gestartet).length,
+    vorbereitungFertig: leads.filter((l) => l.vorbereitung?.fertig).length,
     terminVorbei: t.filter((x) => x.vorbei).length,
     erschienen: t.filter((x) => x.vorbei && x.erschienen).length,
   };
+  const waWeiter = { klick: leads.filter((l) => l.vorbereitung?.waKlick).length, gestartet: leads.filter((l) => l.vorbereitung?.ueberBuchungsseite).length };
   const jeWeg: Trichter["jeWeg"] = {};
   for (const x of t) {
     const w = (jeWeg[x.via ?? "ohne"] ??= { gebucht: 0, komplettcheckGefragt: 0, komplettcheckJa: 0 });
@@ -90,7 +103,11 @@ export function trichter(leads: readonly JourneyLead[]): Trichter {
       komplettcheckJaJeTermin: quote(z.komplettcheckJa, z.gebucht),
       komplettcheckJaJeGefragt: quote(z.komplettcheckJa, z.komplettcheckGefragt),
       erschienenJeVorbei: quote(z.erschienen, z.terminVorbei),
+      vorbereitungJeTermin: quote(z.vorbereitungGestartet, z.gebucht),
+      vorbereitungFertigJeGestartet: quote(z.vorbereitungFertig, z.vorbereitungGestartet),
+      waWeiterGestartetJeKlick: quote(waWeiter.gestartet, waWeiter.klick),
     },
+    waWeiter,
     medianStundenBisTermin: median(t.map((x) => x.stundenBisBuchung)),
     jeWeg,
   };
@@ -127,10 +144,30 @@ export async function ladeJourney(tage: number, now = new Date()): Promise<Journ
     }),
   ]);
   const convIds = convs.map((c) => c.id);
-  const [antworten, vorschlaege] = await Promise.all([
+  const [antworten, vorschlaege, vorbereitung] = await Promise.all([
     prisma.message.findMany({ where: { conversationId: { in: convIds }, direction: "inbound" }, distinct: ["conversationId"], select: { conversationId: true } }),
     prisma.message.findMany({ where: { conversationId: { in: convIds }, direction: "internal", kind: "termin_vorschlag" }, select: { conversationId: true, createdAt: true } }),
+    // Merker der Strecke (termin-strecke.ts STRECKE): nur Art und Weg, keine Inhalte
+    prisma.message.findMany({
+      where: { conversationId: { in: convIds }, direction: "internal", kind: { in: ["vorbereitung_antwort", "strecke_abschluss", "buchungsseite_wa_klick"] } },
+      select: { conversationId: true, kind: true, body: true },
+    }),
   ]);
+  const vorb = new Map<string, { gestartet: boolean; fertig: boolean; waKlick: boolean; ueberBuchungsseite: boolean }>();
+  for (const m of vorbereitung) {
+    const v = vorb.get(m.conversationId) ?? { gestartet: false, fertig: false, waKlick: false, ueberBuchungsseite: false };
+    let d: { art?: unknown; via?: unknown } = {};
+    try {
+      d = JSON.parse(m.body ?? "{}");
+    } catch {}
+    if (m.kind === "vorbereitung_antwort" && d.art === "ja") {
+      v.gestartet = true;
+      if (d.via === "buchungsseite") v.ueberBuchungsseite = true;
+    }
+    if (m.kind === "strecke_abschluss") v.fertig = true;
+    if (m.kind === "buchungsseite_wa_klick") v.waKlick = true;
+    vorb.set(m.conversationId, v);
+  }
   // Gelesen: Nachricht des Assistenten bis 2 Min. nach einem Vorschlags-Merker mit Status „read“
   const gelesen = new Set<string>();
   if (vorschlaege.length) {
@@ -156,6 +193,12 @@ export async function ladeJourney(tage: number, now = new Date()): Promise<Journ
       antwort: cs.some((c) => mitAntwort.has(c)) || !!s?.reaktionAt,
       vorschlag: cs.some((c) => mitVorschlag.has(c)) || (!!s?.erstmailAt && s.zeiten.length > 0),
       vorschlagGelesen: cs.some((c) => gelesen.has(c)) || (!!s?.erstmailAt && s.zeiten.length > 0 && !!s.reaktionAt),
+      vorbereitung: {
+        gestartet: cs.some((c) => vorb.get(c)?.gestartet),
+        fertig: cs.some((c) => vorb.get(c)?.fertig),
+        waKlick: cs.some((c) => vorb.get(c)?.waKlick),
+        ueberBuchungsseite: cs.some((c) => vorb.get(c)?.ueberBuchungsseite),
+      },
       termin: t
         ? {
             via: t.bookedVia,

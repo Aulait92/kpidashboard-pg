@@ -3,7 +3,8 @@
 //   1. Bestätigung ab v5: „Ihr Termin bei Herrn Testkopf“, am Ende die Frage mit [Ja, gern] [Lieber im Termin];
 //      bis zur Freigabe die alte v4 (Rückfall). Anrede des Leads aus dem Formular, sonst nur bei eindeutigem Vornamen.
 //   2. „Ja, gern“ startet die Strecke (Fragen-Engine, sonst Komplettcheck), „Lieber im Termin“ → „Alles klar, bis Montag!“
-//   3. Keine Antwort: einmal am Folgetag die Nachfrage (eigene Vorlage), dann Ruhe
+//   3. Keine Antwort: einmal etwa 3 Std. später (Mo bis Sa 8 bis 20 Uhr) die Nachfrage (eigene Vorlage), dann Ruhe
+//   6. „Weiter auf WhatsApp“ der Buchungsseite: vorbefüllte Nachricht startet die Vorbereitung sofort, nie doppelt
 //   4. Fragen-Engine (Allianz-Sparten, Bündel ohne Dubletten): Liste/Knöpfe, Fortschritt, Folgefragen, Mehrfachauswahl,
 //      gemeinsame Vorvertragsfrage, Bekanntes überspringen, einmal
 //      nachfragen, „Rest im Termin“, Speicherung in den Angaben und am Lead
@@ -29,7 +30,9 @@ import { handleInboundPayload } from "@/lib/whatsapp/gateway";
 import { sendBookingConfirmation } from "@/lib/whatsapp/reminders";
 import { templateBodyFor, templateNamesOf } from "@/lib/whatsapp/template-plan";
 import type { NoticePurpose } from "@/lib/whatsapp/templates";
-import { runVorbereitungNachfassen, STRECKE, bisWann, nachfassTag } from "@/lib/whatsapp/termin-strecke";
+import { runVorbereitungNachfassen, STRECKE, bisWann, nachfassAb } from "@/lib/whatsapp/termin-strecke";
+import { VORAB_TEXT } from "@/lib/whatsapp/vorab";
+import { waWeiterKlick, waWeiterMoeglich } from "@/lib/whatsapp/buchung-whatsapp";
 import { fuehreAktionAus } from "@/lib/ops-aktionen";
 import { cleanupCustomer, makeCustomer, ohneSplittest, requireTestDb } from "./db";
 
@@ -246,42 +249,67 @@ describe("Antwort auf die Frage", () => {
   });
 });
 
-describe("Nachfrage am Folgetag", () => {
-  it("einmal am Folgetag (Geschäftszeit) mit eigener Vorlage und denselben Knöpfen, dann Ruhe", async () => {
+describe("Nachfrage nach etwa 3 Stunden", () => {
+  /** Merker der Frage auf eine feste Zeit (Samstag vor dem Termin, Berliner Zeit hh:mm, Winterzeit) legen. */
+  async function frageAm(conversationId: string, startsAt: Date, uhrzeitUtc: string): Promise<Date> {
+    const samstag = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(new Date(startsAt.getTime() - 2 * DAY));
+    const at = new Date(`${samstag}T${uhrzeitUtc}:00.000Z`);
+    await prisma.message.updateMany({ where: { conversationId, direction: "internal", kind: STRECKE.vorbereitungFrage }, data: { createdAt: at } });
+    return at;
+  }
+
+  it("einmal etwa 3 Std. nach der Frage (Geschäftszeit) mit eigener Vorlage und denselben Knöpfen, dann Ruhe", async () => {
     await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
     await freigeben("booking_prep_nudge", "pg_booking_prep_nudge_v2_sie", "sie");
     const x = await lead({ formData: [{ label: "Anrede", value: "Herr" }] });
     await bestaetigen(x);
-    const frage = (await merker(x.conversationId, STRECKE.vorbereitungFrage))[0].createdAt;
-    // Folgetag 10 Uhr (Sonntag zählt nicht)
-    let folgetag = new Date(frage.getTime() + DAY);
-    if (new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", weekday: "short" }).format(folgetag) === "Sun") folgetag = new Date(folgetag.getTime() + DAY);
-    const zehn = new Date(`${new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(folgetag)}T09:00:00.000Z`);
+    // Samstag 10 Uhr gefragt → Samstag 13 Uhr nachgefragt
+    const frage = await frageAm(x.conversationId, x.termin.startsAt, "09:00");
     sent.length = 0;
-    // am selben Tag nichts
-    expect((await runVorbereitungNachfassen(new Date(frage.getTime() + 7 * HOUR))).gesendet).toBe(0);
-    expect(nachfassTag(frage, zehn)).toBe(true);
-    if (zehn.getTime() > x.termin.startsAt.getTime() - 2 * HOUR) return; // Termin zu nah (Wochentag des Testlaufs)
-    expect(await runVorbereitungNachfassen(zehn)).toMatchObject({ gesendet: 1 });
+    expect((await runVorbereitungNachfassen(new Date(frage.getTime() + 2 * HOUR))).gesendet).toBe(0);
+    expect(nachfassAb(frage)).toEqual(new Date(frage.getTime() + 3 * HOUR));
+    expect(await runVorbereitungNachfassen(new Date(frage.getTime() + 3 * HOUR + 60_000))).toMatchObject({ gesendet: 1 });
     const m = letzte(x.phone);
     expect(m?.template?.name).toBe("pg_booking_prep_nudge_v2_sie");
     expect(params(m)).toEqual(["Herr Kranert", expect.stringMatching(/^Montag, /)]);
     expect(payloads(m)).toEqual(["vorbereitung:ja", "vorbereitung:termin"]);
-    // kein zweites Mal, auch nicht am Tag danach
-    expect((await runVorbereitungNachfassen(new Date(zehn.getTime() + HOUR))).gesendet).toBe(0);
-    expect((await runVorbereitungNachfassen(new Date(zehn.getTime() + DAY))).gesendet).toBe(0);
+    // kein zweites Mal, auch nicht später
+    expect((await runVorbereitungNachfassen(new Date(frage.getTime() + 4 * HOUR))).gesendet).toBe(0);
+    expect((await runVorbereitungNachfassen(new Date(frage.getTime() + DAY))).gesendet).toBe(0);
+  });
+
+  it("Frage am Samstagabend: nicht nachts und nicht sonntags, sondern Montag ab 8 Uhr (Termin noch mindestens 2 Std. entfernt)", async () => {
+    await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
+    await freigeben("booking_prep_nudge", "pg_booking_prep_nudge_v2_sie", "sie");
+    const x = await lead();
+    await bestaetigen(x);
+    // Samstag 18:30 Uhr gefragt
+    const frage = await frageAm(x.conversationId, x.termin.startsAt, "17:30");
+    const montagAcht = new Date(frage.getTime() + 37.5 * HOUR);
+    expect(nachfassAb(frage)).toEqual(montagAcht);
+    sent.length = 0;
+    expect((await runVorbereitungNachfassen(new Date(frage.getTime() + 3.5 * HOUR))).gesendet).toBe(0);
+    expect((await runVorbereitungNachfassen(new Date(frage.getTime() + 16 * HOUR))).gesendet).toBe(0);
+    expect((await runVorbereitungNachfassen(new Date(montagAcht.getTime() - 60_000))).gesendet).toBe(0);
+    expect((await runVorbereitungNachfassen(new Date(montagAcht.getTime() + 5 * 60_000))).gesendet).toBe(1);
   });
 
   it("nicht, wenn der Lead geantwortet hat; ohne freigegebene Vorlage nichts", async () => {
     await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
     const x = await lead();
     await bestaetigen(x);
-    const frage = (await merker(x.conversationId, STRECKE.vorbereitungFrage))[0].createdAt;
-    const spaeter = new Date(frage.getTime() + DAY);
-    const r = await runVorbereitungNachfassen(new Date(`${new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(spaeter)}T09:00:00.000Z`));
+    const frage = await frageAm(x.conversationId, x.termin.startsAt, "09:00");
+    const r = await runVorbereitungNachfassen(new Date(frage.getTime() + 4 * HOUR));
     expect(r.gesendet).toBe(0);
     await knopf(x.phone, "Lieber im Termin", "vorbereitung:termin");
     expect(await merker(x.conversationId, STRECKE.vorbereitungNachfrage)).toHaveLength(0);
+    // mit Vorlage, aber der Lead hat geschrieben: keine Nachfrage
+    await freigeben("booking_prep_nudge", "pg_booking_prep_nudge_v2_sie", "sie");
+    const y = await lead();
+    await bestaetigen(y);
+    const f2 = await frageAm(y.conversationId, y.termin.startsAt, "09:00");
+    await prisma.message.create({ data: { conversationId: y.conversationId, direction: "inbound", kind: "text", body: "Hallo", createdAt: new Date(f2.getTime() + HOUR) } });
+    expect((await runVorbereitungNachfassen(new Date(f2.getTime() + 4 * HOUR))).gesendet).toBe(0);
   });
 
   it("„bis Montag“: heute, morgen bzw. Wochentag", () => {
@@ -289,6 +317,90 @@ describe("Nachfrage am Folgetag", () => {
     expect(bisWann(new Date("2026-11-30T15:00:00.000Z"), jetzt)).toBe("Montag");
     expect(bisWann(new Date("2026-11-27T15:00:00.000Z"), jetzt)).toBe("morgen");
     expect(bisWann(new Date("2026-11-26T15:00:00.000Z"), jetzt)).toBe("heute");
+  });
+});
+
+describe("„Weiter auf WhatsApp“ von der Buchungsseite", () => {
+  it("vorbefüllte Nachricht nach dem Komplettcheck auf der Seite: Strecke startet sofort, ohne Komplettcheck-Frage, nie doppelt", async () => {
+    await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
+    await freigeben("booking_prep_nudge", "pg_booking_prep_nudge_v2_sie", "sie");
+    const x = await lead();
+    await prisma.appointment.update({ where: { id: x.termin.id }, data: { komplettcheck: true } });
+    await bestaetigen(x);
+    sent.length = 0;
+    await schreibt(x.phone, VORAB_TEXT);
+    expect(an(x.phone).length).toBeGreaterThan(0);
+    expect(textVon(an(x.phone)[0])).toMatch(/^Super, danke!/);
+    expect(await merker(x.conversationId, STRECKE.komplettFrage)).toHaveLength(0);
+    const antworten = await merker(x.conversationId, STRECKE.vorbereitungAntwort);
+    expect(antworten).toHaveLength(1);
+    expect(JSON.parse(antworten[0].body!)).toMatchObject({ art: "ja", via: "buchungsseite", appointmentId: x.termin.id });
+    expect((await prisma.leadHistory.findFirst({ where: { leadId: x.lead.id, text: { contains: "über die Buchungsseite gestartet" } } }))?.text).toBeTruthy();
+    // „Ja, gern“ unter der Bestätigung danach: nichts Neues
+    const vorher = an(x.phone).length;
+    await knopf(x.phone, "Ja, gern", "vorbereitung:ja");
+    expect(an(x.phone)).toHaveLength(vorher);
+    expect(await merker(x.conversationId, STRECKE.vorbereitungAntwort)).toHaveLength(1);
+    // keine Nachfrage mehr
+    const frage = (await merker(x.conversationId, STRECKE.vorbereitungFrage))[0].createdAt;
+    expect((await runVorbereitungNachfassen(new Date(Math.max(nachfassAb(frage).getTime(), Date.now()) + 60_000))).gesendet).toBe(0);
+  });
+
+  it("auch ohne gestellte Frage (Bestätigung noch nicht raus): startet mit dem Komplettcheck; Bestätigung danach geht raus, Strecke nicht zweimal", async () => {
+    await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
+    const x = await lead();
+    await schreibt(x.phone, "Ja gerne beantworte ich die Fragen vorab");
+    const m = letzte(x.phone);
+    expect(textVon(m)).toMatch(/^Super, danke!/);
+    expect(m?.interactive?.action.buttons?.map((b) => b.reply.id)).toContain("komplettcheck:ja");
+    expect(await merker(x.conversationId, STRECKE.komplettFrage)).toHaveLength(1);
+    await bestaetigen(x);
+    expect(an(x.phone).length).toBe(2);
+    await knopf(x.phone, "Ja, gern", "vorbereitung:ja");
+    expect(await merker(x.conversationId, STRECKE.komplettFrage)).toHaveLength(1);
+    expect(await merker(x.conversationId, STRECKE.vorbereitungAntwort)).toHaveLength(1);
+  });
+
+  it("zweites Mal bzw. Termin nur am Lead (Chat nicht verknüpft): Termin über den Lead, Strecke nur einmal", async () => {
+    const x = await lead();
+    await prisma.appointment.update({ where: { id: x.termin.id }, data: { conversationId: null } });
+    await schreibt(x.phone, VORAB_TEXT);
+    expect(await merker(x.conversationId, STRECKE.komplettFrage)).toHaveLength(1);
+    await schreibt(x.phone, VORAB_TEXT);
+    expect(await merker(x.conversationId, STRECKE.komplettFrage)).toHaveLength(1);
+    expect(await merker(x.conversationId, STRECKE.vorbereitungAntwort)).toHaveLength(1);
+  });
+
+  it("ohne kommenden Termin bzw. andere Texte: nichts gestartet", async () => {
+    const x = await lead();
+    await prisma.appointment.update({ where: { id: x.termin.id }, data: { status: "cancelled" } });
+    await schreibt(x.phone, VORAB_TEXT);
+    expect(await merker(x.conversationId, STRECKE.vorbereitungAntwort)).toHaveLength(0);
+    const y = await lead();
+    await schreibt(y.phone, "Ich beantworte die Fragen nicht vorab");
+    expect(await merker(y.conversationId, STRECKE.vorbereitungAntwort)).toHaveLength(0);
+  });
+
+  it("Knopf auf der Seite: nur mit Nummer des Vermittlers; Klick einmal gemessen, Link zu wa.me mit Text; nach der Antwort weg", async () => {
+    const x = await lead();
+    const token = `mt-${uid()}`;
+    await prisma.appointment.update({ where: { id: x.termin.id }, data: { manageToken: token } });
+    const t = { id: x.termin.id, customerId, conversationId: x.conversationId, leadId: x.lead.id };
+    expect(await waWeiterMoeglich(t)).toBe(false);
+    expect(await waWeiterKlick(token)).toBeNull();
+    await prisma.whatsAppAccount.update({ where: { customerId }, data: { phoneNumber: "+49 151 2345678" } });
+    expect(await waWeiterMoeglich(t)).toBe(true);
+    const link = await waWeiterKlick(token);
+    expect(link).toBe(`https://wa.me/491512345678?text=${encodeURIComponent("Ja, gern beantworte ich die Fragen vorab.")}`);
+    await waWeiterKlick(token);
+    expect(await merker(x.conversationId, STRECKE.waWeiterKlick)).toHaveLength(1);
+    expect(await waWeiterKlick("falsch")).toBeNull();
+    await schreibt(x.phone, VORAB_TEXT);
+    expect(await waWeiterMoeglich(t)).toBe(false);
+    // Assistent im Chat aus: kein Knopf
+    const y = await lead();
+    await prisma.conversation.update({ where: { id: y.conversationId }, data: { botActive: false } });
+    expect(await waWeiterMoeglich({ id: y.termin.id, customerId, conversationId: y.conversationId, leadId: y.lead.id })).toBe(false);
   });
 });
 

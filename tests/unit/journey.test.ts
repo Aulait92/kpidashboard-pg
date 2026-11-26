@@ -53,4 +53,20 @@ describe("Journey-Trichter", () => {
     expect(t.quoten.terminJeLead).toBeNull();
     expect(t.medianStundenBisTermin).toBeNull();
   });
+
+  it("Vorbereitung: gestartet, fertig und „Weiter auf WhatsApp“ der Buchungsseite (Ole, 26.11.2026)", () => {
+    const v = (x: Partial<NonNullable<JourneyLead["vorbereitung"]>>) => ({ gestartet: false, fertig: false, waKlick: false, ueberBuchungsseite: false, ...x });
+    const t = trichter([
+      lead("k1", { termin: termin({ via: "booking_page" }), vorbereitung: v({ waKlick: true, gestartet: true, ueberBuchungsseite: true, fertig: true }) }),
+      lead("k1", { termin: termin({ via: "booking_page" }), vorbereitung: v({ waKlick: true }) }),
+      lead("k1", { termin: termin(), vorbereitung: v({ gestartet: true }) }),
+      lead("k1", { termin: termin() }),
+    ]);
+    expect(t.vorbereitungGestartet).toBe(2);
+    expect(t.vorbereitungFertig).toBe(1);
+    expect(t.waWeiter).toEqual({ klick: 2, gestartet: 1 });
+    expect(t.quoten.vorbereitungJeTermin).toBe(50);
+    expect(t.quoten.vorbereitungFertigJeGestartet).toBe(50);
+    expect(t.quoten.waWeiterGestartetJeKlick).toBe(50);
+  });
 });

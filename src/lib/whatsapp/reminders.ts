@@ -75,7 +75,7 @@ export function kfzUnterlagenSatz(an: Ansprache): string {
  * Bestätigung nach Buchung (z. B. über die Buchungsseite, Dankeseite des Leadformulars, Vermittler, Assistent).
  * Fenster zu (Ole, 26.11.2026, Kundenfall Schwarzkopf): Vorlage ab v5 mit „Ihr Termin bei Herrn Schwarzkopf“ und der
  * Frage nach der Vorbereitung [Ja, gern] [Lieber im Termin]; die Antwort öffnet das 24-h-Fenster, „Ja, gern“ startet die
- * Vorbereitungsstrecke (termin-strecke.ts vorbereitungAntwort), ohne Antwort einmal am Folgetag nachfragen
+ * Vorbereitungsstrecke (termin-strecke.ts vorbereitungAntwort), ohne Antwort einmal nach etwa 3 Std. nachfragen
  * (runVorbereitungNachfassen). Bis zur Freigabe der v5 bei Meta die freigegebene v4 (ohne Frage, wie bisher).
  * Fenster offen: Freitext wie bisher, die Strecke startet von selbst (Assistent bzw. runBuchungsseiteNachholen).
  * Anrede des Leads nur aus Angaben („Guten Tag Herr Müller“), sonst mit vollem Namen; nie aus dem Vornamen geraten.
@@ -129,7 +129,7 @@ export async function sendBookingConfirmation(opts: {
     textButtons: [KNOPF.terminVerschieben],
     textPayloads: [KNOPF.terminVerschieben],
   });
-  // Vorlage mit der Frage nach der Vorbereitung: merken (Antwort per Knopf, Nachfrage am Folgetag)
+  // Vorlage mit der Frage nach der Vorbereitung: merken (Antwort per Knopf, Nachfrage nach etwa 3 Stunden)
   if (r.mode === "template" && (r.version ?? 0) >= 5) {
     const { vorbereitungGefragt } = await import("@/lib/whatsapp/termin-strecke");
     await vorbereitungGefragt(r.conversationId, { appointmentId: opts.appointmentId ?? null, leadId: opts.leadId ?? null, startsAt: opts.startsAt }, "bestaetigung").catch((e) =>
@@ -138,13 +138,13 @@ export async function sendBookingConfirmation(opts: {
   }
 }
 
-/** Termin für die Nachfrage am Folgetag: „Montag, 30.11., 16:00 Uhr“ (wie in der Bestätigung). */
+/** Termin für die Nachfrage nach etwa 3 Stunden: „Montag, 30.11., 16:00 Uhr“ (wie in der Bestätigung). */
 export function terminFuerNachfrage(d: Date): string {
   return formatWhenDE(d);
 }
 
 /**
- * Nachfrage zur Vorbereitung am Folgetag (Vorlage booking_prep_nudge, Knöpfe wie die Bestätigung ab v5). Im offenen
+ * Nachfrage zur Vorbereitung nach etwa 3 Stunden (Vorlage booking_prep_nudge, Knöpfe wie die Bestätigung ab v5). Im offenen
  * Fenster als Freitext mit Knöpfen. NoTemplateError, solange die Vorlage nicht freigegeben ist (der Aufrufer lässt es).
  */
 export async function sendVorbereitungNachfrage(opts: { customerId: string; to: string; name: string | null; leadId: string | null; startsAt: Date }): Promise<void> {

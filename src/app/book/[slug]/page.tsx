@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { LeadLegalFooter } from "@/components/lead-legal-footer";
 import { a, asAnsprache, type Ansprache } from "@/lib/ansprache";
-import { CheckCircle2, Clock, Mail, MapPin, Phone, Video } from "lucide-react";
+import { CheckCircle2, Clock, Mail, MapPin, MessageCircle, Phone, Video } from "lucide-react";
 import { agenturOrt, loadTerminFormate } from "@/lib/termin-formate-server";
 import { TERMIN_FORMATE_STANDARD } from "@/lib/termin-formate";
 import { kontaktWege, vermittlerKontakt, type VermittlerKontakt } from "@/lib/buchung-ohne-kalender";
@@ -194,16 +194,25 @@ export default async function BookingPage({ params, searchParams }: Props) {
     if (appt) {
       // Komplettcheck direkt nach der Buchung (Ole, 19.11.2026): wer über die Seite bucht, wurde bisher nicht gefragt.
       // Nur einmal, nur solange offen, nicht für den Vermittler selbst (Rückrufliste).
-      const kcOffen = appt.komplettcheck === null && appt.status === "booked" && appt.startsAt.getTime() > nowMs() && !!appt.manageToken && !sp.lead;
+      const kommend = appt.status === "booked" && appt.startsAt.getTime() > nowMs() && !!appt.manageToken && !sp.lead;
+      const kcOffen = kommend && appt.komplettcheck === null;
+      // „Weiter auf WhatsApp“ (Ole, 26.11.2026): nach der Komplettcheck-Frage (bzw. ohne sie) ein klarer nächster Schritt,
+      // die Vorbereitungsfragen im Chat. Nur mit WhatsApp-Nummer des Vermittlers, aktivem Assistenten im Chat und solange
+      // der Lead die Vorbereitung noch nicht beantwortet hat (lib/whatsapp/buchung-whatsapp.ts).
+      const waWeiter = kommend && !kcOffen ? await import("@/lib/whatsapp/buchung-whatsapp").then((m) => m.waWeiterMoeglich({ ...appt, customerId: conn.customerId })).catch(() => false) : false;
       let kcFrage: string | null = null;
-      if (kcOffen) {
+      let personNom: string | null = null;
+      if (kcOffen || waWeiter) {
         const { komplettcheckFrage, istFamilie, formularAus, vermittlerName } = await import("@/lib/whatsapp/gespraech");
         const { ansprechpartner } = await import("@/lib/lead-anrede");
         const lead = appt.leadId ? await prisma.lead.findUnique({ where: { id: appt.leadId }, select: { formData: true, name: true, needData: true, source: true } }) : null;
         const who = await ansprechpartner({ customerId: conn.customerId, leadId: appt.leadId, phone: null, name: lead?.name ?? null });
         const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || advisor });
-        const v = await variante("komplettcheck_text", appt.leadId ?? appt.conversationId ?? appt.id);
-        kcFrage = komplettcheckFrage(an, person, istFamilie(formularAus(lead?.formData), lead?.needData), v, lead?.source).replace(/^Danke! /, "");
+        personNom = person.nom;
+        if (kcOffen) {
+          const v = await variante("komplettcheck_text", appt.leadId ?? appt.conversationId ?? appt.id);
+          kcFrage = komplettcheckFrage(an, person, istFamilie(formularAus(lead?.formData), lead?.needData), v, lead?.source).replace(/^Danke! /, "");
+        }
       }
       return (
         <Shell customerId={conn?.customerId}>
@@ -256,11 +265,27 @@ export default async function BookingPage({ params, searchParams }: Props) {
             </form>
           ) : sp.kc === "1" ? (
             <p className="mt-4 text-sm font-medium text-emerald-700" data-komplettcheck-ja>
-              {a(an, "Super, im Termin wird auch kurz geschaut, wo du vielleicht doppelt zahlst und sparen kannst.", "Super, im Termin wird auch kurz geschaut, wo Sie vielleicht doppelt zahlen und sparen können.")}
+              {a(an, "Super, im Termin wird auch geschaut, ob du irgendwo doppelt zahlst.", "Super, im Termin wird auch geschaut, ob Sie irgendwo doppelt zahlen.")}
             </p>
           ) : null}
+          {waWeiter && personNom ? (
+            <div className="mt-5 rounded-xl bg-[color:var(--brand-soft)] p-4" data-wa-weiter>
+              <h2 className="text-[15px] font-semibold leading-snug">{a(an, "Dein Angebot schneller bekommen", "Ihr Angebot schneller bekommen")}</h2>
+              <p className="mt-1 text-sm leading-relaxed">
+                {a(
+                  an,
+                  `Beantworte jetzt ein paar kurze Fragen per WhatsApp, dann kann ${personNom} dein Angebot schon vorbereiten.`,
+                  `Beantworten Sie jetzt ein paar kurze Fragen per WhatsApp, dann kann ${personNom} Ihr Angebot schon vorbereiten.`,
+                )}
+              </p>
+              {/* Über die eigene Route: Klick messen, dann weiter zu wa.me mit vorbefülltem Text */}
+              <a href={`/book/manage/${appt.manageToken}/whatsapp`} className={buttonClass("primary", "md", "mt-3 h-12 w-full text-base")} data-wa-weiter-knopf>
+                <MessageCircle className="h-5 w-5" /> Weiter auf WhatsApp
+              </a>
+            </div>
+          ) : null}
           {appt.mode === "video" && appt.meetUrl ? (
-            <a href={appt.meetUrl} className={buttonClass(kcFrage ? "secondary" : "primary", "md", "mt-4 w-full")}>
+            <a href={appt.meetUrl} className={buttonClass(kcFrage || waWeiter ? "secondary" : "primary", "md", "mt-4 w-full")}>
               <Video className="h-4 w-4" /> Link zum Videocall
             </a>
           ) : null}

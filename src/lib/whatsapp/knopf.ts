@@ -23,7 +23,7 @@
 //   „Ja“/„Mache ich gleich“ (kalender:ja|gleich, frühere Kalenderfrage) → zugesagt, kurze Antwort
 //   „Ja“/„Nein“ zu einer Angebotsfrage (folge:<key>:ja|nein) → Assistent mit Hinweis, welche Frage beantwortet ist
 //   Tierfrage (TKV, tier:<key>:<wert>, z. B. „Ja, gesund“/„War in Behandlung“) → speichern, nächste Tierfrage bzw. Komplettcheck
-//   „Ja, gern“/„Lieber im Termin“ unter der Bestätigung ab v5 bzw. der Nachfrage am Folgetag (vorbereitung:ja|termin,
+//   „Ja, gern“/„Lieber im Termin“ unter der Bestätigung ab v5 bzw. der Nachfrage nach etwa 3 Stunden (vorbereitung:ja|termin,
 //                                                    Ole 26.11.2026) → Strecke starten bzw. „Alles klar, bis Montag!“
 //   Antwort auf eine Frage der Fragen-Engine (vf:<sparte>.<frage>:<option>, „Rest im Termin“ vf:rest, lib/vorbereitung)
 // Bedenkzeit zum Angebot (Paket P5, lib/bedenkzeit-server.ts):
@@ -344,7 +344,7 @@ export async function handleButtonReply(
     });
     return { handled: false, hint: knopfHinweis(v, now)?.replace("„Bitte verschieben“", "„Lieber andere Zeit“") ?? null, zeit: null };
   }
-  // Frage nach der Vorbereitung (Bestätigung ab v5, Nachfrage am Folgetag) und Fragen-Engine: ohne Assistent
+  // Frage nach der Vorbereitung (Bestätigung ab v5, Nachfrage nach etwa 3 Stunden) und Fragen-Engine: ohne Assistent
   if (k.aktion === "vorbereitung") {
     const { vorbereitungAntwort } = await import("@/lib/whatsapp/termin-strecke");
     return { handled: await vorbereitungAntwort(conversationId, k.art, now) };

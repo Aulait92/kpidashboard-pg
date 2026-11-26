@@ -68,7 +68,7 @@ export const CORE_PURPOSES: NoticePurpose[] = [
   "outreach_kfz_wechsel",
   "outreach_kfz_neu",
   "booking_confirmation",
-  // Nachfrage zur Vorbereitung am Folgetag (Ole, 26.11.2026, Kundenfall Schwarzkopf: Bestätigung ohne Frage, Fenster blieb zu)
+  // Nachfrage zur Vorbereitung nach etwa 3 Stunden (Ole, 26.11.2026, Kundenfall Schwarzkopf: Bestätigung ohne Frage, Fenster blieb zu)
   "booking_prep_nudge",
   "reminder",
   "reminder_soon",
@@ -424,7 +424,7 @@ export const CUSTOMER_TITLES: Record<NoticePurpose, { title: string; when: strin
   outreach_kfz_wechsel: { title: "Erste Nachricht: Kfz-Wechsel", when: "Wenige Minuten nach dem Formular bei einem Wechsel fürs jetzige Auto: wann der Vertrag ausläuft, mit der Erstinformation als PDF." },
   outreach_kfz_neu: { title: "Erste Nachricht: Kfz für ein neues Auto", when: "Wenige Minuten nach dem Formular bei einem neuen Auto: ob es schon da ist, mit der Erstinformation als PDF." },
   booking_confirmation: { title: "Terminbestätigung", when: "Sobald ein Lead einen Termin gebucht hat, mit der Frage, ob er vorab ein paar kurze Fragen beantwortet." },
-  booking_prep_nudge: { title: "Nachfrage zur Vorbereitung", when: "Einmal am Tag nach der Buchung, wenn der Lead auf die Frage in der Bestätigung nicht geantwortet hat." },
+  booking_prep_nudge: { title: "Nachfrage zur Vorbereitung", when: "Einmal etwa 3 Stunden nach der Bestätigung (Mo bis Sa 8 bis 20 Uhr), wenn der Lead auf die Frage darin nicht geantwortet hat." },
   reminder: { title: "Terminerinnerung", when: "Etwa 24 Stunden vor dem Termin." },
   reminder_soon: { title: "Kurz vor dem Termin", when: "Etwa eine Stunde vor dem Termin: passt alles?" },
   reminder_start: { title: "Gleich geht es los", when: "15 Minuten vor einem Videotermin, mit dem Link zum Videoraum." },

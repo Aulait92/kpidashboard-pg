@@ -279,7 +279,7 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-strecke-buchungsseite");
       return { error: e instanceof Error ? e.message : String(e) };
     });
-  // Bestätigung mit Frage nach der Vorbereitung ohne Antwort: einmal am Folgetag nachfragen (Ole, 26.11.2026)
+  // Bestätigung mit Frage nach der Vorbereitung ohne Antwort: einmal nach etwa 3 Std. nachfragen (Ole, 26.11.2026)
   const vorbereitungNachfrage = await import("@/lib/whatsapp/termin-strecke")
     .then((m) => m.runVorbereitungNachfassen(now))
     .catch((e: unknown) => {

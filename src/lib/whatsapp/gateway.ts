@@ -526,7 +526,9 @@ async function persistInbound(
   // Getippte Antwort auf die Frage nach der Vorbereitung unter der Bestätigung (Ole, 26.11.2026: „Ja“, „lieber im Termin“)
   if (botErlaubt && type === "text" && !botHint) {
     try {
-      const { vorbereitungFreitext } = await import("@/lib/whatsapp/termin-strecke");
+      const { vorbereitungFreitext, vorbereitungUeberBuchungsseite } = await import("@/lib/whatsapp/termin-strecke");
+      // Vorbefüllte Nachricht aus „Weiter auf WhatsApp“ der Buchungsseite: startet immer (auch ohne gestellte Frage)
+      if (await vorbereitungUeberBuchungsseite(conversation.id, body, now)) return;
       if (await vorbereitungFreitext(conversation.id, body, now)) return;
     } catch (e) {
       console.error("[whatsapp vorbereitung]", e instanceof Error ? e.name : "Fehler");
