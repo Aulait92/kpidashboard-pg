@@ -69,7 +69,8 @@ export function FilterChips({ fields, searchKey = "q", searchPlaceholder = "Such
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2 transition-opacity", pending && "opacity-60")}>
-      <label className={cn("relative flex h-10 min-w-[220px] flex-1 items-center sm:h-9 sm:max-w-xs", noSearch && "hidden")}>
+      {/* Ab zwei Filtern auf dem Handy: Suche volle Breite, Filter darunter nebeneinander (Ole, 26.11.2026) */}
+      <label className={cn("relative flex h-10 min-w-[220px] flex-1 items-center sm:h-9 sm:max-w-xs", fields.length > 1 && "basis-full sm:basis-auto", noSearch && "hidden")}>
         <Search className="pointer-events-none absolute left-3 h-4 w-4 text-[color:var(--muted)]" />
         <input
           value={q}
