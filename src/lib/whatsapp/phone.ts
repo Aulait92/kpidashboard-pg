@@ -11,6 +11,12 @@ export function normalizePhone(input: string): string | null {
     // Ländervorwahl gewählt bzw. die 0 der Vorwahl mitgetippt. Nach +1 (USA/Kanada) beginnt nie eine 0, das ist eine
     // deutsche Nummer (0175… → 49175…). Nach +49, +43, +41 die 0 der Vorwahl entfernen (Italien +39 behält die 0).
     if (digits.startsWith("10") && digits.length >= 11) digits = `49${digits.slice(2)}`;
+    // Ole, 26.11.2026 (Lohmann-Lead „+15206384856“): Handynummer ohne 0 und ohne Ländervorwahl getippt, das Formular
+    // setzt +1 davor. Unsere Leads kommen aus Anzeigen in Deutschland: „+1“ gefolgt von einer vollständigen deutschen
+    // Handynummer (15x, 160/162/163, 17x mit 10 oder 11 Ziffern) ist eine deutsche Nummer.
+    else if (/^1(5\d|6[023]|7\d)\d{7,8}$/.test(digits)) digits = `49${digits}`;
+    // „+1“ vor einer deutschen Handynummer ohne 0 (+1 1752…): nach +1 beginnt nie eine 1
+    else if (/^11(5\d|6[023]|7\d)\d{7,8}$/.test(digits)) digits = `49${digits.slice(1)}`;
     else if (/^(49|43|41)0/.test(digits)) digits = digits.slice(0, 2) + digits.slice(3);
   } else if (digits.startsWith("00")) {
     digits = digits.slice(2);
