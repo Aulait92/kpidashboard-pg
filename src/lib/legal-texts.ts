@@ -108,6 +108,10 @@
 // Angebote: Garantie nur als Sondervereinbarung vollständig im Angebotstext. Für Kunden ohne Garantie ändert sich
 // nichts (seit 22.11.2026 galten für sie keine Garantien), darum keine Mitteilung; kein Banner, keine erneute Zustimmung.
 // Protokoll: docs/recht/2026-11-26-agb-ohne-garantien.md.
+// 26.11.2026 (gleicher Stand, Ole: „Bei Angeboten ohne Pay-per-Lead darf in den AGB nichts zu Pay-per-Lead stehen“):
+// Wortlaut unverändert; jedes Angebot zeigt nur, was dafür gilt (agbFiltern nach agbMerkmaleAus: Pay-per-Lead,
+// Vorauszahlung), Nachweis bei der Annahme (Offer.agbVersion/agbMerkmale/agbHash). /rechtliches/agb vollständig je
+// Paket (agbOeffentlichJePaket). Protokoll: docs/recht/2026-11-26-agb-nur-was-gilt.md.
 export const LEGAL_VERSION = "26.11.2026";
 
 export const PROVIDER = {
@@ -413,6 +417,14 @@ const LEAD_REKLAMATION: LegalSection = {
 
 const UST_LEADS: LegalSection = { title: "Umsatzsteuer auf Leads", items: [agbPunkt("Vergütung und Zahlung", "Umsatzsteuer auf Leads")] };
 
+/** Bestellung von Leads per Stück (Pay-per-Lead + Software und gemischte Angebote). */
+const LEAD_BESTELLUNG: LegalSection = {
+  title: "Leads: Bestellung, Preis und Zahlung",
+  items: [
+    "Leads bestellt der Kunde im Kundenbereich, ohne Mindestabnahme, zu dem bei der Bestellung genannten Preis je Lead; sie sind nicht Teil der monatlichen Vergütung. Die Umsatzsteuer richtet sich nach dem Abschnitt „Umsatzsteuer auf Leads“ und steht an der Bestellung. Jede Bestellung erhält eine eigene Rechnung und wird mit der Bestellung per Lastschrift oder Karte bezahlt.",
+  ],
+};
+
 /**
  * Bedingungen für das Paket „Nur Leads“ ab 24.11.2026 (ersetzen AGB plus Besondere Bedingungen in einem): nur, was für
  * Leads per Stück gilt. Wortlaut zu Leistung, Bestellung, Voraussetzungen und Laufzeit aus PPL_NUR_LEADS_BEDINGUNGEN_ALT
@@ -490,12 +502,7 @@ export function agbPplSoftware(opt: { zugaenge?: boolean; zusatzmodule?: boolean
         ...(opt.zusatzmodule ? [sub("Zusatzmodule")] : []),
       ],
     },
-    {
-      title: "Leads: Bestellung, Preis und Zahlung",
-      items: [
-        "Leads bestellt der Kunde im Kundenbereich, ohne Mindestabnahme, zu dem bei der Bestellung genannten Preis je Lead; sie sind nicht Teil der monatlichen Vergütung. Die Umsatzsteuer richtet sich nach dem Abschnitt „Umsatzsteuer auf Leads“ und steht an der Bestellung. Jede Bestellung erhält eine eigene Rechnung und wird mit der Bestellung per Lastschrift oder Karte bezahlt.",
-      ],
-    },
+    LEAD_BESTELLUNG,
     LEAD_LIEFERUNG,
     LEAD_REKLAMATION,
     {
@@ -536,10 +543,133 @@ export function agbPplSoftware(opt: { zugaenge?: boolean; zusatzmodule?: boolean
 /** In Leadangeboten nicht geltende Abschnitte der allgemeinen AGB (Variante „Kampagnen im eigenen Werbekonto“). */
 const NICHT_IN_LEADANGEBOTEN = ["Pause und Urlaub", "Angebote vor einer Kündigung"];
 
+// ─── Nur, was für das Angebot gilt (Ole, 26.11.2026) ────────────────────────────────────────────────────────────
+// „Bei Angeboten ohne Pay-per-Lead darf in den AGB nichts zu Pay-per-Lead stehen“, dazu Umsatzsteuer auf Leads und
+// „Vorauszahlung nur zeigen, wenn im Angebot eine Vorauszahlung gewählt ist oder zur Wahl steht“. Grundsatz: Es steht
+// nur drin, was für dieses Angebot gilt oder was der Kunde dort noch wählen kann. Gefiltert wird nach Merkmalen des
+// Angebots (nicht nur nach Paket), Nummern fortlaufend (LegalSections zählt selbst). Gilt auch für die archivierte
+// Fassung „Stand 25.11.2026“ (gleicher Wortlaut der betroffenen Stellen). Die öffentliche Seite /rechtliches/agb
+// bleibt vollständig (je Paket). Protokoll: docs/recht/2026-11-26-agb-nur-was-gilt.md.
+
+/** Vorauszahlung im Angebot: gewählt bzw. fest vereinbart, bei der Annahme wählbar, oder nicht angeboten. */
+export type AgbVorauszahlung = "ja" | "waehlbar" | "nein";
+/** Merkmale, nach denen die AGB eines Angebots gefiltert werden (auch als Nachweis bei der Annahme gespeichert). */
+export type AgbMerkmale = {
+  /** Paket wie Offer.package (software, service, ppl_software, ppl) */
+  paket: string;
+  /** Leads per Stück (Pay-per-Lead) im Angebot: Leadpaket oder einzelne Lead-Produkte (erste Woche, Lead-Preise) */
+  ppl: boolean;
+  /** Eigene Kampagnen mit Betreuung (alle Pakete außer Pay-per-Lead) */
+  kampagnen: boolean;
+  vorauszahlung: AgbVorauszahlung;
+};
+
+export function agbMerkmaleAus(o: {
+  package: string;
+  annualPrepay?: boolean | null;
+  annualChoice?: boolean | null;
+  pplProductKey?: string | null;
+  pplProdukte?: unknown;
+}): AgbMerkmale {
+  const paketPpl = o.package === "ppl" || o.package === "ppl_software";
+  const leadProdukte = !!o.pplProductKey?.trim() || (Array.isArray(o.pplProdukte) && o.pplProdukte.length > 0);
+  // Pay-per-Lead-Pakete haben keine Vorauszahlung (lib/offers.ts lehnt sie ab)
+  const vorauszahlung: AgbVorauszahlung = paketPpl ? "nein" : o.annualPrepay ? "ja" : o.annualChoice ? "waehlbar" : "nein";
+  return { paket: o.package, ppl: paketPpl || leadProdukte, kampagnen: !paketPpl, vorauszahlung };
+}
+
+/** Gespeicherte Merkmale (Offer.agbMerkmale) lesen; null = nicht gespeichert oder unlesbar. */
+export function agbMerkmaleGespeichert(v: unknown): AgbMerkmale | null {
+  if (!v || typeof v !== "object") return null;
+  const m = v as Record<string, unknown>;
+  if (typeof m.paket !== "string" || typeof m.ppl !== "boolean" || typeof m.kampagnen !== "boolean") return null;
+  if (m.vorauszahlung !== "ja" && m.vorauszahlung !== "waehlbar" && m.vorauszahlung !== "nein") return null;
+  return { paket: m.paket, ppl: m.ppl, kampagnen: m.kampagnen, vorauszahlung: m.vorauszahlung };
+}
+
 /**
- * AGB, die ein Angebot zeigt (Angebotsdokument, PDF): Leadangebote nur mit den geltenden Abschnitten und Nachlieferung;
- * vor dem 24.11.2026 angenommene Leadangebote (leadAltBedingungen) und alle anderen Pakete wie bisher.
- * besondere = eigener Block „Besondere Bedingungen“ (alte Nur-Leads-Angebote, Kampagnen im eigenen Werbekonto).
+ * Stellen der allgemeinen AGB (und der Archivfassung), die nur unter einer Bedingung gelten. Abschnitt und Absatz bzw.
+ * Satz genau benannt; der Test prüft, dass jede Regel in AGB und Archiv ihren Text findet (sonst würde nach einer
+ * Textänderung still nichts mehr gefiltert).
+ */
+type AgbRegel = {
+  name: string;
+  /** true = Stelle fällt weg */
+  weg: (m: AgbMerkmale) => boolean;
+  abschnitt: string;
+} & ({ sub: string } | { absatzBeginn: string } | { satz: string; ersatz?: string });
+
+export const AGB_REGELN: readonly AgbRegel[] = [
+  // Beschreibt das Paket Pay-per-Lead + Software; bei Angeboten mit eigener Betreuung (auch gemischt) nicht das gebuchte Paket
+  { name: "Paket Pay-per-Lead + Software", weg: (m) => !m.ppl || m.kampagnen, abschnitt: "Leistungen: Software", sub: "Paket Pay-per-Lead + Software" },
+  { name: "Umsatzsteuer auf Leads", weg: (m) => !m.ppl, abschnitt: "Vergütung und Zahlung", sub: "Umsatzsteuer auf Leads" },
+  {
+    name: "Verweis auf Umsatzsteuer auf Leads",
+    weg: (m) => !m.ppl,
+    abschnitt: "Vergütung und Zahlung",
+    satz: "Alle Preise sind netto zuzüglich Umsatzsteuer, soweit nicht unter „Umsatzsteuer auf Leads“ anders geregelt.",
+    ersatz: "Alle Preise sind netto zuzüglich Umsatzsteuer.",
+  },
+  { name: "Vorauszahlung", weg: (m) => m.vorauszahlung === "nein", abschnitt: "Vergütung und Zahlung", sub: "Vorauszahlung" },
+  { name: "Laufzeit bei Vorauszahlung", weg: (m) => m.vorauszahlung === "nein", abschnitt: "Laufzeit und Kündigung", absatzBeginn: "Bei Vorauszahlung läuft der Vertrag" },
+  { name: "Pause bei Vorauszahlung", weg: (m) => m.vorauszahlung === "nein", abschnitt: "Pause und Urlaub", satz: " Bei Vorauszahlung gibt es dafür keine Gutschrift." },
+  {
+    name: "Zusatzmodule bei Vorauszahlung",
+    weg: (m) => m.vorauszahlung === "nein",
+    abschnitt: "Leistungen: Software",
+    satz: ", bei Vorauszahlung (jährlich bzw. für 6 Monate) zum Ende des bezahlten Zeitraums",
+  },
+];
+
+/** Wendet die Regeln auf eine AGB-Fassung an (neue Objekte, Original unverändert); leere Abschnitte fallen weg. */
+export function agbFiltern(sections: LegalSection[], m: AgbMerkmale): LegalSection[] {
+  const regeln = AGB_REGELN.filter((r) => r.weg(m));
+  return sections
+    .map((s) => {
+      const hier = regeln.filter((r) => r.abschnitt === s.title);
+      if (hier.length === 0) return s;
+      const items = s.items.flatMap((it) => {
+        let cur = it;
+        for (const r of hier) {
+          if ("sub" in r) {
+            if (typeof cur !== "string" && cur.sub === r.sub) return [];
+          } else if ("absatzBeginn" in r) {
+            if (typeof cur === "string" && cur.startsWith(r.absatzBeginn)) return [];
+          } else if (typeof cur === "string") {
+            cur = cur.replace(r.satz, r.ersatz ?? "");
+          } else {
+            cur = { ...cur, text: cur.text.replace(r.satz, r.ersatz ?? "") };
+          }
+        }
+        return [cur];
+      });
+      return { ...s, items };
+    })
+    .filter((s) => s.items.length > 0);
+}
+
+/** Findet die Regel ihren Text in dieser Fassung? (Test: AGB und Archiv) */
+export function agbRegelTrifft(sections: LegalSection[], r: AgbRegel): boolean {
+  const s = sections.find((x) => x.title === r.abschnitt);
+  if (!s) return false;
+  if ("sub" in r) return s.items.some((i) => typeof i !== "string" && i.sub === r.sub);
+  if ("absatzBeginn" in r) return s.items.some((i) => typeof i === "string" && i.startsWith(r.absatzBeginn));
+  return s.items.some((i) => (typeof i === "string" ? i : i.text).includes(r.satz));
+}
+
+/** Gemischtes Angebot (eigene Betreuung und Leads per Stück): Abschnitte zu Leads nach „Leistungen: Software“. */
+function mitLeadAbschnitten(sections: LegalSection[]): LegalSection[] {
+  const i = sections.findIndex((s) => s.title === "Leistungen: Software");
+  const at = i < 0 ? sections.findIndex((s) => s.title === "Leistungen: Leadgenerierung") : i;
+  return [...sections.slice(0, at + 1), LEAD_BESTELLUNG, LEAD_LIEFERUNG, LEAD_REKLAMATION, ...sections.slice(at + 1)];
+}
+
+/**
+ * AGB, die ein Angebot zeigt (Angebotsseite, Annahme-Link, PDF, Konto & Rechnungen → Ihr Vertrag): nur die Abschnitte und
+ * Absätze, die für das Angebot gelten. Leadangebote mit eigenen Abschnitten und Nachlieferung; vor dem 24.11.2026
+ * angenommene Leadangebote (leadAltBedingungen) mit den allgemeinen AGB. Gemischte Angebote (Betreuung mit Lead-Produkten)
+ * zeigen beides. besondere = eigener Block „Besondere Bedingungen“ (alte Nur-Leads-Angebote, Kampagnen im eigenen Werbekonto).
+ * merkmale: gespeicherte Merkmale (Offer.agbMerkmale, angenommene Angebote) gehen den aus dem Angebot berechneten vor.
  */
 export function agbFuerAngebot(o: {
   package: string;
@@ -547,15 +677,46 @@ export function agbFuerAngebot(o: {
   leadAltBedingungen?: boolean;
   zugaenge?: boolean;
   zusatzmodule?: boolean;
-}): { agb: LegalSection[]; besondere: LegalSection[] | null; lead: boolean } {
+  annualPrepay?: boolean | null;
+  annualChoice?: boolean | null;
+  pplProductKey?: string | null;
+  pplProdukte?: unknown;
+  merkmale?: AgbMerkmale | null;
+}): { agb: LegalSection[]; besondere: LegalSection[] | null; lead: boolean; merkmale: AgbMerkmale } {
+  const m = o.merkmale ?? agbMerkmaleAus(o);
   const nurLeads = o.package === "ppl";
   const ppl = nurLeads || o.package === "ppl_software";
+  const f = (agb: LegalSection[]) => agbFiltern(agb, m);
   if (!ppl || o.leadAltBedingungen) {
-    return { agb: AGB, besondere: nurLeads ? PPL_NUR_LEADS_BEDINGUNGEN_ALT : o.kundenkonto && ppl ? PPL_KUNDENKONTO_BEDINGUNGEN : null, lead: false };
+    const agb = !ppl && m.ppl ? mitLeadAbschnitten(f(AGB)) : f(AGB);
+    return { agb, besondere: nurLeads ? PPL_NUR_LEADS_BEDINGUNGEN_ALT : o.kundenkonto && ppl ? PPL_KUNDENKONTO_BEDINGUNGEN : null, lead: false, merkmale: m };
   }
-  if (nurLeads) return { agb: AGB_NUR_LEADS, besondere: null, lead: true };
-  if (o.kundenkonto) return { agb: AGB.filter((s) => !NICHT_IN_LEADANGEBOTEN.includes(s.title)), besondere: PPL_KUNDENKONTO_BEDINGUNGEN, lead: true };
-  return { agb: agbPplSoftware({ zugaenge: o.zugaenge, zusatzmodule: o.zusatzmodule }), besondere: null, lead: true };
+  if (nurLeads) return { agb: AGB_NUR_LEADS, besondere: null, lead: true, merkmale: m };
+  if (o.kundenkonto) return { agb: f(AGB.filter((s) => !NICHT_IN_LEADANGEBOTEN.includes(s.title))), besondere: PPL_KUNDENKONTO_BEDINGUNGEN, lead: true, merkmale: m };
+  return { agb: f(agbPplSoftware({ zugaenge: o.zugaenge, zusatzmodule: o.zusatzmodule })), besondere: null, lead: true, merkmale: m };
+}
+
+export type AgbPaket = { id: string; titel: string; hinweis?: string; agb: LegalSection[]; besondere: LegalSection[] | null };
+
+/**
+ * Öffentliche AGB /rechtliches/agb (Ole, 26.11.2026): vollständig, je Paket die Fassung mit allem, was ein Angebot dieses
+ * Pakets enthalten oder zur Wahl stellen kann. Reihenfolge wie auf der Seite.
+ */
+export function agbOeffentlichJePaket(): AgbPaket[] {
+  const kk = agbFuerAngebot({ package: "ppl_software", kundenkonto: true });
+  return [
+    {
+      id: "betreuung",
+      titel: "Betreuung + Software und Nur Betreuung",
+      hinweis:
+        "Enthält Ihr Angebot zusätzlich Leads per Stück, gelten außerdem die Abschnitte zu Leads und der Absatz „Umsatzsteuer auf Leads“ aus „Pay-per-Lead + Software“.",
+      agb: agbFuerAngebot({ package: "software", annualChoice: true }).agb,
+      besondere: null,
+    },
+    { id: "pay-per-lead-software", titel: "Pay-per-Lead + Software", agb: agbFuerAngebot({ package: "ppl_software", zugaenge: true, zusatzmodule: true }).agb, besondere: null },
+    { id: "eigenes-werbekonto", titel: "Pay-per-Lead + Software: Kampagnen im eigenen Werbekonto", agb: kk.agb, besondere: kk.besondere },
+    { id: "nur-leads", titel: "Nur Leads", agb: agbFuerAngebot({ package: "ppl" }).agb, besondere: null },
+  ];
 }
 
 export const AVV: LegalSection[] = [
@@ -734,11 +895,10 @@ export const SUBPROCESSORS: { name: string; purpose: string; location: string }[
 ];import { euEndpunkt } from "@/lib/policen/ablage";
 
 /**
- * AGB-Link an der Annahme (Ole, 24.11.2026): bei Leadangeboten auf die Fassung nur mit den geltenden Abschnitten
- * (/rechtliches/agb?paket=…). Eigene AGB-URLs (OFFER_TERMS_URL) bleiben unverändert.
+ * AGB-Link an der Annahme (Ole, 24.11.2026; seit 26.11.2026 für alle Angebote): die Fassung des Angebots mit nur den
+ * geltenden Abschnitten unter /angebot/[token]/agb. Eigene AGB-URLs (OFFER_TERMS_URL) bleiben unverändert.
  */
-export function agbLinkFuerAngebot(termsUrl: string, o: { package: string; kundenkonto?: boolean }): string {
-  if ((o.package !== "ppl" && o.package !== "ppl_software") || !/\/rechtliches\/agb$/.test(termsUrl)) return termsUrl;
-  return `${termsUrl}?paket=${o.package}${o.kundenkonto && o.package === "ppl_software" ? "&variante=kundenkonto" : ""}`;
+export function agbLinkFuerAngebot(termsUrl: string, token: string): string {
+  if (!/\/rechtliches\/agb$/.test(termsUrl)) return termsUrl;
+  return `/angebot/${token}/agb`;
 }
-

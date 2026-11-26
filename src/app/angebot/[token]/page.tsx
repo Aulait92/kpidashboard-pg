@@ -172,8 +172,9 @@ export default async function OfferPage({
                   <AcceptForm
                     token={token}
                     termsUrl={
-                      // Angebote vor GUARANTEES_UNTIL: archivierte AGB mit Garantien (Ole, 26.11.2026), nur über den Angebotslink
-                      agbMitGarantien(offer) ? `/angebot/${token}/agb` : agbLinkFuerAngebot(offer.termsUrl!, { package: offer.package, kundenkonto: !!kundenkontoAus(offer) })
+                      // AGB des Angebots (Ole, 26.11.2026): nur die geltenden Abschnitte, bei Angeboten vor GUARANTEES_UNTIL die
+                      // archivierte Fassung mit Garantien, beides unter /angebot/[token]/agb
+                      agbMitGarantien(offer) ? `/angebot/${token}/agb` : agbLinkFuerAngebot(offer.termsUrl!, token)
                     }
                     dpaUrl={offer.dpaUrl!}
                     defaultName={offer.contactName}

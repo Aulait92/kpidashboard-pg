@@ -80,11 +80,18 @@ describe("Die neue AVV-Fassung blockiert Bestandskunden nicht", () => {
       .filter((p) => /\bLEGAL_VERSION\b/.test(readFileSync(p, "utf8")))
       .map((p) => p.replace(/\\/g, "/"))
       .sort();
-    expect(nutzer).toEqual(["src/app/rechtliches/agb/page.tsx", "src/app/rechtliches/avv/page.tsx", "src/lib/legal-texts.ts", "src/lib/unterauftragnehmer-pdf.ts"]);
-    // Kein Feld im Datenmodell, das die Fassung von AGB oder AVV je Kunde oder Angebot festhält (dann gäbe es etwas zu
-    // vergleichen). Angebote speichern nur die Adressen (termsUrl, dpaUrl); policenAvvVersion gehört zur Anlage unten.
+    // lib/agb-angebot.ts: Stand der gezeigten AGB als Nachweis bei der Annahme (Ole, 26.11.2026), nur gespeichert
+    expect(nutzer).toEqual(["src/app/rechtliches/agb/page.tsx", "src/app/rechtliches/avv/page.tsx", "src/lib/agb-angebot.ts", "src/lib/legal-texts.ts", "src/lib/unterauftragnehmer-pdf.ts"]);
+    // Kein Feld im Datenmodell, das die Fassung von AVV je Kunde festhält. Seit 26.11.2026 speichert die Annahme den Stand
+    // der gezeigten AGB als Nachweis (Offer.agbVersion); geschrieben nur in acceptOffer, nirgends gelesen oder verglichen.
     const schema = readFileSync("prisma/schema.prisma", "utf8");
-    expect(schema).not.toMatch(/\b(legalVersion|agbVersion|termsVersion|dpaVersion|avvVersion|agbStand|avvStand)\b/);
+    expect(schema).not.toMatch(/\b(legalVersion|termsVersion|dpaVersion|avvVersion|agbStand|avvStand)\b/);
+    const agbVersionNutzer = quelltexte("src")
+      .filter((p) => !p.includes("/generated/") && /\bagbVersion\b/.test(readFileSync(p, "utf8")))
+      .map((p) => p.replace(/\\/g, "/"))
+      .sort();
+    expect(agbVersionNutzer).toEqual(["src/lib/agb-angebot.ts", "src/lib/legal-texts.ts", "src/lib/offers.ts"]); // legal-texts: nur Kommentar
+    expect(readFileSync("src/lib/offers.ts", "utf8").match(/\bagbVersion\b/g)).toHaveLength(4); // Angebot und Protokoll, je „agbVersion: agb.agbVersion“
   });
 
   it("die Zustimmung zur Anlage „Versicherungsunterlagen über WhatsApp“ gilt weiter (eigene Version, unverändert)", () => {

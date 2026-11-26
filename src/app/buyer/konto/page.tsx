@@ -294,13 +294,21 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                     Angebot {offer.number} ansehen
                   </a>
                 </dd>
-                {/* Verträge aus Angeboten vor GUARANTEES_UNTIL: archivierte AGB mit Garantien (Ole, 26.11.2026) */}
-                {offer.status === "accepted" && agbMitGarantien(offer) ? (
+                {/* AGB des Vertrags (Ole, 26.11.2026): nur die geltenden Abschnitte; Verträge aus Angeboten vor
+                    GUARANTEES_UNTIL mit der archivierten Fassung mit Garantien */}
+                {offer.status === "accepted" ? (
                   <>
                     <dt className="text-[color:var(--muted)]">AGB</dt>
                     <dd>
-                      <a href={`/angebot/${offer.token}/agb`} target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline" data-konto-agb-archiv>
-                        Ihre AGB (Stand {AGB_ARCHIV_STAND})
+                      <a
+                        href={`/angebot/${offer.token}/agb`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-medium text-[color:var(--brand)] underline"
+                        data-konto-agb
+                        {...(agbMitGarantien(offer) ? { "data-konto-agb-archiv": "" } : {})}
+                      >
+                        {agbMitGarantien(offer) ? `Ihre AGB (Stand ${AGB_ARCHIV_STAND})` : "Ihre AGB"}
                       </a>
                     </dd>
                   </>

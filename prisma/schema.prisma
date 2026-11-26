@@ -1881,6 +1881,12 @@ model Offer {
   acceptedPriceStep       Boolean       @default(false)
   termsUrl                String?
   dpaUrl                  String?
+  // Nachweis der gezeigten AGB-Fassung bei der Annahme (Ole, 26.11.2026, lib/agb-angebot.ts agbNachweis): Stand
+  // (LEGAL_VERSION bzw. Archiv „25.11.2026“), Merkmale des Filters { paket, ppl, kampagnen, vorauszahlung, archiv,
+  // abschnitte } und SHA-256 über den gezeigten Wortlaut. null = vor dem 26.11.2026 angenommen oder nicht angenommen.
+  agbVersion              String?
+  agbMerkmale             Json?
+  agbHash                 String?
   // Zusätze (seit 11.11.2026; null = Alt-Angebot ohne Platz-Abrechnung)
   // Logins gesamt (Inhaber + Berater) und davon inklusive
   seats                   Int?

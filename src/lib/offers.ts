@@ -1,6 +1,7 @@
 // Angebote / Auftragsbestätigungen (zu einem Vertriebskontakt oder alten Deal): anlegen (Konditionen
 // werden eingefroren), per geheimem Link anzeigen, online annehmen.
 
+import { agbNachweis } from "@/lib/agb-angebot";
 import { parseZahlungsziel } from "@/lib/mahnwesen";
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
@@ -596,11 +597,16 @@ export async function acceptOffer(
   if (priceStep && !opts.priceStepAck) return { ok: false, error: "Bitte bestätigen Sie den Übergang vom Startpreis in die reguläre Vergütung." };
 
   const now = new Date();
+  // Nachweis der gezeigten AGB (Ole, 26.11.2026): Fassung, wie sie Angebotsseite und Annahme-Link vor der Annahme zeigen
+  const agb = agbNachweis(offer);
   const updated = await prisma.offer.updateMany({
     where: { id: offer.id, status: { in: ["draft", "sent"] } },
     data: {
       status: "accepted",
       acceptedAt: now,
+      agbVersion: agb.agbVersion,
+      agbMerkmale: agb.agbMerkmale,
+      agbHash: agb.agbHash,
       acceptedName: name.slice(0, 200),
       acceptedIp: opts.ip?.slice(0, 100) ?? null,
       acceptedAgent: opts.agent?.slice(0, 400) ?? null,
@@ -638,6 +644,9 @@ export async function acceptOffer(
       startDate: choice.startIso,
       setupFee: choice.setupFee,
       annualPrepay: choice.annualPrepay,
+      agbVersion: agb.agbVersion,
+      agbMerkmale: agb.agbMerkmale,
+      agbHash: agb.agbHash,
       annualChoice: offer.annualChoice,
       chosenByCustomer: offer.customerChoosesTerm || offer.customerChoosesStart || offer.annualChoice || produktWahl.geaendert,
       ...(produktWahl.geaendert ? { products: produktWahl.products, monthlyFee: produktWahl.monthlyFee } : {}),

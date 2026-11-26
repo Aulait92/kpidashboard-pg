@@ -138,9 +138,14 @@ describe("Texte: Nachlieferung, keine Erstattung außer der engen Ausnahme", () 
   });
 
   it("agbFuerAngebot: Leadangebote gefiltert, alte Annahmen und andere Pakete unverändert", () => {
-    expect(agbFuerAngebot({ package: "ppl" })).toEqual({ agb: AGB_NUR_LEADS, besondere: null, lead: true });
-    expect(agbFuerAngebot({ package: "ppl", leadAltBedingungen: true })).toEqual({ agb: AGB, besondere: PPL_NUR_LEADS_BEDINGUNGEN_ALT, lead: false });
-    expect(agbFuerAngebot({ package: "software" }).agb).toBe(AGB);
+    expect(agbFuerAngebot({ package: "ppl" })).toMatchObject({ agb: AGB_NUR_LEADS, besondere: null, lead: true });
+    // Alte Annahmen: allgemeine AGB, seit 26.11.2026 nur mit den geltenden Absätzen (ohne Vorauszahlung, mit Pay-per-Lead)
+    const alt = agbFuerAngebot({ package: "ppl", leadAltBedingungen: true });
+    expect(alt).toMatchObject({ besondere: PPL_NUR_LEADS_BEDINGUNGEN_ALT, lead: false });
+    expect(alt.agb.map((s) => s.title)).toEqual(AGB.map((s) => s.title));
+    expect(text(alt.agb)).toContain("Paket Pay-per-Lead + Software");
+    expect(text(alt.agb)).toContain("Umsatzsteuer auf Leads");
+    expect(agbFuerAngebot({ package: "software" }).agb.map((s) => s.title)).toEqual(AGB.map((s) => s.title));
     const kk = agbFuerAngebot({ package: "ppl_software", kundenkonto: true });
     expect(kk.besondere).toBe(PPL_KUNDENKONTO_BEDINGUNGEN);
     expect(kk.agb.some((s) => s.title === "Garantien")).toBe(false);
@@ -148,9 +153,8 @@ describe("Texte: Nachlieferung, keine Erstattung außer der engen Ausnahme", () 
   });
 
   it("AGB-Link an der Annahme", () => {
-    expect(agbLinkFuerAngebot("https://x.de/rechtliches/agb", { package: "ppl" })).toBe("https://x.de/rechtliches/agb?paket=ppl");
-    expect(agbLinkFuerAngebot("https://x.de/rechtliches/agb", { package: "ppl_software", kundenkonto: true })).toBe("https://x.de/rechtliches/agb?paket=ppl_software&variante=kundenkonto");
-    expect(agbLinkFuerAngebot("https://x.de/rechtliches/agb", { package: "software" })).toBe("https://x.de/rechtliches/agb");
-    expect(agbLinkFuerAngebot("https://andere.de/agb.pdf", { package: "ppl" })).toBe("https://andere.de/agb.pdf");
+    // Seit 26.11.2026 für alle Pakete: die AGB des Angebots unter /angebot/[token]/agb
+    expect(agbLinkFuerAngebot("https://x.de/rechtliches/agb", "tok123")).toBe("/angebot/tok123/agb");
+    expect(agbLinkFuerAngebot("https://andere.de/agb.pdf", "tok123")).toBe("https://andere.de/agb.pdf");
   });
 });

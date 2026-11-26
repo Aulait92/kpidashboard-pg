@@ -161,10 +161,10 @@ describe("Verlinkung", () => {
   it("Annahme-Link alter Angebote und Konto & Rechnungen zeigen auf /angebot/[token]/agb", () => {
     expect(readFileSync("src/app/angebot/[token]/page.tsx", "utf8")).toMatch(/agbMitGarantien\(offer\) \? `\/angebot\/\$\{token\}\/agb`/);
     const konto = readFileSync("src/app/buyer/konto/page.tsx", "utf8");
-    expect(konto).toMatch(/offer\.status === "accepted" && agbMitGarantien\(offer\)/);
-    expect(konto).toContain("Ihre AGB (Stand {AGB_ARCHIV_STAND})");
+    expect(konto).toMatch(/agbMitGarantien\(offer\) \? `Ihre AGB \(Stand \$\{AGB_ARCHIV_STAND\}\)`/);
+    // Seit 26.11.2026 zeigt /angebot/[token]/agb die AGB jedes Angebots (gefiltert), alte mit der Archivfassung
     const seite = readFileSync("src/app/angebot/[token]/agb/page.tsx", "utf8");
-    expect(seite).toMatch(/if \(!agbMitGarantien\(offer\)\) redirect\("\/rechtliches\/agb"\)/);
+    expect(seite).toContain("agbDesAngebots(offer)");
     expect(seite).toMatch(/index: false/);
   });
 });

@@ -2,8 +2,9 @@ import { CheckCircle2 } from "lucide-react";
 import { InfoHinweis } from "@/components/info-hinweis";
 import { PREISSTUFE_ERKLAERT } from "@/lib/begriffe";
 import { LegalSections } from "@/components/legal-sections";
-import { agbFuerAngebot, PPL_KUNDENKONTO_BEDINGUNGEN, PPL_NUR_LEADS_BEDINGUNGEN_ALT, PROVIDER } from "@/lib/legal-texts";
-import { AGB_2026_11_25, AGB_ARCHIV_STAND, agbMitGarantien } from "@/lib/agb-2026-11-25";
+import { PPL_KUNDENKONTO_BEDINGUNGEN, PPL_NUR_LEADS_BEDINGUNGEN_ALT, PROVIDER } from "@/lib/legal-texts";
+import { AGB_ARCHIV_STAND } from "@/lib/agb-2026-11-25";
+import { agbDesAngebots } from "@/lib/agb-angebot";
 import {
   beispielRechnung,
   KUNDENKONTO_ABRECHNUNG,
@@ -58,6 +59,8 @@ export type OfferDoc = {
   status: string;
   /** Leadangebot vor der Nachlieferung angenommen (24.11.2026): alte Bedingungen und volle AGB anzeigen */
   leadAltBedingungen?: boolean;
+  /** Bei der Annahme gespeicherte AGB-Merkmale (Nachweis, lib/agb-angebot.ts) */
+  agbMerkmale?: unknown;
   contactName: string;
   company: string | null;
   street: string | null;
@@ -309,18 +312,12 @@ export function OfferDocument({
   const vorausWort = halb ? "Vorauszahlung" : "Jahreszahlung";
   const hasExtras = add.seatsFee > 0 || add.bestandFee > 0 || add.empfehlungFee > 0;
   const hasIntro = offer.introMonthlyFee != null && !!offer.introMonths;
-  // AGB fürs Angebot (Ole, 24.11.2026): Leadangebote nur mit den geltenden Abschnitten, fortlaufend nummeriert
-  const agbAngebot = agbFuerAngebot({
-    package: offer.package,
-    kundenkonto: !!kk,
-    leadAltBedingungen: !!offer.leadAltBedingungen,
-    zugaenge: add.hasSeats,
-    zusatzmodule: add.bestandActive || add.empfehlungActive,
-  });
-  // Angebote vor GUARANTEES_UNTIL (Ole, 26.11.2026): archivierte AGB „Stand 25.11.2026“ mit Abschnitt „Garantien“,
-  // auf den „Details in den AGB (Abschnitt „Garantien“)“ zeigt. Neuere Angebote: aktuelle AGB ohne Garantien.
-  const agbArchiv = agbMitGarantien(offer);
-  const agbAbschnitte = agbArchiv ? AGB_2026_11_25 : agbAngebot.agb;
+  // AGB fürs Angebot (Ole, 24.11.2026 und 26.11.2026): nur die Abschnitte und Absätze, die für dieses Angebot gelten
+  // (Pay-per-Lead ja/nein, Vorauszahlung ja/wählbar/nein), fortlaufend nummeriert. Angebote vor GUARANTEES_UNTIL: archivierte
+  // AGB „Stand 25.11.2026“ mit Abschnitt „Garantien“, gleich gefiltert. Angenommene Angebote: gespeicherte Merkmale.
+  const agbAngebot = agbDesAngebots(offer);
+  const agbArchiv = agbAngebot.archiv;
+  const agbAbschnitte = agbAngebot.abschnitte;
   // Erster Monatsbetrag inkl. Zusätze (Startpreis gilt nur für das Paket)
   const firstMonth = round2((hasIntro ? offer.introMonthlyFee! : offer.monthlyFee) + add.seatsFee + add.bestandFee + add.empfehlungFee);
   const firstCharge = add.annualTotal ?? firstMonth;
