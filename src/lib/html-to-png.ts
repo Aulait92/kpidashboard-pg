@@ -45,7 +45,7 @@ export type RenderOptions = {
 
 const FESTE_QUELLEN = ["fonts.googleapis.com", "fonts.gstatic.com", "unsplash.com", "pexels.com", "oaidalleapiprodscus.blob.core.windows.net"];
 /** Nie erlaubt, auch nicht über eine Einstellung. */
-const GESPERRTE_QUELLEN = ["fbcdn.net", "facebook.com", "facebook.net", "fb.com", "fbsbx.com", "instagram.com", "cdninstagram.com", "meta.com"];
+export const GESPERRTE_QUELLEN = ["fbcdn.net", "facebook.com", "facebook.net", "fb.com", "fbsbx.com", "instagram.com", "cdninstagram.com", "meta.com"];
 
 const passt = (host: string, liste: string[]) => liste.some((h) => host === h || host.endsWith(`.${h}`));
 

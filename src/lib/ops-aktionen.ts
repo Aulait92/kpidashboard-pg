@@ -6,6 +6,7 @@
 import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
 import { opsTokenOk } from "@/lib/ops-auth";
+import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 
 export const OPS_ACTOR: AuditActor = { role: "system", email: "ops-aktion (Claude)" };
 
@@ -169,21 +170,109 @@ export const AKTIONEN: Record<string, Aktion> = {
       const message = String(p.message ?? "").trim();
       const headline = String(p.headline ?? "").trim();
       if (!adId || !message || !headline) return { ok: false, error: "adId, message und headline nötig." };
-      const { graphApi } = await import("@/lib/kampagnen/builder");
-      const ad = await graphApi.get<{ account_id: string; status: string; name: string; creative?: { id: string } }>(adId, { fields: "account_id,status,name,creative{id}" });
-      if (`act_${ad.account_id}` !== act) return { ok: false, error: "Anzeige gehört nicht zum Werbekonto des Kunden." };
-      if (ad.status !== "PAUSED") return { ok: false, error: `Anzeige ist nicht pausiert (${ad.status}).` };
-      if (!ad.creative?.id) return { ok: false, error: "Anzeige ohne Creative." };
-      const cr = await graphApi.get<{ name?: string; object_story_spec?: { page_id: string; link_data?: Record<string, unknown> } }>(ad.creative.id, { fields: "name,object_story_spec" });
-      const spec = cr.object_story_spec;
-      if (!spec?.link_data) return { ok: false, error: "Creative ohne link_data (nur Bildanzeigen werden unterstützt)." };
-      const link_data: Record<string, unknown> = { ...spec.link_data, message, name: headline };
+      // Gleicher Weg wie anzeige_creative_setzen: link_data nur aus erlaubten Feldern (Meta-Fehler 1443051, 26.11.2026)
       const beschreibung = String(p.description ?? "").trim();
-      if (beschreibung) link_data.description = beschreibung;
-      const neu = await graphApi.post<{ id: string }>(`${act}/adcreatives`, { name: `${cr.name ?? ad.name} | Text ${new Date().toISOString().slice(0, 10)}`.slice(0, 200), object_story_spec: { page_id: spec.page_id, link_data } });
-      await graphApi.post(adId, { creative: { creative_id: neu.id } });
+      const { anzeigeCreativeSetzen } = await import("@/lib/kampagnen/anzeige-creative-server");
+      const r = await anzeigeCreativeSetzen({ act, adId, message, headline, description: beschreibung || undefined });
+      const neu = { id: r.creativeId };
+      const ad = { name: r.adName };
       await audit("meta.anzeige_texte", { customerId: c.id, details: { adId, creative: neu.id }, actor: OPS_ACTOR });
       return { ok: true, info: `${c.name}: Anzeige ${ad.name} hat neue Texte (Creative ${neu.id}), weiter pausiert.` };
+    },
+  },
+  anzeige_creative_vorschau: {
+    beschreibung:
+      "Neue Bild-Creatives (1080 × 1080) für Meta-Anzeigen nur erzeugen und in R2 ablegen (Ole, 26.11.2026: echte Tierfotos statt KI-Bilder). Layouts: frage (große Frage, Sprechblase, Badge, Nutzenleiste), balken (Satz im Balken unten), leo (Titel und kleine Sprechblasen), ohne (nur Foto und Marke). Foto: Pexels, sonst Unsplash, sonst KI-Foto; oder fotoQuelle=ki bzw. fotoUrl. Ändert nichts bei Meta, gibt Bild-Adressen und Foto-Herkunft zurück.",
+    felder: {
+      customerId: "Kunden-ID",
+      layouts: "Liste, z. B. [\"frage\",\"balken\",\"leo\"] (Standard: diese drei; Wiederholung = mehrere Varianten)",
+      marke: "dezente Marke im Bild, z. B. Tierfairgleich (Standard: Kundenname)",
+      farbe: "Akzentfarbe Hex, z. B. #E8742A (optional)",
+      fotoQuelle: "pexels | unsplash | ki | url (optional)",
+      fotoSuche: "Suchbegriff für Pexels/Unsplash (optional, sonst je Layout passend)",
+      bildBrief: "Bild-Brief für das KI-Foto (optional, sonst je Layout passend)",
+      fotoUrl: "öffentliche Foto-Adresse (optional, statt Suche)",
+      fotoPosition: "Bildausschnitt, z. B. 50% 30% (optional)",
+      texte: "optional: { titel, sprechblase, badge, nutzen: [4], balken, blasen: [3–4] } überschreibt die Standardtexte",
+    },
+    run: async (p) => {
+      const c = await kunde(text(p.customerId));
+      if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+      const { LAYOUTS } = await import("@/lib/kampagnen/anzeige-creative");
+      const roh = Array.isArray(p.layouts) ? p.layouts : typeof p.layouts === "string" && p.layouts.trim() ? p.layouts.split(",") : ["frage", "balken", "leo"];
+      const layouts = roh.map((l) => text(l, 20)).slice(0, 6);
+      const falsch = layouts.filter((l) => !(LAYOUTS as readonly string[]).includes(l));
+      if (!layouts.length || falsch.length) return { ok: false, error: `Layouts: ${LAYOUTS.join(", ")}.` };
+      const { creativeErzeugen } = await import("@/lib/kampagnen/anzeige-creative-server");
+      const schon = new Set<string>();
+      const foto = { quelle: text(p.fotoQuelle, 20), suche: text(p.fotoSuche, 100), brief: text(p.bildBrief, 600), url: text(p.fotoUrl, 1000) };
+      const texte = p.texte && typeof p.texte === "object" ? (p.texte as Record<string, unknown>) : {};
+      const ergebnisse = await Promise.allSettled(
+        layouts.map((layout) =>
+          creativeErzeugen(c.id, { layout: layout as (typeof LAYOUTS)[number], foto, texte, marke: text(p.marke, 40) || c.name, farbe: text(p.farbe, 7), fotoPosition: text(p.fotoPosition, 12) }, schon),
+        ),
+      );
+      const bilder = ergebnisse.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+      const fehler = ergebnisse.flatMap((r, i) => (r.status === "rejected" ? [`${layouts[i]}: ${r.reason instanceof Error ? r.reason.message : String(r.reason)}`.slice(0, 200)] : []));
+      if (!bilder.length) return { ok: false, error: `Kein Bild erzeugt. ${fehler.join(" | ")}` };
+      await audit("meta.creative_vorschau", { customerId: c.id, details: { bilder: bilder.map((b) => ({ layout: b.layout, url: b.url, foto: b.foto })) }, actor: OPS_ACTOR });
+      return { ok: true, info: `${c.name}: ${bilder.length} Bild${bilder.length === 1 ? "" : "er"} erzeugt${fehler.length ? `, Fehler: ${fehler.join(" | ")}` : ""}. Nichts bei Meta geändert.`, daten: bilder };
+    },
+  },
+  anzeige_creative_setzen: {
+    beschreibung:
+      "Neues Bild und optional Texte und Formular auf eine pausierte Meta-Anzeige im Werbekonto des Kunden setzen (Ole, 26.11.2026). Bild: imageUrl (z. B. aus anzeige_creative_vorschau) oder layout plus Foto-Felder wie bei der Vorschau (dann wird erzeugt und abgelegt). Kopiert das Creative (Link, Knopf, Formular bleiben, sofern nicht geändert), Upload ins Werbekonto (adimages), verknüpft die Anzeige neu. Nur bei Status PAUSED, Status bleibt.",
+    felder: {
+      customerId: "Kunden-ID",
+      adId: "ID der Anzeige",
+      imageUrl: "öffentliche Bild-Adresse (optional)",
+      layout: "statt imageUrl: frage | balken | leo | ohne (optional, Foto-Felder wie bei der Vorschau)",
+      formId: "Sofortformular-ID (optional, setzt call_to_action.value.lead_gen_form_id)",
+      message: "Haupttext (optional)",
+      headline: "Überschrift (optional)",
+      description: "Beschreibung (optional)",
+    },
+    run: async (p) => {
+      const c = await kunde(text(p.customerId));
+      if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+      const konto = (await prisma.customer.findUnique({ where: { id: c.id }, select: { metaAdAccountId: true } }))?.metaAdAccountId;
+      if (!konto) return { ok: false, error: "Kein Werbekonto hinterlegt." };
+      const act = konto.startsWith("act_") ? konto : `act_${konto}`;
+      const adId = text(p.adId).replace(/\D/g, "");
+      const formId = text(p.formId).replace(/\D/g, "");
+      const { pruefeText, LAYOUTS } = await import("@/lib/kampagnen/anzeige-creative");
+      const felder: Record<string, string | undefined> = {};
+      for (const k of ["message", "headline", "description"] as const) {
+        const v = String(p[k] ?? "").trim();
+        if (!v) continue;
+        const r = pruefeText(v);
+        if (!r.ok) return r;
+        // Haupttext behält Zeilenumbrüche, nur Gedankenstriche werden ersetzt
+        felder[k] = k === "message" ? ohneGedankenstriche(v) : r.text;
+      }
+      let imageUrl = text(p.imageUrl, 1000);
+      const layout = text(p.layout, 20);
+      if (!adId) return { ok: false, error: "adId nötig." };
+      if (!imageUrl && !layout && !formId && !felder.message && !felder.headline && !felder.description) return { ok: false, error: "Nichts zu ändern (imageUrl, layout, formId oder Texte)." };
+      const mod = await import("@/lib/kampagnen/anzeige-creative-server");
+      let foto: unknown;
+      if (!imageUrl && layout) {
+        if (!(LAYOUTS as readonly string[]).includes(layout)) return { ok: false, error: `layout: ${LAYOUTS.join(", ")}.` };
+        const texte = p.texte && typeof p.texte === "object" ? (p.texte as Record<string, unknown>) : {};
+        const b = await mod.creativeErzeugen(c.id, {
+          layout: layout as (typeof LAYOUTS)[number],
+          foto: { quelle: text(p.fotoQuelle, 20), suche: text(p.fotoSuche, 100), brief: text(p.bildBrief, 600), url: text(p.fotoUrl, 1000) },
+          texte,
+          marke: text(p.marke, 40) || c.name,
+          farbe: text(p.farbe, 7),
+          fotoPosition: text(p.fotoPosition, 12),
+        });
+        imageUrl = b.url;
+        foto = b.foto;
+      }
+      const r = await mod.anzeigeCreativeSetzen({ act, adId, imageUrl: imageUrl || undefined, formId: formId || undefined, ...felder });
+      await audit("meta.anzeige_creative", { customerId: c.id, details: { adId, creative: r.creativeId, geaendert: r.geaendert, imageUrl: imageUrl || null, formId: formId || null, foto: foto ?? null }, actor: OPS_ACTOR });
+      return { ok: true, info: `${c.name}: Anzeige ${r.adName} hat ein neues Creative (${r.creativeId}: ${r.geaendert.join(", ")}), weiter pausiert.`, daten: { creativeId: r.creativeId, imageUrl: imageUrl || null, foto: foto ?? null } };
     },
   },
   app_kalender_einschalten: {

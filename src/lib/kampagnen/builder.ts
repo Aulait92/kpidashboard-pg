@@ -100,7 +100,7 @@ const slug = (s: string) =>
  * Bild für eine Anzeige: Upload über /adimages (Hash). Fehlt der App dafür die Berechtigung (Meta #3 „Application does
  * not have the capability“, Lohmann 21.11.2026), nehmen wir die öffentliche Bild-Adresse direkt im Creative (picture).
  */
-async function bildFuerAnzeige(api: MetaApi, act: string, imageUrl: string): Promise<string> {
+export async function bildFuerAnzeige(api: MetaApi, act: string, imageUrl: string): Promise<string> {
   try {
     const r = await api.post<{ images?: Record<string, { hash: string }> }>(`${act}/adimages`, { url: imageUrl });
     const hash = r.images ? Object.values(r.images)[0]?.hash : undefined;
@@ -113,7 +113,7 @@ async function bildFuerAnzeige(api: MetaApi, act: string, imageUrl: string): Pro
 }
 
 /** link_data-Feld zum gespeicherten Bild: Hash bzw. Adresse (picture). */
-const bildFeld = (ref: string): Record<string, string> => (ref.startsWith("url:") ? { picture: ref.slice(4) } : { image_hash: ref });
+export const bildFeld = (ref: string): Record<string, string> => (ref.startsWith("url:") ? { picture: ref.slice(4) } : { image_hash: ref });
 
 /** Formularname mit Zeitstempel (Berlin), z. B. „PG | Privatschutz | Formular | 24.11.26 09:15“. */
 export function eindeutigerFormName(name: string, now = new Date()): string {

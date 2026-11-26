@@ -40,6 +40,7 @@ const PHOTO_SUFFIX = `, realistic photograph, natural soft lighting, authentic c
 async function generateImage(
   keywords: string,
   styleSuffix: string,
+  qualityOverride?: string,
 ): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -49,7 +50,7 @@ async function generateImage(
   // Modell: aktuelles verfügbares Modell der Reihe nach (gpt-image-1 gibt es nicht mehr, 14.11.2026)
   const candidates = imageModelCandidates();
   let mi = 0;
-  const quality = process.env.OPENAI_IMAGE_QUALITY || "low";
+  const quality = qualityOverride || process.env.OPENAI_IMAGE_QUALITY || "low";
   const timeoutMs = Number(process.env.OPENAI_IMAGE_TIMEOUT_MS) || 90000;
   const prompt = `${keywords}${styleSuffix}`;
 
@@ -160,6 +161,13 @@ export async function generateFullCreativeImage(
   prompt: string,
 ): Promise<string | null> {
   const url = await generateImage(prompt, "");
+  return url === FALLBACK_DATA_URL ? null : url;
+}
+
+// Einzelnes fotorealistisches Foto ohne Text (z. B. Hintergrund für Ops-Creatives, lib/kampagnen/anzeige-creative-server.ts),
+// standardmäßig in hoher Qualität. data-URL oder null bei Fehler.
+export async function generatePhoto(brief: string, quality = "high"): Promise<string | null> {
+  const url = await generateImage(brief, PHOTO_SUFFIX, quality);
   return url === FALLBACK_DATA_URL ? null : url;
 }
 
