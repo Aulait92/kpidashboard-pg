@@ -39,7 +39,7 @@ const SPARTEN: { key: Sparte; label: string; match: RegExp }[] = [
   { key: "haftpflicht", label: "Privathaftpflicht", match: /haftpflicht(?!.*tier)|privathaftpflicht/i },
   { key: "hausrat", label: "Hausrat", match: /hausrat/i },
   { key: "rechtsschutz", label: "Rechtsschutz", match: /rechtsschutz/i },
-  { key: "wohngebaeude", label: "Wohngebäude", match: /wohngeb(ä|a)ude|geb(ä|a)ude/i },
+  { key: "wohngebaeude", label: "Wohngebäude", match: /wohngeb(ä|ae|a)ude|geb(ä|ae|a)ude/i },
   { key: "tier", label: "Tierkranken / Tierhalterhaftpflicht", match: /tier|hund|katze|pferd/i },
   { key: "unfall", label: "Unfall", match: /unfall/i },
 ];

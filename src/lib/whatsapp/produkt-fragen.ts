@@ -22,7 +22,7 @@ export type ProduktCheckliste = {
   unterlagen: string[];
 };
 
-const PRIVATSCHUTZ = /privatschutz|haftpflicht|hausrat|rechtsschutz|wohngeb(ä|a)ude|\bunfall/i;
+const PRIVATSCHUTZ = /privatschutz|haftpflicht|hausrat|rechtsschutz|wohngeb(ä|ae|a)ude|\bunfall/i;
 
 /** Tierkrankenversicherung (TKV), z. B. „TKV-Katze“; nicht Hundefutter oder Hundehalter-Haftpflicht. */
 const TKV = /\btkv\b|tierkranken|tier-?op|katze|hundekranken|hunde-?op|pferdekranken|pferde-?op/i;

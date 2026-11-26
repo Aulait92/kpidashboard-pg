@@ -236,7 +236,7 @@ export function testLeadAnswers(product: string): Answer[] {
     ];
   }
   if (/zahn/.test(p)) return [{ label: "Interesse (Zahnzusatz)", value: "Ja" }, ...ORT];
-  if (/privatschutz|haftpflicht|hausrat|rechtsschutz|wohngeb(ä|a)ude|unfall/.test(p)) {
+  if (/privatschutz|haftpflicht|hausrat|rechtsschutz|wohngeb(ä|ae|a)ude|unfall/.test(p)) {
     return [
       { label: "Lebenssituation", value: "Familie mit Kindern" },
       { label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" },

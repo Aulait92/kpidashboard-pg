@@ -34,7 +34,7 @@ const SPARTE_WORT: [RegExp, string][] = [
   [/haftpflicht/i, "Haftpflicht"],
   [/hausrat/i, "Hausrat"],
   [/rechtsschutz/i, "Rechtsschutz"],
-  [/wohngeb(ä|a)ude/i, "Wohngebäude"],
+  [/wohngeb(ä|ae|a)ude/i, "Wohngebäude"],
   [/unfall/i, "Unfall"],
 ];
 

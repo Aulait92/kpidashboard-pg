@@ -42,7 +42,7 @@ const MUSTER: [RegExp, VertragSparte][] = [
   [/pflege/i, "Pflege"],
   [/haftpflicht|\bphv\b/i, "Haftpflicht"],
   [/hausrat/i, "Hausrat"],
-  [/wohngeb(ä|a)ude|geb(ä|a)udeversicherung|feuerversicherung/i, "Wohngebäude"],
+  [/wohngeb(ä|ae|a)ude|geb(ä|ae|a)udeversicherung|feuerversicherung/i, "Wohngebäude"],
   [/rechtsschutz/i, "Rechtsschutz"],
   [/unfall/i, "Unfall"],
   [/berufsunf(ä|a)hig|\bbu\b|erwerbsunf(ä|a)hig|grundf(ä|a)higkeit/i, "Berufsunfähigkeit"],

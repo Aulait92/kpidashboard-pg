@@ -106,7 +106,7 @@ function sparteKey(s: string): string {
   if (/tier|hund|katze|pferd/.test(t)) return "tier";
   if (/hausrat/.test(t)) return "hausrat";
   if (/rechtsschutz/.test(t)) return "rechtsschutz";
-  if (/geb(ä|a)ude/.test(t)) return "wohngebaeude";
+  if (/geb(ä|ae|a)ude/.test(t)) return "wohngebaeude";
   if (/unfall/.test(t)) return "unfall";
   return "haftpflicht";
 }

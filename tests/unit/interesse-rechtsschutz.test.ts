@@ -78,6 +78,8 @@ describe("Eröffnungsvorlage v14: {{2}} = gewählte Sparten statt fest Haftpflic
     expect(privatschutzThema("Privatschutz", RS_FORM, "sie")).toBe("Rechtsschutz");
     expect(privatschutzThema("Privatschutz", [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }], "sie")).toBe("Haftpflicht und Hausrat");
     expect(privatschutzThema("Privatschutz", [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat, Rechtsschutz" }], "sie")).toBe("Haftpflicht, Hausrat und Rechtsschutz");
+    // Meta-Formular ohne Umlaut (Ole, 26.11.2026, Lohmann-Lead „haftpflicht, hausrat, wohngebaeude“)
+    expect(privatschutzThema("Privatschutz", [{ label: "Welche Versicherung interessiert Sie am meisten?", value: "haftpflicht, hausrat, wohngebaeude" }], "sie")).toBe("Haftpflicht, Hausrat und Wohngebäude");
     // mehr als drei bzw. unbekannt: neutral (nie leer, nie falsche Sparte), je Ansprache
     expect(privatschutzThema("Privatschutz", [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat, Rechtsschutz, Unfall" }], "sie")).toBe("Ihren gewünschten Versicherungen");
     expect(privatschutzThema("Privatschutz", [{ label: "Postleitzahl", value: "12209" }], "du")).toBe("deinen gewünschten Versicherungen");

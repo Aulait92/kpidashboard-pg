@@ -129,7 +129,7 @@ export const PROVISION_PRODUCTS: readonly { key: ProductKey; label: string; matc
   // Weitere Sach-Sparten: Sach-Standard mit typischem Jahresbeitrag (0 € ist nicht zulässig)
   { key: "unfall", label: "Unfall", match: /unfall/i, standard: sach(180) },
   { key: "hausrat", label: "Hausrat", match: /hausrat/i, standard: sach(120) },
-  { key: "wohngebaeude", label: "Wohngebäude", match: /geb(ä|a)ude/i, standard: sach(500) },
+  { key: "wohngebaeude", label: "Wohngebäude", match: /geb(ä|ae|a)ude/i, standard: sach(500) },
   { key: "rechtsschutz", label: "Rechtsschutz", match: /rechtsschutz/i, standard: sach(300) },
   // KFZ: keine Abschlussprovision, 5 % laufend vom Jahresbeitrag ab dem 1. Jahr
   { key: "kfz", label: "KFZ", match: /\bkfz\b|kraftfahrt|\bauto/i, standard: { kind: "percent", rate: 0, trail: 0.05, defaultPremium: 600 } },
@@ -247,7 +247,7 @@ const SPARTE_RULES: [RegExp, SparteKey][] = [
   [/\btkv\b|tierkranken|tierversicherung/i, "katze"],
   [/unfall/i, "unfall"],
   [/hausrat/i, "hausrat"],
-  [/geb(ä|a)ude/i, "wohngebaeude"],
+  [/geb(ä|ae|a)ude/i, "wohngebaeude"],
   [/rechtsschutz/i, "rechtsschutz"],
   [/sparplan/i, "kindersparplan"],
   [/\bkfz\b|kraftfahrt|\bauto/i, "kfz"],

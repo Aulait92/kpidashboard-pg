@@ -442,7 +442,7 @@ export function tierWort(tier: Tier | undefined, an: Ansprache): string {
 const TIER = /\btkv\b|tierkranken|tier-?op|katze|hund|pferd/i;
 const ZAHN = /zahn/i;
 const PKV = /\bpkv\b|private?n? kranken|krankenvoll|wechsel|tarifoptim|neugesch/i;
-const PRIVATSCHUTZ = /privatschutz|haftpflicht|hausrat|rechtsschutz|wohngeb(ä|a)ude/i;
+const PRIVATSCHUTZ = /privatschutz|haftpflicht|hausrat|rechtsschutz|wohngeb(ä|ae|a)ude/i;
 
 /** Welches Erstanschreiben passt zum Produkt? null = allgemeine Fassung „outreach“ (Telefonat: Heute/Morgen/schriftlich). */
 export function outreachProdukt(source: string | null | undefined): OutreachProdukt | null {
@@ -620,7 +620,7 @@ export function spartenWoerter(interesse: string | null): string[] {
   if (/haftpflicht/i.test(t.replace(/tierhalter-?\s*haftpflicht/gi, ""))) out.push("Haftpflicht");
   if (/hausrat/i.test(t)) out.push("Hausrat");
   if (/rechtsschutz/i.test(t)) out.push("Rechtsschutz");
-  if (/wohngeb(ä|a)ude/i.test(t)) out.push("Wohngebäude");
+  if (/wohngeb(ä|ae|a)ude/i.test(t)) out.push("Wohngebäude");
   if (/unfall/i.test(t)) out.push("Unfall");
   return out;
 }

@@ -777,29 +777,12 @@ Seiten aus der Liste „Seiten“ unten.
   Sparten (Cross-Selling)**. Ohne eingetragenen Beitrag rechnet die App mit dem typischen Beitrag. „Auf Standard“ setzt
   zurück. Nur der Inhaber kann speichern, Berater sehen die Sätze. Alle Zahlen rechnen danach mit den eigenen Sätzen.
 
-## Garantien (Katzenversicherung)
-- **Nur für Verträge aus Angeboten vor dem 22.11.2026, 19:15 Uhr.** Neuere Verträge enthalten keine Garantien. Wer nicht
-  sicher ist, schaut ins eigene Angebot (Abschnitt 2.2) oder fragt bei uns nach.
-- **Lead-Garantie:** Bei mindestens 20 € Werbebudget pro Tag gibt es in den ersten 30 Tagen nach Kampagnenstart mindestens
-  100 Leads, sonst sind Betreuung und Software im Folgemonat kostenlos.
-- **Break-even-Garantie (nur Vertreter, nicht Makler), spätestens ab dem 5. Monat profitabel:** Liegt die Provision nach 4 Monaten
-  (120 aktiven Tagen; bei Angeboten vor dem 13.11.2026, 19 Uhr: 90 Tage) unter den Kosten für Werbung und Betreuung, betreuen wir ohne
-  Betreuungsgebühr weiter (auf Wunsch mit anderem Produkt), bis es sich rechnet, längstens 6 Monate. Voraussetzung:
-  mindestens 20 €/Tag an den aktiven Tagen, mindestens 80 % der Termine von Ihnen wahrgenommen (Absagen und Nichterscheinen von Interessenten zählen nicht gegen Sie), Ergebnisse bei mindestens 80 % der Leads
-  eingetragen („Wie lief es?“, Abschluss mit Beitrag) und Provisionssätze unter „Meine Provisionen“ hinterlegt.
-- **Vertrags-Garantie (nur Makler, statt Break-even):** Sind nach 120 aktiven Tagen (bei Angeboten vor dem 15.11.2026, 23:45 Uhr: 90 Tage)
-  weniger als 15 Verträge abgeschlossen,
-  sind Betreuung und Software kostenlos (auf Wunsch mit anderem Produkt, ohne Setupgebühr), bis 15 erreicht sind,
-  längstens 6 Monate. Voraussetzung: mindestens 20 €/Tag
-  an den aktiven Tagen, mindestens 80 % der Termine von Ihnen wahrgenommen (Absagen und Nichterscheinen von Interessenten zählen nicht gegen Sie) und Ergebnisse bei mindestens 80 % der Leads eingetragen.
-  Als Vertrag zählt jeder Lead mit „Abschluss“. Wir können im Garantiefall eine Courtage-Abrechnung als Nachweis anfordern.
-- **Garantie einfordern:** Einen eigenen Garantie-Stand zeigt die App nicht. Ist eine Garantie aus Ihrer Sicht eingetreten, melden Sie sich bei uns (KI-Hilfe → „Mit Mensch sprechen“ oder „Etwas unklar? Feedback“ im Profilmenü). Wir prüfen anhand Ihrer Zahlen in der App.
-- Die Tage zählen ab der ersten Auslieferung der Anzeigen. **Pausen (Urlaub, Krankheit) verlängern den Zeitraum** um die
-  Pausentage, die Garantie verfällt dadurch nicht. Eine offene Rechnung zum Prüfzeitpunkt verhindert die Gutschrift, bis
-  sie bezahlt ist.
-- Gutgeschrieben wird nach kurzer Prüfung durch uns auf der nächsten Rechnung.
-- Genaue Bedingungen stehen in Ihren AGB (Stand 25.11.2026), Abschnitt „Garantien“: unter **Konto & Rechnungen → Ihr Vertrag**
-  („Ihre AGB“). Die aktuellen AGB enthalten keine Garantien mehr. Fragen dazu: bei performancegrowth melden.
+## Garantien
+- Neue Verträge enthalten keine Garantien. Für Verträge aus Angeboten vor dem 22.11.2026, 19:15 Uhr gelten die Garantien
+  aus dem damaligen Angebot weiter. Die genauen Bedingungen stehen nur dort: in Ihren AGB (Stand 25.11.2026) unter
+  **Konto & Rechnungen → Ihr Vertrag** („Ihre AGB“). Die KI-Hilfe nennt keine Garantie-Bedingungen, Zahlen oder Fristen.
+- Wer wissen möchte, ob für ihn eine Garantie gilt oder ob sie eingetreten ist: bei performancegrowth melden (KI-Hilfe →
+  „Mit Mensch sprechen“). Wir prüfen anhand Ihres Vertrags und Ihrer Zahlen in der App.
 
 ## Team (nur Inhaber)
 

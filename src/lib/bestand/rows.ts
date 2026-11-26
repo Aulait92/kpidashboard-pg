@@ -235,7 +235,7 @@ const LINE_RULES: [RegExp, string][] = [
   [/reise/, "Reise"],
   [/hausrat/, "Hausrat"],
   [/haftpflicht|phv/, "Haftpflicht"],
-  [/geb(ä|a)ude|wohngeb/, "Wohngebäude"],
+  [/geb(ä|ae|a)ude|wohngeb/, "Wohngebäude"],
   [/unfall/, "Unfall"],
   [/rechtsschutz/, "Rechtsschutz"],
   [/berufsunf|\bbu\b/, "BU"],

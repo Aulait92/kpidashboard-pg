@@ -290,7 +290,7 @@ export function spartenDesLeads(source: string | null | undefined, src: AngabenQ
   if (/haftpflicht/i.test(ohneTier)) out.push("haftpflicht");
   if (/hausrat/i.test(interesse)) out.push("hausrat");
   if (/rechts?schutz/i.test(interesse)) out.push("rechtsschutz");
-  if (/wohngeb(ä|a)ude/i.test(interesse)) out.push("wohngebaeude");
+  if (/wohngeb(ä|ae|a)ude/i.test(interesse)) out.push("wohngebaeude");
   if (/unfall/i.test(interesse)) out.push("unfall");
   // Tierhalterhaftpflicht nur mit klarer Tierart (Ole, 17.11.2026: kein Hund oder Pferd ohne Tierhalterhaftpflicht)
   const tierText = `${interesse} ${a.tier ?? ""}`;

@@ -564,7 +564,7 @@ const WOHNGEBAEUDE: FrageDef[] = [
     praefix: "Schwimmbad",
     frage: T("Wo ist das Schwimmbad?"),
     optionen: [
-      { id: "innen", titel: "Im Gebäude", auch: /im (geb(ä|a)ude|haus)|innen|drinnen/i },
+      { id: "innen", titel: "Im Gebäude", auch: /im (geb(ä|ae|a)ude|haus)|innen|drinnen/i },
       { id: "aussen", titel: "Außerhalb", wert: "außerhalb des Gebäudes", auch: /au(ß|ss)en|drau(ß|ss)en|garten/i },
     ],
   },
@@ -637,7 +637,7 @@ const WOHNGEBAEUDE: FrageDef[] = [
     wenn: (c) => {
       if (!vorvertragGemeinsam(c)) return c.hat(frageId("wohngebaeude", "vorvertrag"), "nein");
       const a = c.antwort(frageId(GEMEINSAM, "vorvertraege"));
-      return !!a && (!!a.opt?.includes("nein") || !/\bhaus\b|geb(ä|a)ude|\balles?\b/i.test(a.wert));
+      return !!a && (!!a.opt?.includes("nein") || !/\bhaus\b|geb(ä|ae|a)ude|\balles?\b/i.test(a.wert));
     },
     label: "Vorversicherung 5 Jahre (Haus)",
     feld: "gebaeude",
