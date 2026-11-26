@@ -64,10 +64,10 @@ function normal(f: GeplanteFrage): { text?: string; knopf?: string } {
 
 describe("Normalfall je Sparte (Formular mit Geburtsdatum und PLZ)", () => {
   it("Anzahl der Hauptfragen wie in der Fragereihenfolge (Vorvertrag je Sparte einzeln, Bündel gemeinsam)", () => {
-    expect(hauptfragen(["haftpflicht"])).toBe(4);
-    expect(hauptfragen(["hausrat"])).toBe(6);
-    expect(hauptfragen(["rechtsschutz"])).toBe(6);
-    expect(hauptfragen(["wohngebaeude"])).toBe(12);
+    expect(hauptfragen(["haftpflicht"])).toBe(3);
+    expect(hauptfragen(["hausrat"])).toBe(5);
+    expect(hauptfragen(["rechtsschutz"])).toBe(5);
+    expect(hauptfragen(["wohngebaeude"])).toBe(11);
     expect(hauptfragen(["unfall"])).toBe(3);
     expect(hauptfragen(["kfz"])).toBe(1);
     // Normalfall durchgespielt (Tierart und Folgefragen erst nach der Antwort bekannt)
@@ -76,11 +76,11 @@ describe("Normalfall je Sparte (Formular mit Geburtsdatum und PLZ)", () => {
     const thv = lauf(["tierhalter"], normal);
     expect(thv.gestellt.filter((g) => !g.folge)).toHaveLength(4);
   });
-  it("Bündel Haftpflicht, Hausrat, Rechtsschutz: 9 Fragen, mit Wohngebäude (eine Wohneinheit) 15", () => {
+  it("Bündel Haftpflicht, Hausrat, Rechtsschutz: 8 Fragen, mit Wohngebäude (eine Wohneinheit) 14 (ohne Zusatzbausteine)", () => {
     const b = lauf(["haftpflicht", "hausrat", "rechtsschutz"], normal);
-    expect(b.gestellt.filter((g) => !g.folge)).toHaveLength(9);
+    expect(b.gestellt.filter((g) => !g.folge)).toHaveLength(8);
     const w = lauf(["haftpflicht", "hausrat", "rechtsschutz", "wohngebaeude"], normal);
-    expect(w.gestellt.filter((g) => !g.folge)).toHaveLength(15);
+    expect(w.gestellt.filter((g) => !g.folge)).toHaveLength(14);
   });
 });
 
@@ -103,7 +103,6 @@ describe("Bündel ohne Dubletten", () => {
       "wohngebaeude.neben",
       "rechtsschutz.bereiche",
       "gemeinsam.vorvertraege",
-      "gemeinsam.bausteine",
       "gemeinsam.adresse",
     ]);
     expect(b.gestellt[2].text).toBe("Gab es in den letzten 5 Jahren einen Schaden bei der Haftpflicht, beim Hausrat oder am Haus, oder einen Rechtsstreit bzw. eine Rechtsberatung?");
@@ -115,7 +114,7 @@ describe("Bündel ohne Dubletten", () => {
     expect(plan.find((f) => f.id === "hausrat.flaeche")?.abgeleitetWert).toEqual({ wert: "140 m²" });
   });
   it("Fortschritt zählt Hauptfragen, wird kleiner, Folgefragen ohne Zähler", () => {
-    expect(b.gestellt[0].offen).toBe(17);
+    expect(b.gestellt[0].offen).toBe(16);
     expect(b.gestellt.at(-1)!.offen).toBe(1);
     const ja = lauf(["haftpflicht", "hausrat"], (f) => (f.key === "schaeden" ? { knopf: "ja" } : f.key === "schaeden_hausrat" ? { text: "1" } : normal(f)));
     const folgen = ja.gestellt.filter((g) => g.folge).map((g) => g.text);
@@ -275,7 +274,8 @@ describe("Bekanntes aus dem Formular wird übersprungen", () => {
     for (const id of ["gemeinsam.geburt", "gemeinsam.plz", "gemeinsam.versicherte", "gemeinsam.beruf", "hausrat.flaeche", "gemeinsam.adresse"]) expect(offen).not.toContain(id);
     // erkannte Optionen gelten für Bedingungen: öffentlicher Dienst → Zeile Dienst-Haftpflicht
     expect(plan.find((f) => f.id === "gemeinsam.versicherte")?.vorwissen?.opt).toEqual(["familie"]);
-    expect(plan.find((f) => f.id === "gemeinsam.bausteine")?.optionen?.map((o) => o.id)).toContain("dienst");
+    // Zusatzbausteine werden nicht gefragt (Ole, 26.11.2026: bietet der Vermittler im Termin an)
+    expect(offen).not.toContain("gemeinsam.bausteine");
     const tq = quelle([...FORM, { label: "Tierart", value: "Katze" }]);
     const tk = offeneFragen(fragenPlan(["tierkranken"], SPARTEN_DEFINITIONEN, tq), tq);
     expect(tk[0].frage.sie).toBe("Wie heißt Ihre Katze?");
@@ -355,3 +355,4 @@ describe("Schalter", () => {
     expect(aktiveSparten(SPARTEN_DEFINITIONEN, false, true)).toHaveLength(SPARTEN_DEFINITIONEN.length);
   });
 });
+

@@ -99,6 +99,9 @@ const NEIN_JA: Option[] = [
   { id: "ja", titel: "Ja", auch: /^(ja|jo|jep|genau)\b/i },
 ];
 
+/** Zusatzbausteine im Chat fragen? (Ole, 26.11.2026: nein, die bietet der Vermittler im Termin an) */
+export const ZUSATZBAUSTEINE_FRAGEN = false;
+
 /** Zusatzknöpfe der Vorvertragsfrage. */
 const VORVERTRAG_KNOEPFE: Option[] = [
   { id: "nein", titel: "Nicht versichert", wert: "noch nicht versichert" },
@@ -330,12 +333,14 @@ const GEMEINSAME_FRAGEN: FrageDef[] = [
     knoepfe: VORVERTRAG_KNOEPFE,
     auswerten: (t, j) => vorvertraegeAuswerten(t, j),
   },
-  // Zusatzbausteine: eine Sammelfrage mit den passenden Zeilen
+  // Zusatzbausteine: eine Sammelfrage mit den passenden Zeilen. Abgeschaltet (Ole, 26.11.2026: „Zusatzbausteine kann
+  // Anid im Termin anbieten. Brauchen wir nicht fragen“); Definition bleibt für später.
   {
     key: "bausteine",
     typ: "mehrfach",
     pflicht: false,
     abschnitt: 4,
+    wenn: () => ZUSATZBAUSTEINE_FRAGEN,
     label: "Zusatzbausteine",
     feld: "sonstiges",
     praefix: "Bausteine",

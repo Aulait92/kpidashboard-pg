@@ -338,22 +338,7 @@ describe("Fragen-Engine (Allianz-Sparten, Privatschutz als Bündel)", () => {
     );
     expect(knoepfe(m)).toEqual(["Nicht versichert", "Weiß ich nicht", "Rest im Termin"]);
     await schreibt(x.phone, "Haftpflicht bei der HUK, den Rest weiß ich gerade nicht");
-    // Zusatzbausteine: Mehrfachauswahl mit „Noch etwas davon?“ (nur passende Zeilen: Dienst-Haftpflicht für Beamte, keine
-    // Öltank-Haftpflicht in der Mietwohnung)
-    m = letzte(x.phone);
-    expect(textVon(m)).toBe("Danke! Soll noch etwas davon ins Angebot?");
-    expect(zeilen(m)).toEqual(["Nichts davon", "Ich vermiete Wohnraum", "Fahrräder", "Glasschutz", "Internetschutz", "Dienst-Haftpflicht", "Strafrechtsschutz Beruf", "Rest im Termin"]);
-    await knopf(x.phone, "Fahrräder", "vf:gemeinsam.bausteine:fahrrad", "interactive");
-    m = letzte(x.phone);
-    expect(textVon(m)).toBe("Danke! Noch etwas davon?");
-    expect(zeilen(m)[0]).toBe("Das war alles");
-    expect(zeilen(m)).not.toContain("Fahrräder");
-    await knopf(x.phone, "Glasschutz", "vf:gemeinsam.bausteine:glas", "interactive");
-    await knopf(x.phone, "Das war alles", "vf:gemeinsam.bausteine:fertig", "interactive");
-    expect(textVon(letzte(x.phone))).toBe("Danke! Wie viel sind Ihre Fahrräder zusammen ungefähr wert?");
-    await schreibt(x.phone, "etwa 2.000 Euro");
-    expect(textVon(letzte(x.phone))).toBe("Danke! Welches Glas soll versichert sein?");
-    await knopf(x.phone, "Innen", "vf:gemeinsam.glas:innen", "interactive");
+    // Zusatzbausteine werden nicht gefragt (Ole, 26.11.2026: bietet der Vermittler im Termin an)
     expect(textVon(letzte(x.phone))).toBe("Danke! Wie lautet die Adresse Ihrer Wohnung? Straße und Hausnummer reichen.");
     await schreibt(x.phone, "Musterweg 5");
     // danach der Komplettcheck
@@ -367,7 +352,6 @@ describe("Fragen-Engine (Allianz-Sparten, Privatschutz als Bündel)", () => {
       wohnflaeche: "Lage: Wohnung ab 1. Stock; Fläche: 75 m²",
       bereiche: "Privat, Beruf, Verkehr und Wohnen",
       vorhanden: "Vorverträge: Haftpflicht bei der HUK, den Rest weiß ich gerade nicht",
-      sonstiges: "Bausteine: Fahrräder, Glasschutz; Fahrräder: 2000 €; Glas: Innen",
       plz: "Musterweg 5",
     });
     const l = await prisma.lead.findUniqueOrThrow({ where: { id: x.lead.id } });
