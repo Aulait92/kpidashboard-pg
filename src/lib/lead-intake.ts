@@ -218,7 +218,14 @@ export async function ingestLead(
   // Einwilligung (lib/einwilligung-leadformular.ts): Nachweis mit Zeitpunkt, Formular, Textversion und Wortlaut.
   // Formular ohne Häkchen → waConsent null (bisheriges Verhalten), Hinweis da und Häkchen fehlt → "nein".
   const responses = inc.disclaimer ?? null;
-  // Einwilligung per Knopf (Formular ohne Häkchen, CONSENT_VERSION_KNOPF an der Zuordnung): Absenden = eingewilligt
+  // Einwilligung per Knopf (Formular ohne Häkchen, CONSENT_VERSION_KNOPF an der Zuordnung): Absenden = eingewilligt.
+  // Zuordnung ohne Fassung (Formular von Hand angelegt, Ole 26.11.2026): einmal bei Meta nachsehen und nachtragen.
+  if (source && !responses && !source.consentVersion && inc.formId) {
+    if (await (await import("@/lib/einwilligung-knopf-server")).knopfEinwilligungNachtragen(inc.formId)) {
+      const neu = await prisma.leadSource.findUnique({ where: { id: source.id }, select: { consentVersion: true, consentText: true } });
+      if (neu) Object.assign(source, neu);
+    }
+  }
   const knopf = !responses && istKnopfFassung(source?.consentVersion);
   const waConsent = knopf ? "ja" : consentStateOf(responses);
   const nachweis: ConsentNachweis = {
