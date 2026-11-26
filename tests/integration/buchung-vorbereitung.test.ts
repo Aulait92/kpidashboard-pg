@@ -349,7 +349,7 @@ describe("Ops-Aktion buchung_vorbereitung_nachsenden", () => {
     const x = await lead({ formData: [{ label: "Anrede", value: "Herr" }], name: "Peter Kranertneu" });
     const ohne = await fuehreAktionAus("buchung_vorbereitung_nachsenden", { customerId, name: "Kranertneu" });
     expect(ohne).toMatchObject({ ok: false });
-    expect((ohne as { error: string }).error).toContain("noch nicht freigegeben");
+    expect((ohne as { error: string }).error).toContain("freigegeben");
     expect(an(x.phone)).toHaveLength(0);
     await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
     const vorschau = await fuehreAktionAus("buchung_vorbereitung_nachsenden", { customerId, name: "Kranertneu", vorschau: "true" });
@@ -363,5 +363,17 @@ describe("Ops-Aktion buchung_vorbereitung_nachsenden", () => {
     const nochmal = await fuehreAktionAus("buchung_vorbereitung_nachsenden", { customerId, leadId: x.lead.id });
     expect(nochmal).toMatchObject({ ok: false });
     expect(an(x.phone)).toHaveLength(1);
+  });
+
+  it("Bestätigung schon da: bevorzugt die kurze Nachfrage (booking_prep_nudge), danach keine zweite Nachfrage", async () => {
+    await freigeben("booking_prep_nudge", "pg_booking_prep_nudge_v2_sie", "sie");
+    const x = await lead({ name: "Rachid El Oufy" });
+    const vorschau = await fuehreAktionAus("buchung_vorbereitung_nachsenden", { customerId, leadId: x.lead.id, vorschau: "true" });
+    expect((vorschau as { info: string }).info).toMatch(/^Vorschau: Nachfrage pg_booking_prep_nudge_v2_sie/);
+    const los = await fuehreAktionAus("buchung_vorbereitung_nachsenden", { customerId, leadId: x.lead.id });
+    expect(los).toMatchObject({ ok: true });
+    expect(letzte(x.phone)?.template?.name).toBe("pg_booking_prep_nudge_v2_sie");
+    expect(params(letzte(x.phone))[0]).toBe("Rachid El Oufy");
+    expect(await merker(x.conversationId, STRECKE.vorbereitungNachfrage)).toHaveLength(1);
   });
 });

@@ -2111,20 +2111,36 @@ export async function vorbereitungNachsenden(
   const fensterOffen = !!conv.windowExpiresAt && conv.windowExpiresAt.getTime() > now.getTime();
   const wann = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(termin.startsAt);
   let vorlage: string | null = null;
+  // Fenster zu (Ole, 26.11.2026): Der Lead hat die Bestätigung schon. Bevorzugt die kurze Nachfrage (booking_prep_nudge,
+  // „kurze Frage zu Ihrem Termin am …“) statt die ganze Bestätigung zu wiederholen; nur ohne freigegebene Nachfrage die
+  // Bestätigung ab v5.
+  let nurFrage = fensterOffen;
   if (!fensterOffen) {
     const { ansprechpartner } = await import("@/lib/lead-anrede");
     const who = await ansprechpartner({ customerId: lead.customerId, leadId, phone: conv.contactPhone, name: lead.name });
     const { pickTemplate, templateVersionOfName } = await import("@/lib/whatsapp/templates");
-    const pick = await pickTemplate(lead.customerId, "booking_confirmation", who.kontakt, { kiErst: false });
-    if (!pick || templateVersionOfName(pick.tpl.name) < 5) return { ...nein(`Vorlage booking_confirmation mit der Frage (ab v5) ist noch nicht freigegeben (zuletzt freigegeben: ${pick?.tpl.name ?? "keine"}). Nichts gesendet.`), fensterOffen, termin: wann };
-    vorlage = pick.tpl.name;
+    const nudge = await pickTemplate(lead.customerId, "booking_prep_nudge", who.kontakt, { kiErst: false });
+    if (nudge) {
+      vorlage = nudge.tpl.name;
+      nurFrage = true;
+    } else {
+      const pick = await pickTemplate(lead.customerId, "booking_confirmation", who.kontakt, { kiErst: false });
+      if (!pick || templateVersionOfName(pick.tpl.name) < 5) return { ...nein(`Weder Nachfrage (booking_prep_nudge) noch Bestätigung mit der Frage (ab v5) sind freigegeben (zuletzt freigegebene Bestätigung: ${pick?.tpl.name ?? "keine"}). Nichts gesendet.`), fensterOffen, termin: wann };
+      vorlage = pick.tpl.name;
+    }
   }
-  const info = fensterOffen ? `Fenster offen: Frage zur Vorbereitung als Freitext mit Knöpfen (Termin ${wann}).` : `Bestätigung ${vorlage} mit Frage nach der Vorbereitung (Termin ${wann}).`;
+  const info = fensterOffen
+    ? `Fenster offen: Frage zur Vorbereitung als Freitext mit Knöpfen (Termin ${wann}).`
+    : nurFrage
+      ? `Nachfrage ${vorlage} mit Frage nach der Vorbereitung (Termin ${wann}).`
+      : `Bestätigung ${vorlage} mit Frage nach der Vorbereitung (Termin ${wann}).`;
   if (o.vorschau) return { gesendet: false, vorschau: true, wuerdeSenden: true, info: `Vorschau: ${info}`, termin: wann, vorlage, fensterOffen };
-  if (fensterOffen) {
+  if (nurFrage) {
     const { sendVorbereitungNachfrage } = await import("@/lib/whatsapp/reminders");
     await sendVorbereitungNachfrage({ customerId: lead.customerId, to: conv.contactPhone, name: lead.name, leadId, startsAt: termin.startsAt });
     await vorbereitungGefragt(conv.id, { appointmentId: termin.id, leadId, startsAt: termin.startsAt }, "ops");
+    // Gleicher Wortlaut wie die Nachfrage am Folgetag: nicht ein zweites Mal schicken
+    await vorbereitungGefragt(conv.id, { appointmentId: termin.id, leadId, startsAt: termin.startsAt }, "nachfrage");
   } else {
     const { sendBookingConfirmation } = await import("@/lib/whatsapp/reminders");
     await sendBookingConfirmation({ customerId: lead.customerId, to: conv.contactPhone, name: lead.name, leadId, startsAt: termin.startsAt, mode: termin.mode, meetUrl: termin.meetUrl, ort: termin.ort, appointmentId: termin.id });

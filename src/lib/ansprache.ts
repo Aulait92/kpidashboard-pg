@@ -118,7 +118,7 @@ export function namePartsFromForm(formData: unknown): { firstName: string | null
   return out;
 }
 
-const PARTICLES = new Set(["von", "van", "vom", "zu", "zum", "zur", "de", "der", "den", "di", "da", "du", "del", "la", "le", "ten", "ter"]);
+const PARTICLES = new Set(["von", "van", "vom", "zu", "zum", "zur", "de", "der", "den", "di", "da", "du", "del", "la", "le", "ten", "ter", "el", "al", "ben", "bin", "ibn", "abu", "ait", "dos", "das", "do"]);
 const clean = (s: string | null | undefined) => (s ?? "").replace(/\s+/g, " ").trim();
 
 /** Vorname, Nachname und Anrede aus den Angaben ableiten (Nachname nur, wenn wirklich bekannt). */

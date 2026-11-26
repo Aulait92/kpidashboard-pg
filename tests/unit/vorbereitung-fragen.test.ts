@@ -119,6 +119,7 @@ describe("Anrede des Leads: aus Angaben, sonst nur bei eindeutigem Vornamen (Ole
     expect(anredeZeile("sie", { fullName: "Andrea Becker" })).toBe("Guten Tag Andrea Becker,");
     expect(anredeZeile("sie", { fullName: "Frau Becker" })).toBe("Guten Tag Frau Becker,");
     expect(anredeZeile("sie", { fullName: "Andrea Becker", salutation: "w" })).toBe("Guten Tag Frau Becker,");
+    expect(anredeZeile("sie", { fullName: "Rachid El Oufy", salutation: "Herr" })).toBe("Guten Tag Herr El Oufy,");
   });
 });
 
