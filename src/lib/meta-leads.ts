@@ -88,6 +88,13 @@ export async function fetchFormInfo(formId: string): Promise<MetaForm> {
   return graphGet<MetaForm>(formId, { fields: "id,name,status,questions{key,label,type}" });
 }
 
+/** Einwilligungstext eines Formulars (legal_content), mit Seiten-Token, wenn die Seite bekannt ist. */
+export async function fetchFormLegal(formId: string, pageId?: string | null): Promise<unknown> {
+  const t = pageId ? await pageToken(pageId).catch(() => undefined) : undefined;
+  const res = await graphGet<{ legal_content?: unknown }>(formId, { fields: "legal_content" }, t ?? token());
+  return res.legal_content ?? null;
+}
+
 export type MetaPage = { id: string; name: string; tasks?: string[] };
 
 /** Seiten, auf die der System-User Zugriff hat. */

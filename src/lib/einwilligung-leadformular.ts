@@ -62,6 +62,19 @@ export const istKnopfFassung = (v: string | null | undefined) => typeof v === "s
 /** Titel über dem Text (max. 60 Zeichen, nennt den Knopf, der den Lead abschickt). */
 export const KNOPF_TITEL = "Letzter Schritt: Tippen Sie unten auf „Senden“";
 
+/**
+ * Formular mit Einwilligung per Knopf? (Ole, 26.11.2026: von Hand kopierte Formulare zeigten „Keine Einwilligung“.)
+ * legal_content aus der Graph-API: custom_disclaimer ohne Häkchen und mit Knopf-Titel bzw. „Klick auf Senden“ im Text.
+ * Gibt den Wortlaut zurück, sonst null.
+ */
+export function knopfEinwilligungAus(legal: unknown): string | null {
+  const cd = (legal as { custom_disclaimer?: { title?: string; body?: { text?: string }; checkboxes?: unknown[] } } | null)?.custom_disclaimer;
+  if (!cd || (Array.isArray(cd.checkboxes) && cd.checkboxes.length > 0)) return null;
+  const text = (cd.body?.text ?? "").trim();
+  const knopf = cd.title?.trim() === KNOPF_TITEL || /klick auf\s*[„"“]?senden/i.test(text);
+  return knopf && text ? text : null;
+}
+
 /** Wortlaut mit den Angaben des Vermittlers (Einwilligung per Knopf); fehlende Angaben als Platzhalter in eckigen Klammern. */
 export function leadFormConsentText(x: ConsentAngaben): string {
   const v = clean(x.vermittler) || PLATZHALTER.vermittler;
