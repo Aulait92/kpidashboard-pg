@@ -6,7 +6,7 @@
 import { sendLeadEmail } from "@/lib/calendar/lead-email";
 import { prisma } from "@/lib/prisma";
 import { firstNameOf, KNOPF, neuePlatzhalter, NoTemplateError, sendWhatsAppNotice, VORBEREITUNG_PAYLOADS } from "@/lib/whatsapp/templates";
-import { a, anredeNurAusAngaben, anredeZeile, asAnsprache, type Ansprache } from "@/lib/ansprache";
+import { a, anredeZeile, asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import { advisorDisplayName } from "@/lib/advisor-name";
 import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
@@ -97,7 +97,7 @@ export async function sendBookingConfirmation(opts: {
 }): Promise<void> {
   const an = await anspracheOf(opts.customerId);
   const who = await ansprechpartner({ customerId: opts.customerId, leadId: opts.leadId, phone: opts.to, name: opts.name });
-  const kontakt = anredeNurAusAngaben(who.kontakt);
+  const kontakt = who.kontakt;
   // Verschieben per Knopf „Termin verschieben“ (v4) bzw. per Chat (ältere Vorlagen: Satz im Parameter)
   const lead = opts.leadId ? await prisma.lead.findUnique({ where: { id: opts.leadId }, select: { source: true } }).catch(() => null) : null;
   const { istKfzProdukt } = await import("@/lib/whatsapp/produkt-fragen");
@@ -150,7 +150,7 @@ export function terminFuerNachfrage(d: Date): string {
 export async function sendVorbereitungNachfrage(opts: { customerId: string; to: string; name: string | null; leadId: string | null; startsAt: Date }): Promise<void> {
   const an = await anspracheOf(opts.customerId);
   const who = await ansprechpartner({ customerId: opts.customerId, leadId: opts.leadId, phone: opts.to, name: opts.name });
-  const kontakt = anredeNurAusAngaben(who.kontakt);
+  const kontakt = who.kontakt;
   const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || who.firm });
   const wann = terminFuerNachfrage(opts.startsAt);
   const text = `${anredeZeile(an, kontakt)} ${a(

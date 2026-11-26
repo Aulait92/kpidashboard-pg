@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { antwortAuswerten, bekannt, feldWert, frageNachricht, fragenPlan, offeneFragen, payloadLesen, REST_KNOPF, type SparteDef } from "@/lib/vorbereitung/fragen";
 import { aktiveSparten, SPARTEN_DEFINITIONEN, vorlaeufigeErlaubt } from "@/lib/vorbereitung/sparten";
 import { buchungsModus } from "@/lib/termin-formate";
-import { anredeNurAusAngaben, anredeZeile } from "@/lib/ansprache";
+import { anredeZeile } from "@/lib/ansprache";
 import { metaTemplateProblems, exampleValuesFor, templateBodyFor, templateNamesOf } from "@/lib/whatsapp/template-plan";
 import { vorbereitungAusText } from "@/lib/vorbereitung/fragen";
 
@@ -113,12 +113,12 @@ describe("Bestätigung v5 und Nachfrage: Texte nach Meta-Regeln", () => {
   });
 });
 
-describe("Anrede des Leads nur aus Angaben (nie aus dem Vornamen)", () => {
-  it("Formular Herr/Frau → „Herr Kranert“, sonst voller Name", () => {
-    expect(anredeZeile("sie", anredeNurAusAngaben({ fullName: "Peter Kranert" }))).toBe("Guten Tag Peter Kranert,");
-    expect(anredeZeile("sie", anredeNurAusAngaben({ fullName: "Peter Kranert", salutation: "Herr" }))).toBe("Guten Tag Herr Kranert,");
-    expect(anredeZeile("sie", anredeNurAusAngaben({ fullName: "Frau Becker" }))).toBe("Guten Tag Frau Becker,");
-    expect(anredeZeile("sie", anredeNurAusAngaben({ fullName: "Andrea Becker", salutation: "w" }))).toBe("Guten Tag Frau Becker,");
+describe("Anrede des Leads: aus Angaben, sonst nur bei eindeutigem Vornamen (Ole, 26.11.2026)", () => {
+  it("eindeutig → Herr/Frau, mehrdeutig → voller Name, Angabe hat Vorrang", () => {
+    expect(anredeZeile("sie", { fullName: "Peter Kranert" })).toBe("Guten Tag Herr Kranert,");
+    expect(anredeZeile("sie", { fullName: "Andrea Becker" })).toBe("Guten Tag Andrea Becker,");
+    expect(anredeZeile("sie", { fullName: "Frau Becker" })).toBe("Guten Tag Frau Becker,");
+    expect(anredeZeile("sie", { fullName: "Andrea Becker", salutation: "w" })).toBe("Guten Tag Frau Becker,");
   });
 });
 

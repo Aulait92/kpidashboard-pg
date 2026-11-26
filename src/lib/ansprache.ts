@@ -199,14 +199,3 @@ export function gebeugt<T extends string | null | undefined>(name: T): T {
   if (!name) return name;
   return name.replace(/^(\s*)Herr(?=\s+\S)/, "$1Herrn") as T;
 }
-
-/**
- * Anrede nur aus Angaben, nie aus dem Vornamen geraten (Ole, 26.11.2026, Terminbestätigung und Vorbereitung): Ist keine
- * Anrede bekannt (Formular, Korrektur im Kontakt, Bestandskunde, „Frau …“ im Namen), wird sie bewusst offen gelassen,
- * dann „Guten Tag Vorname Nachname“.
- */
-export function anredeNurAusAngaben(k: AnredeKontakt): AnredeKontakt {
-  if (salutationOf(k.salutation) || anredeBewusstOffen(k.salutation)) return k;
-  if (/^(herrn?|frau|hr\.?|fr\.?)\s+\S/i.test(clean(k.fullName))) return k;
-  return { ...k, salutation: "keine" };
-}

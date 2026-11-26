@@ -1,7 +1,7 @@
 // Vorbereitung nach der Buchung (Ole, 26.11.2026, Kundenfall Schwarzkopf): Lead bucht online, bevor er im Chat geschrieben
 // hat. Bisher kam nur die Bestätigungsvorlage ohne Frage, das 24-h-Fenster blieb zu, die Vorbereitung begann nie.
 //   1. Bestätigung ab v5: „Ihr Termin bei Herrn Testkopf“, am Ende die Frage mit [Ja, gern] [Lieber im Termin];
-//      bis zur Freigabe die alte v4 (Rückfall). Anrede des Leads nur aus dem Formular, sonst voller Name.
+//      bis zur Freigabe die alte v4 (Rückfall). Anrede des Leads aus dem Formular, sonst nur bei eindeutigem Vornamen.
 //   2. „Ja, gern“ startet die Strecke (Fragen-Engine, sonst Komplettcheck), „Lieber im Termin“ → „Alles klar, bis Montag!“
 //   3. Keine Antwort: einmal am Folgetag die Nachfrage (eigene Vorlage), dann Ruhe
 //   4. Fragen-Engine (vorläufige Privatschutz-Definition): Liste/Knöpfe, Fortschritt, Bekanntes überspringen, einmal
@@ -163,11 +163,14 @@ describe("Bestätigung mit Frage nach der Vorbereitung (Vorlage v5)", () => {
     expect(await merker(x.conversationId, STRECKE.vorbereitungFrage)).toHaveLength(1);
   });
 
-  it("Anrede nie aus dem Vornamen: ohne Anrede im Formular „Guten Tag Peter Kranert“", async () => {
+  it("Anrede ohne Formularangabe nur bei eindeutigem Vornamen (Peter → Herr Kranert, Andrea → voller Name)", async () => {
     await freigeben("booking_confirmation", "pg_booking_confirmation_v5_sie", "sie");
     const x = await lead();
     await bestaetigen(x);
-    expect(params(letzte(x.phone))[0]).toBe("Peter Kranert");
+    expect(params(letzte(x.phone))[0]).toBe("Herr Kranert");
+    const z = await lead({ name: "Andrea Beckmann" });
+    await bestaetigen(z);
+    expect(params(letzte(z.phone))[0]).toBe("Andrea Beckmann");
     const y = await lead({ formData: [{ label: "Anrede", value: "Frau" }], name: "Andrea Becker" });
     await bestaetigen(y);
     expect(params(letzte(y.phone))[0]).toBe("Frau Becker");

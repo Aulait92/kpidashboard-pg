@@ -2113,10 +2113,9 @@ export async function vorbereitungNachsenden(
   let vorlage: string | null = null;
   if (!fensterOffen) {
     const { ansprechpartner } = await import("@/lib/lead-anrede");
-    const { anredeNurAusAngaben } = await import("@/lib/ansprache");
     const who = await ansprechpartner({ customerId: lead.customerId, leadId, phone: conv.contactPhone, name: lead.name });
     const { pickTemplate } = await import("@/lib/whatsapp/templates");
-    const pick = await pickTemplate(lead.customerId, "booking_confirmation", anredeNurAusAngaben(who.kontakt), { kiErst: false });
+    const pick = await pickTemplate(lead.customerId, "booking_confirmation", who.kontakt, { kiErst: false });
     if (!pick?.current) return { ...nein(`Vorlage booking_confirmation v5 ist noch nicht freigegeben (zuletzt freigegeben: ${pick?.tpl.name ?? "keine"}). Nichts gesendet.`), fensterOffen, termin: wann };
     vorlage = pick.tpl.name;
   }
