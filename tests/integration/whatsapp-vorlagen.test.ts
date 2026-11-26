@@ -146,7 +146,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     expect(created.find((c) => c.name === "pg_reschedule_v5_sie")!.category).toBe("UTILITY");
     expect(created.find((c) => c.name === "pg_reminder_soon_v5")!.category).toBe("UTILITY");
     // Bestätigung v5 und Nachfrage zur Vorbereitung (Ole, 26.11.2026): UTILITY mit [Ja, gern] [Lieber im Termin]
-    for (const n of ["pg_booking_confirmation_v5_sie", "pg_booking_confirmation_v5_ki_sie", "pg_booking_prep_nudge_v1_sie", "pg_booking_prep_nudge_v1_sie_ohne_name"]) {
+    for (const n of ["pg_booking_confirmation_v6_sie", "pg_booking_confirmation_v6_ki_sie", "pg_booking_prep_nudge_v2_sie", "pg_booking_prep_nudge_v2_sie_ohne_name"]) {
       const t = created.find((c) => c.name === n);
       expect(t?.category, n).toBe("UTILITY");
       expect(t?.components.find((c) => c.type === "BUTTONS"), n).toEqual({ type: "BUTTONS", buttons: [{ type: "QUICK_REPLY", text: "Ja, gern" }, { type: "QUICK_REPLY", text: "Lieber im Termin" }] });
@@ -176,9 +176,9 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
       ["pg_followup_nudge_v5", "pg_followup_nudge_v5_ki"],
       ["pg_followup_nudge_v5_sie", "pg_followup_nudge_v5_ki_sie"],
       ["pg_followup_nudge_v5_sie_ohne_name", "pg_followup_nudge_v5_ki_sie_ohne_name"],
-      ["pg_booking_confirmation_v5", "pg_booking_confirmation_v5_ki"],
-      ["pg_booking_confirmation_v5_sie", "pg_booking_confirmation_v5_ki_sie"],
-      ["pg_booking_confirmation_v5_sie_ohne_name", "pg_booking_confirmation_v5_ki_sie_ohne_name"],
+      ["pg_booking_confirmation_v6", "pg_booking_confirmation_v6_ki"],
+      ["pg_booking_confirmation_v6_sie", "pg_booking_confirmation_v6_ki_sie"],
+      ["pg_booking_confirmation_v6_sie_ohne_name", "pg_booking_confirmation_v6_ki_sie_ohne_name"],
     ]) {
       const a = created.find((c) => c.name === normal)!;
       const b = created.find((c) => c.name === ki)!;

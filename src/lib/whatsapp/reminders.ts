@@ -155,8 +155,8 @@ export async function sendVorbereitungNachfrage(opts: { customerId: string; to: 
   const wann = terminFuerNachfrage(opts.startsAt);
   const text = `${anredeZeile(an, kontakt)} ${a(
     an,
-    `kurze Frage zu deinem Termin am ${wann}: Damit sich ${person.nom} gut auf dich vorbereiten kann, darf ich dir vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.`,
-    `kurze Frage zu Ihrem Termin am ${wann}: Damit sich ${person.nom} gut auf Sie vorbereiten kann, darf ich Ihnen vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.`,
+    `kurze Frage zu deinem Termin am ${wann}: Wenn du mir vorab ein paar kurze Fragen beantwortest, kann ${person.nom} dein Angebot schon vorbereiten und du bekommst es schneller. Dauert etwa eine Minute. Wollen wir kurz starten?`,
+    `kurze Frage zu Ihrem Termin am ${wann}: Wenn Sie mir vorab ein paar kurze Fragen beantworten, kann ${person.nom} Ihr Angebot schon vorbereiten und Sie bekommen es schneller. Dauert etwa eine Minute. Wollen wir kurz starten?`,
   )}`;
   await sendWhatsAppNotice({
     customerId: opts.customerId,

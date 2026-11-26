@@ -99,13 +99,13 @@ describe("Bestätigung v5 und Nachfrage: Texte nach Meta-Regeln", () => {
   const names = templateNamesOf("Allianz Anid Schwarzkopf", undefined, "Anid Schwarzkopf", "Herr");
   it("Sie: „bei Herrn Schwarzkopf“, Frage am Ende; Du: Vorname", () => {
     expect(templateBodyFor("booking_confirmation", names, "sie")).toBe(
-      "Guten Tag {{1}}, Ihr Termin bei Herrn Schwarzkopf ist bestätigt: {{2}} ({{3}}). {{4}} Damit sich Herr Schwarzkopf gut auf Sie vorbereiten kann: Darf ich Ihnen vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.",
+      "Guten Tag {{1}}, Ihr Termin bei Herrn Schwarzkopf ist bestätigt: {{2}} ({{3}}). {{4}} Wenn Sie mir vorab ein paar kurze Fragen beantworten, kann Herr Schwarzkopf Ihr Angebot schon vorbereiten und Sie bekommen es schneller. Dauert etwa eine Minute. Wollen wir kurz starten?",
     );
     expect(templateBodyFor("booking_confirmation", names, "du")).toBe(
-      "Hallo {{1}}, dein Termin bei Anid ist bestätigt: {{2}} ({{3}}). {{4}} Damit sich Anid gut auf dich vorbereiten kann: Darf ich dir vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.",
+      "Hallo {{1}}, dein Termin bei Anid ist bestätigt: {{2}} ({{3}}). {{4}} Wenn du mir vorab ein paar kurze Fragen beantwortest, kann Anid dein Angebot schon vorbereiten und du bekommst es schneller. Dauert etwa eine Minute. Wollen wir kurz starten?",
     );
     expect(templateBodyFor("booking_prep_nudge", names, "sie")).toBe(
-      "Guten Tag {{1}}, kurze Frage zu Ihrem Termin am {{2}}: Damit sich Herr Schwarzkopf gut auf Sie vorbereiten kann, darf ich Ihnen vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.",
+      "Guten Tag {{1}}, kurze Frage zu Ihrem Termin am {{2}}: Wenn Sie mir vorab ein paar kurze Fragen beantworten, kann Herr Schwarzkopf Ihr Angebot schon vorbereiten und Sie bekommen es schneller. Dauert etwa eine Minute. Wollen wir kurz starten?",
     );
     expect(templateBodyFor("reschedule", names, "sie")).toContain("Ihr Termin bei Herrn Schwarzkopf musste leider verschoben werden");
     for (const p of ["booking_confirmation", "booking_prep_nudge", "reschedule"] as const)

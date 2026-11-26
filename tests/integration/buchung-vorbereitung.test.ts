@@ -149,22 +149,22 @@ describe("Bestätigung mit Frage nach der Vorbereitung (Vorlage v5)", () => {
 
   it("v5 freigegeben: „Ihr Termin bei Herrn Testkopf“, Frage am Ende, Knöpfe mit Payload, Merker; Anrede aus dem Formular", async () => {
     await freigeben("booking_confirmation", "pg_booking_confirmation_v4_sie", "sie", V4_SIE);
-    await freigeben("booking_confirmation", "pg_booking_confirmation_v5_sie", "sie");
+    await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
     const x = await lead({ formData: [{ label: "Anrede", value: "Herr" }] });
     await bestaetigen(x);
     const m = letzte(x.phone);
-    expect(m?.template?.name).toBe("pg_booking_confirmation_v5_sie");
+    expect(m?.template?.name).toBe("pg_booking_confirmation_v6_sie");
     expect(params(m)[0]).toBe("Herr Kranert");
     expect(payloads(m)).toEqual(["vorbereitung:ja", "vorbereitung:termin"]);
     const body = (await prisma.message.findFirst({ where: { conversationId: x.conversationId, direction: "outbound" }, orderBy: { createdAt: "desc" } }))!.body!;
     expect(body).toContain("Guten Tag Herr Kranert, Ihr Termin bei Herrn Testkopf ist bestätigt:");
-    expect(body).toContain("Damit sich Herr Testkopf gut auf Sie vorbereiten kann: Darf ich Ihnen vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.");
+    expect(body).toContain("Wenn Sie mir vorab ein paar kurze Fragen beantworten, kann Herr Testkopf Ihr Angebot schon vorbereiten und Sie bekommen es schneller. Dauert etwa eine Minute. Wollen wir kurz starten?");
     expect(body).not.toMatch(/Anid Testkopf|[–—]/);
     expect(await merker(x.conversationId, STRECKE.vorbereitungFrage)).toHaveLength(1);
   });
 
   it("Anrede ohne Formularangabe nur bei eindeutigem Vornamen (Peter → Herr Kranert, Andrea → voller Name)", async () => {
-    await freigeben("booking_confirmation", "pg_booking_confirmation_v5_sie", "sie");
+    await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
     const x = await lead();
     await bestaetigen(x);
     expect(params(letzte(x.phone))[0]).toBe("Herr Kranert");
@@ -177,7 +177,7 @@ describe("Bestätigung mit Frage nach der Vorbereitung (Vorlage v5)", () => {
   });
 
   it("offenes Fenster: Freitext wie bisher mit „Termin verschieben“, Vermittler im Dativ", async () => {
-    await freigeben("booking_confirmation", "pg_booking_confirmation_v5_sie", "sie");
+    await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
     const x = await lead({ fensterOffen: true, formData: [{ label: "Anrede", value: "Herr" }] });
     await bestaetigen(x);
     const m = letzte(x.phone);
@@ -189,7 +189,7 @@ describe("Bestätigung mit Frage nach der Vorbereitung (Vorlage v5)", () => {
 
 describe("Antwort auf die Frage", () => {
   it("„Lieber im Termin“: „Alles klar, bis Montag!“, keine weiteren Fragen, auch nicht durch den Cron", async () => {
-    await freigeben("booking_confirmation", "pg_booking_confirmation_v5_sie", "sie");
+    await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
     const x = await lead();
     await bestaetigen(x);
     sent.length = 0;
@@ -205,7 +205,7 @@ describe("Antwort auf die Frage", () => {
   });
 
   it("„Ja, gern“ (ohne vorläufige Fragen): die Strecke startet mit dem Komplettcheck", async () => {
-    await freigeben("booking_confirmation", "pg_booking_confirmation_v5_sie", "sie");
+    await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
     const x = await lead();
     await bestaetigen(x);
     sent.length = 0;
@@ -219,7 +219,7 @@ describe("Antwort auf die Frage", () => {
   });
 
   it("„Ja, gern“ ohne Payload (Knopftext) bzw. getippt „Ja gerne“ zählt nur direkt nach der Frage", async () => {
-    await freigeben("booking_confirmation", "pg_booking_confirmation_v5_sie", "sie");
+    await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
     const x = await lead();
     await bestaetigen(x);
     sent.length = 0;
@@ -234,8 +234,8 @@ describe("Antwort auf die Frage", () => {
 
 describe("Nachfrage am Folgetag", () => {
   it("einmal am Folgetag (Geschäftszeit) mit eigener Vorlage und denselben Knöpfen, dann Ruhe", async () => {
-    await freigeben("booking_confirmation", "pg_booking_confirmation_v5_sie", "sie");
-    await freigeben("booking_prep_nudge", "pg_booking_prep_nudge_v1_sie", "sie");
+    await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
+    await freigeben("booking_prep_nudge", "pg_booking_prep_nudge_v2_sie", "sie");
     const x = await lead({ formData: [{ label: "Anrede", value: "Herr" }] });
     await bestaetigen(x);
     const frage = (await merker(x.conversationId, STRECKE.vorbereitungFrage))[0].createdAt;
@@ -250,7 +250,7 @@ describe("Nachfrage am Folgetag", () => {
     if (zehn.getTime() > x.termin.startsAt.getTime() - 2 * HOUR) return; // Termin zu nah (Wochentag des Testlaufs)
     expect(await runVorbereitungNachfassen(zehn)).toMatchObject({ gesendet: 1 });
     const m = letzte(x.phone);
-    expect(m?.template?.name).toBe("pg_booking_prep_nudge_v1_sie");
+    expect(m?.template?.name).toBe("pg_booking_prep_nudge_v2_sie");
     expect(params(m)).toEqual(["Herr Kranert", expect.stringMatching(/^Montag, /)]);
     expect(payloads(m)).toEqual(["vorbereitung:ja", "vorbereitung:termin"]);
     // kein zweites Mal, auch nicht am Tag danach
@@ -259,7 +259,7 @@ describe("Nachfrage am Folgetag", () => {
   });
 
   it("nicht, wenn der Lead geantwortet hat; ohne freigegebene Vorlage nichts", async () => {
-    await freigeben("booking_confirmation", "pg_booking_confirmation_v5_sie", "sie");
+    await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
     const x = await lead();
     await bestaetigen(x);
     const frage = (await merker(x.conversationId, STRECKE.vorbereitungFrage))[0].createdAt;
@@ -284,7 +284,7 @@ describe("Fragen-Engine (vorläufige Privatschutz-Definition)", () => {
   });
 
   it("Liste, Fortschritt, Bekanntes überspringen, Zusammengesetztes, einmal nachfragen, dann Komplettcheck", async () => {
-    await freigeben("booking_confirmation", "pg_booking_confirmation_v5_sie", "sie");
+    await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
     // Beruf ist aus dem Formular bekannt, Hausrat und Haftpflicht gebucht
     const x = await lead({ formData: [{ label: "Welche Versicherungen interessieren Sie?", value: "Haftpflicht, Hausrat" }, { label: "Beruf", value: "Angestellt" }] });
     await bestaetigen(x);
@@ -326,7 +326,7 @@ describe("Fragen-Engine (vorläufige Privatschutz-Definition)", () => {
   });
 
   it("„Rest im Termin“: freundlich stoppen, offene Punkte am Lead und im Verlauf, keine weiteren Fragen", async () => {
-    await freigeben("booking_confirmation", "pg_booking_confirmation_v5_sie", "sie");
+    await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
     const x = await lead({ formData: [{ label: "Welche Versicherungen interessieren Sie?", value: "Hausrat" }] });
     await bestaetigen(x);
     await knopf(x.phone, "Ja, gern", "vorbereitung:ja");
@@ -351,14 +351,14 @@ describe("Ops-Aktion buchung_vorbereitung_nachsenden", () => {
     expect(ohne).toMatchObject({ ok: false });
     expect((ohne as { error: string }).error).toContain("noch nicht freigegeben");
     expect(an(x.phone)).toHaveLength(0);
-    await freigeben("booking_confirmation", "pg_booking_confirmation_v5_sie", "sie");
+    await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
     const vorschau = await fuehreAktionAus("buchung_vorbereitung_nachsenden", { customerId, name: "Kranertneu", vorschau: "true" });
     expect(vorschau).toMatchObject({ ok: true });
-    expect((vorschau as { info: string }).info).toMatch(/^Vorschau: Bestätigung pg_booking_confirmation_v5_sie/);
+    expect((vorschau as { info: string }).info).toMatch(/^Vorschau: Bestätigung pg_booking_confirmation_v6_sie/);
     expect(an(x.phone)).toHaveLength(0);
     const los = await fuehreAktionAus("buchung_vorbereitung_nachsenden", { customerId, leadId: x.lead.id });
     expect(los).toMatchObject({ ok: true });
-    expect(letzte(x.phone)?.template?.name).toBe("pg_booking_confirmation_v5_sie");
+    expect(letzte(x.phone)?.template?.name).toBe("pg_booking_confirmation_v6_sie");
     expect(await merker(x.conversationId, STRECKE.vorbereitungFrage)).toHaveLength(1);
     const nochmal = await fuehreAktionAus("buchung_vorbereitung_nachsenden", { customerId, leadId: x.lead.id });
     expect(nochmal).toMatchObject({ ok: false });

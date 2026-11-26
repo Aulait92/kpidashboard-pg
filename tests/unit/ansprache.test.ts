@@ -251,7 +251,7 @@ describe("Vorlage wählen und Parameter setzen", () => {
     for (const k of [NUR_VORNAME, NUR_VORNAME_FRAU]) {
       const r = send([v2sie, v2ohne, v1sie], "sie", k)!;
       expect(r.name).toBe("pg_booking_confirmation_v2_sie_ohne_name");
-      expect(r.text).toBe(`Guten Tag, Ihr Termin bei X ist bestätigt: ${rest[0]} (${rest[1]}). ${rest[2]} Damit sich X gut auf Sie vorbereiten kann: Darf ich Ihnen vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.`);
+      expect(r.text).toBe(`Guten Tag, Ihr Termin bei X ist bestätigt: ${rest[0]} (${rest[1]}). ${rest[2]} Wenn Sie mir vorab ein paar kurze Fragen beantworten, kann X Ihr Angebot schon vorbereiten und Sie bekommen es schneller. Dauert etwa eine Minute. Wollen wir kurz starten?`);
     }
     // Nur die Fassung mit Namen freigegeben → nie mit leerem Namen, sondern die bisherige
     expect(send([v2sie, v1sie], "sie", NUR_VORNAME)!.name).toBe("pg_booking_confirmation_v1_sie");

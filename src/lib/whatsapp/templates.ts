@@ -195,8 +195,10 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   // Bestätigung v5 (Ole, 26.11.2026, Kundenfall Schwarzkopf): Vermittler als Person („bei Herrn Schwarzkopf“ statt
   // „bei Anid Schwarzkopf“) und am Ende die Frage nach der Vorbereitung mit [Ja, gern] [Lieber im Termin], damit sich das
   // 24-h-Fenster öffnet. Platzhalter gleich; bis zur Freigabe bei Meta sendet die App die freigegebene v4 (rankTemplates).
-  booking_confirmation: "v5",
-  booking_prep_nudge: "v1",
+  // v6/v2 (Ole, 26.11.2026): Nutzen der Fragen klar machen („kann … Ihr Angebot schon vorbereiten und Sie bekommen es
+  // schneller“). Bis zur Freigabe die zuletzt freigegebene Fassung (v5 bzw. v4).
+  booking_confirmation: "v6",
+  booking_prep_nudge: "v2",
   // Verschoben v5 (26.11.2026): „Ihr Termin bei Herrn Schwarzkopf“ statt „bei [Firma]“; Platzhalter gleich
   reschedule: "v5",
   reminder: "v5",
@@ -326,13 +328,13 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
   // (Knöpfe [Ja, gern] [Lieber im Termin], knopf.ts vorbereitung:ja|termin). Die freigegebene v4 hatte „bei [Firma]“, den
   // Satz zum Bereitlegen der Unterlagen und den Knopf „Termin verschieben“.
   booking_confirmation: {
-    du: "dein Termin bei [BeraterDat] ist bestätigt: {{2}} ({{3}}). {{4}} Damit sich [BeraterNom] gut auf dich vorbereiten kann: Darf ich dir vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.",
-    sie: "Ihr Termin bei [BeraterDat] ist bestätigt: {{2}} ({{3}}). {{4}} Damit sich [BeraterNom] gut auf Sie vorbereiten kann: Darf ich Ihnen vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.",
+    du: "dein Termin bei [BeraterDat] ist bestätigt: {{2}} ({{3}}). {{4}} Wenn du mir vorab ein paar kurze Fragen beantwortest, kann [BeraterNom] dein Angebot schon vorbereiten und du bekommst es schneller. Dauert etwa eine Minute. Wollen wir kurz starten?",
+    sie: "Ihr Termin bei [BeraterDat] ist bestätigt: {{2}} ({{3}}). {{4}} Wenn Sie mir vorab ein paar kurze Fragen beantworten, kann [BeraterNom] Ihr Angebot schon vorbereiten und Sie bekommen es schneller. Dauert etwa eine Minute. Wollen wir kurz starten?",
   },
   // Einmal am Folgetag (Geschäftszeit), wenn auf die Frage in der Bestätigung keine Antwort kam (UTILITY, gleiche Knöpfe)
   booking_prep_nudge: {
-    du: "kurze Frage zu deinem Termin am {{2}}: Damit sich [BeraterNom] gut auf dich vorbereiten kann, darf ich dir vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.",
-    sie: "kurze Frage zu Ihrem Termin am {{2}}: Damit sich [BeraterNom] gut auf Sie vorbereiten kann, darf ich Ihnen vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.",
+    du: "kurze Frage zu deinem Termin am {{2}}: Wenn du mir vorab ein paar kurze Fragen beantwortest, kann [BeraterNom] dein Angebot schon vorbereiten und du bekommst es schneller. Dauert etwa eine Minute. Wollen wir kurz starten?",
+    sie: "kurze Frage zu Ihrem Termin am {{2}}: Wenn Sie mir vorab ein paar kurze Fragen beantworten, kann [BeraterNom] Ihr Angebot schon vorbereiten und Sie bekommen es schneller. Dauert etwa eine Minute. Wollen wir kurz starten?",
   },
   // Show-up-Paket v5 (Ole, freigegeben 17.11.2026; Freitext: lib/showup.ts). Vortag (ca. 24 h vorher): Wann, Nutzensatz
   // aus den Angaben (bei Komplettcheck mit dem Satz zu den Verträgen), Zugang, Frage

@@ -2114,9 +2114,9 @@ export async function vorbereitungNachsenden(
   if (!fensterOffen) {
     const { ansprechpartner } = await import("@/lib/lead-anrede");
     const who = await ansprechpartner({ customerId: lead.customerId, leadId, phone: conv.contactPhone, name: lead.name });
-    const { pickTemplate } = await import("@/lib/whatsapp/templates");
+    const { pickTemplate, templateVersionOfName } = await import("@/lib/whatsapp/templates");
     const pick = await pickTemplate(lead.customerId, "booking_confirmation", who.kontakt, { kiErst: false });
-    if (!pick?.current) return { ...nein(`Vorlage booking_confirmation v5 ist noch nicht freigegeben (zuletzt freigegeben: ${pick?.tpl.name ?? "keine"}). Nichts gesendet.`), fensterOffen, termin: wann };
+    if (!pick || templateVersionOfName(pick.tpl.name) < 5) return { ...nein(`Vorlage booking_confirmation mit der Frage (ab v5) ist noch nicht freigegeben (zuletzt freigegeben: ${pick?.tpl.name ?? "keine"}). Nichts gesendet.`), fensterOffen, termin: wann };
     vorlage = pick.tpl.name;
   }
   const info = fensterOffen ? `Fenster offen: Frage zur Vorbereitung als Freitext mit Knöpfen (Termin ${wann}).` : `Bestätigung ${vorlage} mit Frage nach der Vorbereitung (Termin ${wann}).`;
