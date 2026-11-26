@@ -72,7 +72,7 @@ describe("Normalfall je Sparte (Formular mit Geburtsdatum und PLZ)", () => {
     expect(hauptfragen(["kfz"])).toBe(1);
     // Normalfall durchgespielt (Tierart und Folgefragen erst nach der Antwort bekannt)
     const tk = lauf(["tierkranken"], normal);
-    expect(tk.gestellt.filter((g) => !g.folge)).toHaveLength(8);
+    expect(tk.gestellt.filter((g) => !g.folge)).toHaveLength(9);
     const thv = lauf(["tierhalter"], normal);
     expect(thv.gestellt.filter((g) => !g.folge)).toHaveLength(4);
   });
@@ -356,3 +356,34 @@ describe("Schalter", () => {
   });
 });
 
+
+describe("Tierkranken: Kennzeichnung (Chip, Tätowierung), Ole 26.11.2026", () => {
+  const katzen = (f: GeplanteFrage) => (f.key === "tierart" ? { knopf: "katzen" } : f.key === "anzahl" ? { text: "2" } : normal(f));
+  it("je Tier gefragt, nach Haltung, als Liste mit vier Antworten und „Weiß ich nicht“", () => {
+    const r = lauf(["tierkranken"], katzen);
+    const ids = r.ids.filter((id) => id.startsWith("tierkranken.kennzeichnung"));
+    expect(ids).toEqual(["tierkranken.kennzeichnung", "tierkranken.kennzeichnung~2"]);
+    expect(r.ids.indexOf("tierkranken.kennzeichnung")).toBe(r.ids.indexOf("tierkranken.haltung") + 1);
+    const plan = fragenPlan(["tierkranken"], SPARTEN_DEFINITIONEN, quelle([...FORM, { label: "Tierart", value: "Katze" }]));
+    const f = plan.find((x) => x.id === "tierkranken.kennzeichnung")!;
+    expect(f.frage).toEqual({ sie: "Ist Ihre Katze gechippt oder tätowiert?", du: "Ist deine Katze gechippt oder tätowiert?" });
+    const n = frageNachricht(f, "sie", 1);
+    expect(n.buttons).toBeNull();
+    expect(n.liste?.zeilen.map((z) => z.title)).toEqual(["Gechippt", "Tätowiert", "Beides", "Weder noch", "Weiß ich nicht", "Rest im Termin"]);
+    expect(antwortAuswerten(f, null, "beides")).toEqual({ art: "wert", wert: "gechippt und tätowiert", opt: ["beides"] });
+    expect(antwortAuswerten(f, null, "weissnicht")).toEqual({ art: "offen" });
+    expect(antwortAuswerten(f, "ist gechippt", null)).toMatchObject({ wert: "gechippt" });
+    expect(antwortAuswerten(f, "Nein, gar nicht", null)).toMatchObject({ wert: "weder gechippt noch tätowiert" });
+    expect(antwortAuswerten(f, "keine Ahnung", null)).toEqual({ art: "offen" });
+    // Antwort landet am Tier („Katze 2 Kennzeichnung: …“)
+    const f2 = fragenPlan(["tierkranken"], SPARTEN_DEFINITIONEN, { ...quelle(), antworten: r.antworten }).find((x) => x.id === "tierkranken.kennzeichnung~2")!;
+    expect(f2.frage.sie).toBe("Ist Bello gechippt oder tätowiert?");
+    expect(feldWert(f2, "gechippt", "Kennzeichnung: tätowiert")).toBe("Kennzeichnung: tätowiert; Katze 2 Kennzeichnung: gechippt");
+  });
+  it("aus dem Formular bekannt: für das erste Tier nicht fragen", () => {
+    const q = quelle([...FORM, { label: "Tierart", value: "Katze" }, { label: "ist_ihre_katze_gechippt_oder_tätowiert?", value: "gechippt" }]);
+    const plan = fragenPlan(["tierkranken"], SPARTEN_DEFINITIONEN, q);
+    expect(plan.find((f) => f.id === "tierkranken.kennzeichnung")?.vorwissen).toMatchObject({ wert: "gechippt", opt: ["chip"] });
+    expect(offeneFragen(plan, q).map((f) => f.id)).not.toContain("tierkranken.kennzeichnung");
+  });
+});

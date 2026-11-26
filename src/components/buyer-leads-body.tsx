@@ -24,6 +24,8 @@ import { ladeCrossSellVerkauf } from "@/lib/cross-sell-verkauf-server";
 import { CrossSellLeiste } from "@/components/bestand/cross-sell-angebot";
 import { istZuTun, kontaktAnsicht, zuTunRang } from "@/lib/kontakt-liste";
 import { zaehltAlsTermin } from "@/lib/kpis";
+import { produktWhere } from "@/lib/produkt-filter";
+import { ladeProduktFilter } from "@/lib/produkt-filter-server";
 
 export async function BuyerLeadsBody({
   customerId,
@@ -66,9 +68,17 @@ export async function BuyerLeadsBody({
   const zuTunView = viewKey === "zu-tun" && !q && !crossSell && !verlust;
   const endOfToday = new Date(now);
   endOfToday.setHours(23, 59, 59, 999);
+  // Produktfilter (Ole, 26.11.2026): erst ab zwei Produkten; wirkt auf Liste und alle Zähler der Ansichten
+  const produktFilter = await ladeProduktFilter(leadScope(team), params.produkt);
+  const nachProdukt = produktFilter.aktiv
+    ? produktWhere(produktFilter.aktiv)
+    : verlust && params.produkt
+    ? { source: params.produkt }
+    : {};
   const leadRowsAll = await prisma.lead.findMany({
     where: {
       ...leadScope(team),
+      ...nachProdukt,
       ...(noStepView ? withoutNextStepWhere(now) : {}),
       // Bei einer Suche über alle Zeiträume (Rückrufer sind oft älter).
       ...(noStepView
@@ -76,7 +86,7 @@ export async function BuyerLeadsBody({
         : crossSell
         ? crossSellOffenWhere(now)
         : verlust
-        ? { ...verlorenImZeitraum(range.from, range.to), ...(params.produkt ? { source: params.produkt } : {}) }
+        ? verlorenImZeitraum(range.from, range.to)
         : q
         ? {
             OR: [
@@ -164,7 +174,7 @@ export async function BuyerLeadsBody({
       apptByLead.set(a.leadId, { startsAt: a.startsAt, mode: a.mode });
     }
   }
-  const noStepTotal = await countWithoutNextStep(leadScope(team), now);
+  const noStepTotal = await countWithoutNextStep({ ...leadScope(team), ...nachProdukt }, now);
   const crossSellTotal = crossSell ? await prisma.lead.count({ where: { ...leadScope(team), ...crossSellOffenWhere(now) } }) : 0;
   // „Allen ein Produkt anbieten“ (lib/cross-sell-verkauf.ts): nur mit Bestandskunden-Modul für alle, sonst wie bisher
   const crossSellVerkauf = crossSell && crossSellTotal > 0 ? await ladeCrossSellVerkauf(team, { now, anzahl: crossSellTotal }) : null;
@@ -258,7 +268,13 @@ export async function BuyerLeadsBody({
       ) : null}
       <FilterChips
         searchPlaceholder="Name, Telefon oder E-Mail"
-        fields={[{ kind: "select", key: "phase", label: "Phase", options: phases.map((p) => ({ value: p.key, label: p.label })) }]}
+        fields={[
+          { kind: "select", key: "phase", label: "Phase", options: phases.map((p) => ({ value: p.key, label: p.label })) },
+          // Nur bei mindestens zwei Produkten (sonst unverändert), häufigste zuerst
+          ...(produktFilter.optionen.length > 1
+            ? [{ kind: "select" as const, key: "produkt", label: "Produkt", options: produktFilter.optionen.map((p) => ({ value: p.value, label: p.label })) }]
+            : []),
+        ]}
       />
       <nav className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1" aria-label="Ansichten">
         {VIEWS.filter((v) => !v.nurOffen || v.key === activeView.key).map((v) => {
@@ -290,7 +306,7 @@ export async function BuyerLeadsBody({
       </nav>
       <BuyerLeadsTable
         leads={shown}
-        title={[crossSell ? CROSS_SELL_LABEL : activeView.key === "alle" ? "Alle Kontakte" : activeView.label, phase?.label].filter(Boolean).join(" · ")}
+        title={[crossSell ? CROSS_SELL_LABEL : activeView.key === "alle" ? "Alle Kontakte" : activeView.label, phase?.label, produktFilter.aktiv?.label].filter(Boolean).join(" · ")}
         statusLabels={WHATSAPP_STATUS_LABELS}
         showLeadCost={!(await loadRetainerConfig(customerId))}
         detailBase={detailBase}

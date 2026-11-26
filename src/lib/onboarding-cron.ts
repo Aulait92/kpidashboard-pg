@@ -68,7 +68,11 @@ export async function emailLeads(now: Date, onlyCustomerId?: string) {
   let sent = 0;
   for (const ob of onboardings) {
     const q = (ob.questionnaire ?? {}) as { leadEmails?: string[]; callbackBy?: string };
-    const to = q.leadEmails?.length ? q.leadEmails : await customerEmails(ob.customerId);
+    // Teams (mehr als ein Login): ohne fest hinterlegte Adressen übernimmt die E-Mail je Login
+    // (lib/lead-benachrichtigung.ts, „nur meine / alle im Team“), sonst bekäme jede Beraterin jeden Lead doppelt.
+    const alle = q.leadEmails?.length ? null : await customerEmails(ob.customerId);
+    if (alle && alle.length > 1) continue;
+    const to = q.leadEmails?.length ? q.leadEmails : (alle ?? []);
     if (to.length === 0) continue;
     // Nur Leads ab Onboarding-Start und höchstens 2 Tage alt (keine Altlasten).
     const since = new Date(Math.max(ob.createdAt.getTime(), now.getTime() - 2 * DAY));

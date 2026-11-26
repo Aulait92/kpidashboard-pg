@@ -38,6 +38,16 @@ describe("Terminvorbereitung", () => {
     expect(ab[0].titel).toBe("Allianz-Rechner Tierkrankenversicherung");
     expect(ab[0].felder.find((f) => f.label === "Tierart")?.wert).toBe("Katze");
     expect(offenePunkte(ab)).toContain("Geburtsdatum des Halters");
+    expect(offenePunkte(ab)).toContain("Kennzeichnung (Chip, Tätowierung)");
+  });
+
+  it("TKV: Kennzeichnung aus dem Formular bzw. aus dem Chat, nicht doppelt unter weiteren Angaben (Ole, 26.11.2026)", () => {
+    const d = { ...base, lead: { ...base.lead, produkt: "TKV-Katze" }, formular: [{ label: "ist_ihre_katze_gechippt_oder_tätowiert?", value: "beides" }], angaben: {} };
+    const feld = (x: VorbereitungDaten) => abschnitte(x).flatMap((s) => s.felder).find((f) => f.label === "Kennzeichnung (Chip, Tätowierung)")?.wert;
+    expect(feld(d)).toBe("gechippt und tätowiert");
+    const chat = { ...d, formular: [], angaben: { tier: "Rasse: Perser; Kennzeichnung: gechippt" } };
+    expect(feld(chat)).toBe("gechippt");
+    expect(abschnitte(chat).flatMap((s) => s.felder).find((f) => f.label === "Weitere Angaben zu den Tieren")).toBeUndefined();
   });
 
   it("PDF-HTML im PG-Design, ohne Gedankenstriche, Werte escaped", () => {

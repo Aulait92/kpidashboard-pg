@@ -662,11 +662,11 @@ export async function ersteNachBuchung(
 async function ersteNachAngaben(
   k: StreckenKontext,
   einleitung?: string | null,
-): Promise<{ text: string; buttons: Knopf[] | null; merker: string; daten?: Record<string, unknown> }> {
+): Promise<{ text: string; buttons: Knopf[] | null; merker: string; daten?: Record<string, unknown>; liste?: FrageNachricht["liste"] }> {
   if (k.termin && istTierStrecke(k.source)) {
     const s = await streckenStand(k.conversationId, k.termin.id);
     const f = naechsteTierFrage(k, s.tierBeantwortet);
-    if (f && !s.komplettFrageAt && !s.abschlussAt) return { text: mitEinleitung(f.text, einleitung), buttons: f.buttons, merker: STRECKE.tierFrage, daten: { key: f.key } };
+    if (f && !s.komplettFrageAt && !s.abschlussAt) return { text: mitEinleitung(f.text, einleitung), buttons: f.buttons, liste: f.liste ?? null, merker: STRECKE.tierFrage, daten: { key: f.key } };
   }
   const m = komplettcheckNachricht({ ...k, variante: await komplettcheckVariante(k.leadId ?? k.conversationId) }, einleitung);
   return { text: m.text, buttons: m.buttons, merker: STRECKE.komplettFrage };
@@ -790,7 +790,7 @@ export async function tierAntwort(conversationId: string, text: string, knopf: {
   if (f) {
     await merke(conversationId, STRECKE.tierFrage, { appointmentId: k.termin.id, key: f.key });
     // ohne „Danke!“ davor: Fragen, die selbst mit Dank beginnen, und die Bitte um ein passendes Datum
-    await sende(k, /^(Danke\b|Das Datum)/.test(f.text) ? f.text : `Danke! ${f.text}`, f.buttons);
+    await sende(k, /^(Danke\b|Das Datum)/.test(f.text) ? f.text : `Danke! ${f.text}`, f.buttons, f.liste);
   } else {
     await sendeKomplettcheck(k);
   }
@@ -1960,7 +1960,7 @@ async function weiterNachAngaben(k: StreckenKontext, einleitung: string): Promis
   if (stand.komplettFrageAt || stand.tierFrageLetzte) return false;
   const m = await ersteNachAngaben(k, einleitung);
   await merke(k.conversationId, m.merker, { appointmentId: k.termin.id, ...(m.daten ?? {}) });
-  await sende(k, m.text, m.buttons);
+  await sende(k, m.text, m.buttons, m.liste);
   return true;
 }
 
