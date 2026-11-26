@@ -284,12 +284,18 @@ export async function bookingKeys(customerId: string, leadId?: string | null): P
   }
   const advisors = await prisma.user.findMany({
     where: { customerId, role: "BUYER", receivesLeads: true, advisorCalendar: { status: "connected" } },
-    select: { id: true, lastLeadAssignedAt: true },
+    select: { id: true, lastLeadAssignedAt: true, advisorCalendar: { select: { provider: true, accountEmail: true, calendarId: true } } },
     orderBy: [{ lastLeadAssignedAt: { sort: "asc", nulls: "first" } }, { createdAt: "asc" }],
   });
-  const main = await prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true } });
+  const main = await prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true, provider: true, accountEmail: true, calendarId: true } });
   const keys = advisors.map((a) => userCalendarKey(a.id));
-  if (main?.status === "connected" || keys.length === 0) keys.push(customerId);
+  // Agentur-Kalender, der derselbe Kalender wie der einer Beraterin ist (ops beraterkalender_als_agentur,
+  // Fall CL Capital Living 26.11.2026), nicht doppelt zählen: sonst gelten zusätzlich die Standard-Zeiten
+  // der Agentur und Leads buchen außerhalb der Zeiten der Beraterin.
+  const gleich = (a: { provider: string; accountEmail: string | null; calendarId: string } | null) =>
+    !!a && !!main && a.provider === main.provider && !!a.accountEmail && a.accountEmail === main.accountEmail && a.calendarId === main.calendarId;
+  const doppelt = advisors.some((a) => gleich(a.advisorCalendar));
+  if ((main?.status === "connected" && !doppelt) || keys.length === 0) keys.push(customerId);
   return keys;
 }
 
