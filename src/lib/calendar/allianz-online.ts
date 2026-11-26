@@ -434,8 +434,8 @@ export function decodeAllianzCalendar(enc: string | null | undefined): AllianzCa
 /**
  * Belegte Zeiten aus dem Allianz-Online-Kalender eines Kunden (Agentur-Kalender).
  *
- * Vor dem frühesten Buchungstag kennt die App keine Allianz-Daten. Sicherer
- * Standard (Ole, 20.11.2026): diese Tage gelten als belegt. Nur wenn ein
+ * Vor dem frühesten Buchungstag zählen nur freie Zeiten, die Allianz selbst liefert (Ole, 26.11.2026); ohne
+ * Angaben gelten diese Tage als belegt (sicherer Standard, Ole 20.11.2026). Nur wenn ein
  * eigener Kalender (Google/Outlook) die belegten Zeiten liefert
  * (`leadTimesBeforeEarliest`), gelten dort die Lead-Zeiten als frei.
  */
@@ -450,7 +450,10 @@ export async function allianzBusy(
   const fallbackFree =
     opts.leadTimesBeforeEarliest && min < knownFrom ? leadTimeWindows(await loadLeadTimes(customerId), min, knownFrom, Math.max(cal.durationMin, 60)) : [];
   try {
-    const slots = max > knownFrom ? await fetchFreeSlots(cal, min > knownFrom ? min : knownFrom, max) : [];
+    // Ab jetzt abfragen, nicht erst ab dem frühesten Buchungstag (Ole, 26.11.2026: Anids Online-Kalender zeigte Do. und
+    // Fr. freie Zeiten, die Buchungsseite erst ab Montag). Freie Zeiten, die Allianz davor liefert, zählen als frei;
+    // Tage ohne Angaben bleiben wie bisher belegt bzw. Lead-Zeiten des eigenen Kalenders.
+    const slots = max > min ? await fetchFreeSlots(cal, min, max) : [];
     const busy = busyFromSlots({ slots, durationMin: cal.durationMin, leadTimeMin: cal.leadTimeMin, followupMin: cal.followupMin, min, max, knownFrom, fallbackFree });
     await prisma.agentConfig.updateMany({ where: { customerId }, data: { allianzLastOkAt: new Date(), allianzLastError: null } }).catch(() => {});
     return busy;
