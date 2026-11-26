@@ -97,7 +97,18 @@
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
-export const LEGAL_VERSION = "25.11.2026";
+// 26.11.2026 (neuer Stand „26.11.2026“, Ole: „Die Garantien müssen aus den öffentlichen AGB raus. Neue Kunden sollen
+// keine alten Garantien mehr lesen.“): Abschnitt „Garantien“ (mit „Gemeinsame Voraussetzungen“, „Wahrgenommene
+// Termine“, Lead-, Break-even- und Vertrags-Garantie, „Übergang“) aus den AGB entfernt, ebenso der Hinweis „und
+// Garantien“ im Absatz „Paket Pay-per-Lead + Software“; die Nummern danach rücken auf (LegalSections zählt selbst).
+// Verträge aus Angeboten vor GUARANTEES_UNTIL (22.11.2026, 19:15 Uhr) behalten ihre Garantien: Die bisherige Fassung
+// ist als Archiv „Stand 25.11.2026“ erhalten (lib/agb-2026-11-25.ts, unveränderter Wortlaut). Diese Angebote zeigen sie
+// in Seite und PDF und verlinken /angebot/[token]/agb, die Kunden finden sie unter Konto & Rechnungen → Ihr Vertrag
+// („Ihre AGB (Stand 25.11.2026)“, /buyer/konto/agb). lib/garantien.ts und die Garantie-Prüfung unverändert. Neue
+// Angebote: Garantie nur als Sondervereinbarung vollständig im Angebotstext. Für Kunden ohne Garantie ändert sich
+// nichts (seit 22.11.2026 galten für sie keine Garantien), darum keine Mitteilung; kein Banner, keine erneute Zustimmung.
+// Protokoll: docs/recht/2026-11-26-agb-ohne-garantien.md.
+export const LEGAL_VERSION = "26.11.2026";
 
 export const PROVIDER = {
   name: "Ole Kannapinn UG (haftungsbeschränkt)",
@@ -159,7 +170,7 @@ export const AGB: LegalSection[] = [
       { sub: "Zugänge", text: "Enthalten ist die im Angebot genannte Zahl aktiver Verkäufer. Aktiv ist ein Zugang, der Leads zugeteilt bekommt; Zugänge ohne Leads sind kostenlos. Jeder weitere aktive Verkäufer kostet den im Angebot genannten Preis je Monat, tagesgenau anteilig." },
       // Prüfen: Zusatzmodule, Kündigung bei jährlicher Vorauszahlung zum Ende des bezahlten Jahres (12.11.2026)
       // Prüfen: Paket Pay-per-Lead + Software (19.11.2026, Fassung 3)
-      { sub: "Paket Pay-per-Lead + Software", text: "In diesem Paket nutzt der Kunde die Software für die Leads, die er per Stück (Pay-per-Lead) beim Anbieter kauft. Der Anbieter stellt nur die Software bereit, ohne Betreuung und ohne eigene Werbekampagnen; die Regeln zu Leadgenerierung, Werbebudget, Preisstaffel, Meta-Zugriff, Pause und Garantien gelten dafür nicht. Leads bestellt und bezahlt der Kunde gesondert zu dem bei der Bestellung genannten Preis je Lead; sie sind nicht Teil der monatlichen Vergütung, eine Mindestabnahme besteht nicht. Der Vertrag läuft ohne Mindestlaufzeit und ist zum Ende jedes Abrechnungsmonats kündbar; im Übrigen gilt „Laufzeit und Kündigung“. Für Verträge aus Angeboten, die ab dem 24.11.2026 angenommen werden, gelten für Bestellung, Lieferung und Reklamation der Leads die im Angebot enthaltenen Bedingungen: Anerkannte Reklamationen gleicht der Anbieter mit einem kostenlosen Ersatzlead aus, bezahlte Leads liefert er nach." },
+      { sub: "Paket Pay-per-Lead + Software", text: "In diesem Paket nutzt der Kunde die Software für die Leads, die er per Stück (Pay-per-Lead) beim Anbieter kauft. Der Anbieter stellt nur die Software bereit, ohne Betreuung und ohne eigene Werbekampagnen; die Regeln zu Leadgenerierung, Werbebudget, Preisstaffel, Meta-Zugriff und Pause gelten dafür nicht. Leads bestellt und bezahlt der Kunde gesondert zu dem bei der Bestellung genannten Preis je Lead; sie sind nicht Teil der monatlichen Vergütung, eine Mindestabnahme besteht nicht. Der Vertrag läuft ohne Mindestlaufzeit und ist zum Ende jedes Abrechnungsmonats kündbar; im Übrigen gilt „Laufzeit und Kündigung“. Für Verträge aus Angeboten, die ab dem 24.11.2026 angenommen werden, gelten für Bestellung, Lieferung und Reklamation der Leads die im Angebot enthaltenen Bedingungen: Anerkannte Reklamationen gleicht der Anbieter mit einem kostenlosen Ersatzlead aus, bezahlte Leads liefert er nach." },
       { sub: "Zusatzmodule", text: "Zusatzmodule gelten nur, wenn sie im Angebot vereinbart oder im Kundenbereich bzw. in Textform gebucht sind. Sie werden tagesgenau anteilig berechnet und sind zum Ende des laufenden Abrechnungszeitraums kündbar, bei Vorauszahlung (jährlich bzw. für 6 Monate) zum Ende des bezahlten Zeitraums; eine anteilige Erstattung erfolgt nicht." },
     ],
   },
@@ -218,21 +229,6 @@ export const AGB: LegalSection[] = [
       "Bei Vorauszahlung läuft der Vertrag einen Zahlungszeitraum (12 Monate bei jährlicher Vorauszahlung, 6 Monate bei Vorauszahlung für 6 Monate) ab Start und verlängert sich um jeweils einen weiteren Zahlungszeitraum, wenn er nicht spätestens einen Monat vor dessen Ende gekündigt wird. Der Kunde kann vorher auf monatliche Zahlung umstellen; dann gilt die Regel für seine Laufzeit.",
       { sub: "Fristen", text: "Start ist das im Angebot genannte oder bei der Annahme gewählte Datum. Ein Abrechnungsmonat läuft vom Starttag bis zum Tag vor demselben Kalendertag des Folgemonats (fehlt der Tag, bis zum Monatsletzten); Beispiel: Start am 15.03., Abrechnungsmonate 15.03. bis 14.04. usw., 3 Monate Mindestlaufzeit bis 14.06. Eine Kündigung während der Mindestlaufzeit wirkt zu deren Ende, danach zum Ende des Abrechnungsmonats, in dem sie zugeht." },
       "Die Kündigung erfolgt in Textform oder im Kundenbereich unter „Konto & Rechnungen“ („Vertrag hier kündigen“), wo der Kunde den Endtermin vorher sieht. Der Anbieter bestätigt Eingang und Vertragsende per E-Mail. Das Recht zur außerordentlichen Kündigung bleibt unberührt. Die Setupgebühr wird nicht erstattet.",
-    ],
-  },
-  {
-    // Prüfen: Garantien (von Ole am 11.11.2026 freigegeben); 120 statt 90 Tage für neue Angebote (Übergang bleibt, da eine URL).
-    // Seit 22.11.2026 nur noch für ältere Angebote (Ole: ohne Garantie verkaufen), Stichtag GUARANTEES_UNTIL.
-    title: "Garantien",
-    items: [
-      "Die Garantien gelten nur für Verträge aus Angeboten, die vor dem 22.11.2026, 19:15 Uhr erstellt wurden, und dort für die Katzenversicherung (TKV) und für weitere im Angebot genannte Produkte, ab dem Tag der ersten Auslieferung der Anzeigen. Spätere Angebote enthalten keine Garantien, es sei denn, das Angebot sagt sie ausdrücklich zu.",
-      { sub: "Gemeinsame Voraussetzungen", text: "Werbebudget an den aktiven Tagen mindestens 20 € pro Tag und Produkt. Für Break-even- und Vertrags-Garantie außerdem: mindestens 80 % der über die Software gebuchten Termine vom Kunden wahrgenommen und für mindestens 80 % der Leads das Ergebnis in der Software eingetragen. Pausen verlängern den Prüfzeitraum um ihre Dauer; bei Zahlungsverzug ruht der Anspruch bis zum Ausgleich." },
-      { sub: "Wahrgenommene Termine", text: "Nicht wahrgenommen sind nur Termine, die der Kunde selbst absagt oder versäumt. Sagt der Interessent ab, verschiebt er oder erscheint er nicht, gilt der Termin als wahrgenommen. Verschiebt der Kunde einen Termin, zählt nur der neue. Im Zweifel, etwa wenn nicht feststeht, wer abgesagt hat, gilt der Termin als wahrgenommen. Auf Anfrage legt der Anbieter dem Kunden die Berechnung beider Quoten in Textform vor, mit der Liste der zugrunde liegenden Termine und Leads und dem jeweils eingetragenen Ergebnis." },
-      { sub: "Lead-Garantie", text: "Erhält der Kunde in den ersten 30 aktiven Tagen weniger als 100 Leads für das Produkt, entfällt die Vergütung für Betreuung und Software im folgenden Abrechnungsmonat. Das Werbebudget zahlt er weiter an Meta." },
-      { sub: "Break-even-Garantie (Vertreter mit Abschlussprovision)", text: "Liegt die Provision aus den über den Anbieter gewonnenen Verträgen nach 120 aktiven Tagen unter Werbebudget plus Vergütung für Betreuung und Software in diesem Zeitraum, betreut der Anbieter ohne diese Vergütung weiter, auf Wunsch mit einem anderen Produkt ohne Setupgebühr, bis die Provision seit Start die Kosten erreicht, längstens 6 Monate. Grundlage ist die Berechnung in der Software mit den unter „Meine Provisionen“ hinterlegten Sätzen; der Anbieter kann Nachweise zu Abschlüssen verlangen." },
-      { sub: "Vertrags-Garantie (Makler, statt Break-even)", text: "Hat der Kunde nach 120 aktiven Tagen weniger als 15 Verträge aus den Leads abgeschlossen (in der Software als Abschluss eingetragen), betreut der Anbieter ohne Vergütung für Betreuung und Software weiter, auf Wunsch mit einem anderen Produkt ohne Setupgebühr, bis 15 Verträge erreicht sind, längstens 6 Monate. Der Anbieter kann eine Courtage- bzw. Provisionsabrechnung des Versicherers anfordern; verschweigt der Kunde Abschlüsse, entfällt der Anspruch." },
-      { sub: "Übergang", text: "Für Verträge aus Angeboten, die vor dem 13.11.2026, 19:00 Uhr (Break-even-Garantie) bzw. vor dem 15.11.2026, 23:45 Uhr (Vertrags-Garantie) erstellt wurden, gelten 90 statt 120 aktive Tage." },
-      "Weitergehende Ansprüche, insbesondere auf eine bestimmte Provision oder Zahl an Verträgen, bestehen nicht.",
     ],
   },
   {
@@ -538,7 +534,7 @@ export function agbPplSoftware(opt: { zugaenge?: boolean; zusatzmodule?: boolean
 }
 
 /** In Leadangeboten nicht geltende Abschnitte der allgemeinen AGB (Variante „Kampagnen im eigenen Werbekonto“). */
-const NICHT_IN_LEADANGEBOTEN = ["Garantien", "Pause und Urlaub", "Angebote vor einer Kündigung"];
+const NICHT_IN_LEADANGEBOTEN = ["Pause und Urlaub", "Angebote vor einer Kündigung"];
 
 /**
  * AGB, die ein Angebot zeigt (Angebotsdokument, PDF): Leadangebote nur mit den geltenden Abschnitten und Nachlieferung;

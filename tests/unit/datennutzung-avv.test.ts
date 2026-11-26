@@ -61,7 +61,7 @@ describe("AVV", () => {
   });
 
   it("neue Fassung, hochgezählt wie bisher (Datum, am selben Tag „Fassung n“)", () => {
-    expect(LEGAL_VERSION).toBe("25.11.2026");
+    expect(LEGAL_VERSION).toBe("26.11.2026");
     expect(LEGAL_VERSION).toMatch(/^\d{2}\.\d{2}\.\d{4}( \(Fassung \d+\))?$/);
   });
 });

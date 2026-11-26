@@ -3,6 +3,7 @@ import { InfoHinweis } from "@/components/info-hinweis";
 import { PREISSTUFE_ERKLAERT } from "@/lib/begriffe";
 import { LegalSections } from "@/components/legal-sections";
 import { agbFuerAngebot, PPL_KUNDENKONTO_BEDINGUNGEN, PPL_NUR_LEADS_BEDINGUNGEN_ALT, PROVIDER } from "@/lib/legal-texts";
+import { AGB_2026_11_25, AGB_ARCHIV_STAND, agbMitGarantien } from "@/lib/agb-2026-11-25";
 import {
   beispielRechnung,
   KUNDENKONTO_ABRECHNUNG,
@@ -316,6 +317,10 @@ export function OfferDocument({
     zugaenge: add.hasSeats,
     zusatzmodule: add.bestandActive || add.empfehlungActive,
   });
+  // Angebote vor GUARANTEES_UNTIL (Ole, 26.11.2026): archivierte AGB „Stand 25.11.2026“ mit Abschnitt „Garantien“,
+  // auf den „Details in den AGB (Abschnitt „Garantien“)“ zeigt. Neuere Angebote: aktuelle AGB ohne Garantien.
+  const agbArchiv = agbMitGarantien(offer);
+  const agbAbschnitte = agbArchiv ? AGB_2026_11_25 : agbAngebot.agb;
   // Erster Monatsbetrag inkl. Zusätze (Startpreis gilt nur für das Paket)
   const firstMonth = round2((hasIntro ? offer.introMonthlyFee! : offer.monthlyFee) + add.seatsFee + add.bestandFee + add.empfehlungFee);
   const firstCharge = add.annualTotal ?? firstMonth;
@@ -892,7 +897,7 @@ export function OfferDocument({
             </summary>
             <div className="border-t border-[#e5e7eb] px-5 pb-5">
             <div className="mt-4">
-          <h2 className="text-xl font-bold">Allgemeine Geschäftsbedingungen (AGB)</h2>
+          <h2 className="text-xl font-bold">Allgemeine Geschäftsbedingungen (AGB{agbArchiv ? `, Stand ${AGB_ARCHIV_STAND}` : ""})</h2>
           <p className="mb-6 mt-1 text-sm text-[#6b7280]">
             Die nachfolgenden Bedingungen sind Bestandteil dieses Angebots.
             {offer.dpaUrl ? (
@@ -905,14 +910,14 @@ export function OfferDocument({
               </>
             ) : null}
           </p>
-          <LegalSections sections={agbAngebot.agb} compact />
+          <LegalSections sections={agbAbschnitte} compact />
         </div>
 
             </div>
           </details>
         ) : (
         <div className="offer-agb mt-14">
-          <h2 className="text-xl font-bold">Allgemeine Geschäftsbedingungen (AGB)</h2>
+          <h2 className="text-xl font-bold">Allgemeine Geschäftsbedingungen (AGB{agbArchiv ? `, Stand ${AGB_ARCHIV_STAND}` : ""})</h2>
           <p className="mb-6 mt-1 text-sm text-[#6b7280]">
             Die nachfolgenden Bedingungen sind Bestandteil dieses Angebots.
             {offer.dpaUrl ? (
@@ -925,7 +930,7 @@ export function OfferDocument({
               </>
             ) : null}
           </p>
-          <LegalSections sections={agbAngebot.agb} compact />
+          <LegalSections sections={agbAbschnitte} compact />
         </div>
 
         )}

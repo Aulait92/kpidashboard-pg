@@ -798,7 +798,8 @@ Seiten aus der Liste „Seiten“ unten.
   Pausentage, die Garantie verfällt dadurch nicht. Eine offene Rechnung zum Prüfzeitpunkt verhindert die Gutschrift, bis
   sie bezahlt ist.
 - Gutgeschrieben wird nach kurzer Prüfung durch uns auf der nächsten Rechnung.
-- Genaue Bedingungen stehen in den AGB (Abschnitt „Garantien“). Fragen dazu: bei performancegrowth melden.
+- Genaue Bedingungen stehen in Ihren AGB (Stand 25.11.2026), Abschnitt „Garantien“: unter **Konto & Rechnungen → Ihr Vertrag**
+  („Ihre AGB“). Die aktuellen AGB enthalten keine Garantien mehr. Fragen dazu: bei performancegrowth melden.
 
 ## Team (nur Inhaber)
 

@@ -21,6 +21,7 @@ import { includedPhrase } from "@/lib/seats";
 import { contractCancelInfo } from "@/lib/vertrag-kuendigung";
 import { helpCallSlots } from "@/lib/help-call";
 import { VertragKuendigen } from "./vertrag-kuendigen";
+import { AGB_ARCHIV_STAND, agbMitGarantien } from "@/lib/agb-2026-11-25";
 import { Aufbewahrung } from "./aufbewahrung";
 import { loadRetentionView } from "@/lib/ruhend";
 import { loadHalteKonto } from "@/lib/halteangebote-server";
@@ -88,7 +89,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   });
   if (!customer) redirect("/buyer");
   const offer = customer.onboarding?.offerId
-    ? await prisma.offer.findUnique({ where: { id: customer.onboarding.offerId }, select: { term: true, softwareFee: true, number: true, token: true, annualFreeMonths: true, paymentInArrears: true, startDate: true, introMonths: true, billingDay: true, acceptedAt: true, paidAt: true } })
+    ? await prisma.offer.findUnique({ where: { id: customer.onboarding.offerId }, select: { term: true, softwareFee: true, number: true, token: true, status: true, package: true, createdAt: true, garantieStichtag: true, annualFreeMonths: true, paymentInArrears: true, startDate: true, introMonths: true, billingDay: true, acceptedAt: true, paidAt: true } })
     : null;
 
   let invoices: CustomerInvoice[] = [];
@@ -293,6 +294,17 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                     Angebot {offer.number} ansehen
                   </a>
                 </dd>
+                {/* Verträge aus Angeboten vor GUARANTEES_UNTIL: archivierte AGB mit Garantien (Ole, 26.11.2026) */}
+                {offer.status === "accepted" && agbMitGarantien(offer) ? (
+                  <>
+                    <dt className="text-[color:var(--muted)]">AGB</dt>
+                    <dd>
+                      <a href={`/angebot/${offer.token}/agb`} target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline" data-konto-agb-archiv>
+                        Ihre AGB (Stand {AGB_ARCHIV_STAND})
+                      </a>
+                    </dd>
+                  </>
+                ) : null}
               </>
             ) : null}
           </dl>

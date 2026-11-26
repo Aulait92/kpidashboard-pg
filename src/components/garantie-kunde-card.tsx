@@ -80,9 +80,10 @@ export async function GarantieKundeCard({ customerId }: { customerId: string }) 
         })}
       </div>
       <p className="mt-3 text-xs text-[color:var(--muted)]">
-        Pausen wie Urlaub oder Krankheit verlängern den Zeitraum. Details in den{" "}
-        <Link href="/rechtliches/agb" className="underline">
-          AGB unter „Garantien“
+        {/* Seit 26.11.2026 stehen die Garantien nur noch in den archivierten AGB (Konto & Rechnungen → Ihr Vertrag) */}
+        Pausen wie Urlaub oder Krankheit verlängern den Zeitraum. Details in Ihren AGB unter{" "}
+        <Link href="/buyer/konto" className="underline">
+          Konto & Rechnungen
         </Link>
         .
       </p>
