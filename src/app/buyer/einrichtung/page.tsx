@@ -33,7 +33,8 @@ import { ErstinfoForm } from "./erstinfo-form";
 import { loadErstinfo } from "@/lib/erstinformation";
 import { vermittlerStatusLabel } from "@/lib/erstinformation-shared";
 import { SmtpForm } from "@/app/buyer/postfach/forms";
-import { googleMailAvailable, microsoftMailAvailable } from "@/lib/mail/postfach";
+import { googleMailFreigegeben, microsoftMailAvailable } from "@/lib/mail/postfach";
+import { PostfachVerbindenKnoepfe } from "@/components/postfach-verbinden";
 import { mitKampagnen } from "@/lib/offer-pricing";
 import { appInstalled, loadSetupSettings, videoEmbedUrl, type MetaCheck, type SetupStepKey } from "@/lib/selbst-einrichtung";
 import { helpCallSlots } from "@/lib/help-call";
@@ -145,7 +146,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
     const next = order.slice(order.indexOf(k) + 1).find((x) => !isDone(x));
     return next ? `/buyer/einrichtung?schritt=${next}#${next}` : "/buyer";
   };
-  const showGoogleMail = googleMailAvailable() && process.env.GOOGLE_MAIL_VERIFIED === "1";
+  const showGoogleMail = googleMailFreigegeben();
   let stepNo = 0;
   const nextNo = () => ++stepNo;
   const current = order.find((k) => !isDone(k)) ?? "start";
@@ -207,8 +208,9 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const zeitenZweitrangig = !kalenderDa;
   // Videoraum (Go-live-Prüfung 22.11.2026): fester Link Pflicht, solange weder Google noch Microsoft verbunden ist, auch bei
   // Kalender-Link (ICS) und nach „Mein Versicherer erlaubt das nicht“ (gleiche Regel wie kalenderSchrittFertig).
-  const videoNoetig = !calendar.status.native.meetOderTeams;
   const kalenderUebersprungen = !!stepSkipOf(ob.stepSkips, "calendar");
+  // Hinweis am Video-Link (Ole, 26.11.2026): erst dringend, wenn ein Weg ohne Google/Microsoft gewählt ist (auch „übersprungen“)
+  const videoWegEinr = calendar.videoWeg === "offen" && kalenderUebersprungen ? "ohne" : calendar.videoWeg;
   // Ihre Angaben (Schritt 1): einmal fragen, vorausgefüllt aus Erstinformation, Impressum, Angebot und Vertriebskontakt
   let angaben: AngabenInitial | null = null;
   if (software && erstinfo) {
@@ -398,11 +400,11 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                     </span>
                   </summary>
                   <div className="mt-3">
-                    <VideoRaumForm action={saveVideoRaumAction} readOnly={readOnly} initial={calendar.videoRoomUrl} noetig={videoNoetig} />
+                    <VideoRaumForm action={saveVideoRaumAction} readOnly={readOnly} initial={calendar.videoRoomUrl} weg={videoWegEinr} teamsLinkFehlt={calendar.teamsLinkFehlt} />
                   </div>
                 </details>
               ) : (
-                <VideoRaumForm action={saveVideoRaumAction} readOnly={readOnly} initial={calendar.videoRoomUrl} noetig={videoNoetig} />
+                <VideoRaumForm action={saveVideoRaumAction} readOnly={readOnly} initial={calendar.videoRoomUrl} weg={videoWegEinr} teamsLinkFehlt={calendar.teamsLinkFehlt} />
               )}
             </div>
             <div id="beratungszeiten" className="mt-6 scroll-mt-20 border-t border-[color:var(--border)] pt-5">
@@ -481,20 +483,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               <p className="text-sm font-medium text-emerald-700">Postfach verbunden.</p>
             ) : (
               <>
-                {!readOnly ? (
-                  <div className="flex flex-wrap gap-2">
-                    {showGoogleMail ? (
-                      <a href="/api/mail/connect?anbieter=google" className={buttonClass("secondary", "md")}>
-                        Mit Google (Gmail) verbinden
-                      </a>
-                    ) : null}
-                    {microsoftMailAvailable() ? (
-                      <a href="/api/mail/connect?anbieter=microsoft" className={buttonClass("secondary", "md")}>
-                        Mit Microsoft (Outlook/365) verbinden
-                      </a>
-                    ) : null}
-                  </div>
-                ) : null}
+                <PostfachVerbindenKnoepfe google={showGoogleMail} microsoft={microsoftMailAvailable()} readOnly={readOnly} adminConsentUrl={microsoftAdminConsentUrl()} />
                 <details className="mt-3 rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-3">
                   <summary className="cursor-pointer text-[15px] font-medium">Anderer Anbieter (SMTP, z. B. IONOS, Strato, T-Online, GMX)</summary>
                   <div className="mt-3">
@@ -614,7 +603,19 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             {done("policenGesundheit") && !gesundheitAn ? (
               <p className="text-sm text-[color:var(--muted)]">Übersprungen. Freischalten können Sie jederzeit unter Einstellungen.</p>
             ) : (
-              <PolicenFreischaltungKarte ctx={ctx} ort="einstellungen" className="-mx-5 -my-4" ohneKopf />
+              <PolicenFreischaltungKarte
+                ctx={ctx}
+                ort="einstellungen"
+                className="-mx-5 -my-4"
+                ohneKopf
+                leer={
+                  <p className="text-sm text-[color:var(--muted)]" data-policen-gesundheit-leer>
+                    {ctx.preview
+                      ? "Das schaltet der Inhaber mit seinem eigenen Login frei (mit Zwei-Faktor-Anmeldung), nicht in der Kundenansicht."
+                      : "Policen aus Kranken, BU und Leben schalten wir für Sie frei, sobald die geschützte Ablage bereit ist. Sie müssen jetzt nichts tun."}
+                  </p>
+                }
+              />
             )}
             {!done("policenGesundheit") ? <StepExits laterHref={laterHref("policenGesundheit")} readOnly={readOnly} skips={[{ kind: "skip:policenGesundheit:nicht_noetig", label: "Brauche ich nicht" }]} /> : null}
           </Step>

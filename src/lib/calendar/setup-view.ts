@@ -7,7 +7,7 @@ import { loadLeadTimes, scheduleFromTimes, type LeadTimes } from "@/lib/calendar
 import { beratungszeitenText } from "@/lib/calendar/zeiten-gleich";
 import { einladungsAdresse } from "@/lib/calendar/app-kalender";
 import { loadSources, upcomingBlocks, type AllianzSummary } from "@/lib/calendar/sources";
-import { meetOderTeams } from "@/lib/video-raum";
+import { meetOderTeams, videoWeg, type VideoWeg } from "@/lib/video-raum";
 
 const PROVIDER: Record<string, string> = { google: "Google-Kalender", microsoft: "Outlook-Kalender", app: "App-Kalender" };
 
@@ -37,6 +37,10 @@ export type CalendarSetupView = {
   einladungAn: string | null;
   /** Fester Video-Link (z. B. Webex) des Agentur-Kalenders */
   videoRoomUrl: string | null;
+  /** Woher der Videoraum kommt (Hinweis am Video-Link, lib/video-raum.ts) */
+  videoWeg: VideoWeg;
+  /** Microsoft verbunden, aber beim letzten Videotermin kam kein Teams-Link (AgentConfig.teamsLinkFehltAt) */
+  teamsLinkFehlt: boolean;
   blocks: Awaited<ReturnType<typeof upcomingBlocks>>;
 };
 
@@ -50,7 +54,7 @@ export async function loadCalendarSetup(customerId: string, calendarKey: string)
       : prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true, provider: true, accountEmail: true } }),
     loadLeadTimes(calendarKey),
     upcomingBlocks(calendarKey),
-    prisma.agentConfig.findUnique({ where: { customerId }, select: { videoRoomUrl: true } }),
+    prisma.agentConfig.findUnique({ where: { customerId }, select: { videoRoomUrl: true, teamsLinkFehltAt: true } }),
     userId ? Promise.resolve(null) : einladungsAdresse(customerId).catch(() => null),
   ]);
   const a = sources.allianz;
@@ -96,6 +100,8 @@ export async function loadCalendarSetup(customerId: string, calendarKey: string)
     beratungszeiten: beratungszeitenText(scheduleFromTimes(leadTimes).days),
     einladungAn,
     videoRoomUrl: agent?.videoRoomUrl ?? null,
+    videoWeg: videoWeg({ verbindung: native, hasIcs: sources.hasIcs, allianz: !!a }),
+    teamsLinkFehlt: !!agent?.teamsLinkFehltAt && meetOderTeams(native) && native?.provider === "microsoft",
     blocks,
   };
 }
