@@ -407,12 +407,11 @@ export async function testleadSelbstAction(_prev: TestleadSelbstState, fd: FormD
 
 /** „Mit welchen Gesellschaften arbeiten Sie?“ (Vorauswahl für Terminvorbereitung und Angebote, lib/tarifauswahl-server.ts) */
 export async function gesellschaftenEinrichtungAction(keys: string[]): Promise<SetupState> {
-  let ctx;
-  try {
-    ({ ctx } = await requireCustomer());
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Nicht möglich." };
-  }
+  // Auch in der Admin-Vorschau (Ole, 26.11.2026: Versicherer im Onboarding gemeinsam mit dem Kunden eintragen); nie in
+  // der öffentlichen App-Demo
+  const ctx = await getBuyerContext();
+  if (!ctx || ctx.demo) return { error: "In der Vorschau nicht möglich." };
+  if (!ctx.preview && ctx.teamRole === "advisor") return { error: "Nur der Inhaber kann das ändern." };
   const { gesellschaftenSpeichern } = await import("@/lib/tarifauswahl-server");
   await gesellschaftenSpeichern(ctx, Array.isArray(keys) ? keys.map(String) : []);
   revalidatePath("/buyer/einrichtung");

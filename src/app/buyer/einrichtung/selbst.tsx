@@ -116,11 +116,11 @@ export function GesellschaftenWahl({ alle, gewaehlt: start0, readOnly, vermittle
             value=""
             disabled={pending}
             onChange={(e) => e.target.value && speichern([...gewaehlt, e.target.value])}
-            className="h-9 rounded-full border border-dashed border-[color:var(--border-strong)] bg-white px-3 text-sm"
+            className="h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-strong)] bg-white px-3 text-base sm:w-auto"
             aria-label="Versicherer hinzufügen"
             data-gesellschaft-dazu
           >
-            <option value="">+ Versicherer hinzufügen</option>
+            <option value="">{gewaehlt.length ? "Weiteren Versicherer wählen" : "Versicherer wählen"}</option>
             {alle
               .filter((g) => !gewaehlt.includes(g.key))
               .map((g) => (
@@ -131,7 +131,7 @@ export function GesellschaftenWahl({ alle, gewaehlt: start0, readOnly, vermittle
           </select>
         ) : null}
       </div>
-      <p className="mt-2 text-xs text-[color:var(--muted)]">Deren Tarife schlägt Ihnen die App in der Terminvorbereitung zuerst vor.</p>
+      <p className="mt-2 text-xs text-[color:var(--muted)]">{nurEiner ? "Dessen" : "Deren"} Tarife schlägt Ihnen die App in der Terminvorbereitung zuerst vor.</p>
     </div>
   );
 }

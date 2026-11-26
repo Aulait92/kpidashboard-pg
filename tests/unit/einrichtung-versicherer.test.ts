@@ -20,18 +20,18 @@ describe("Versicherer wählen", () => {
   it("Vertreter: eine Frage im Singular, nach der Wahl kein Hinzufügen mehr", () => {
     const leer = html("vertreter", []);
     expect(leer).toContain("Für welchen Versicherer sind Sie tätig?");
-    expect(leer).toContain("+ Versicherer hinzufügen");
-    expect(leer).toContain("Deren Tarife schlägt Ihnen die App in der Terminvorbereitung zuerst vor.");
+    expect(leer).toContain("Versicherer wählen");
+    expect(leer).toContain("Dessen Tarife schlägt Ihnen die App in der Terminvorbereitung zuerst vor.");
     const einer = html("vertreter", ["allianz"]);
     expect(einer).toContain("Allianz");
-    expect(einer).not.toContain("+ Versicherer hinzufügen");
+    expect(einer).not.toContain("data-gesellschaft-dazu");
   });
 
   it("Makler und Mehrfachvertreter: mehrere Versicherer", () => {
     for (const typ of ["makler", "mehrfachvertreter"]) {
       const h = html(typ, ["allianz"]);
       expect(h).toContain("Mit welchen Versicherern arbeiten Sie?");
-      expect(h).toContain("+ Versicherer hinzufügen");
+      expect(h).toContain("Weiteren Versicherer wählen");
     }
   });
 

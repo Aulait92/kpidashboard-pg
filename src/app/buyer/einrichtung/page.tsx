@@ -519,7 +519,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             </Link>
             {!provision.confirmed ? <SkipButton kind="provision" readOnly={readOnly} label="Passt so" primary /> : null}
           </div>
-          {software && vertrieb ? <GesellschaftenWahl alle={alleGesellschaften} gewaehlt={vertrieb.vertrieb.gesellschaften} readOnly={readOnly} vermittlerTyp={vermittlerTyp} /> : null}
+          {software && vertrieb ? <GesellschaftenWahl alle={alleGesellschaften} gewaehlt={vertrieb.vertrieb.gesellschaften} readOnly={!!ctx.demo} vermittlerTyp={vermittlerTyp} /> : null}
         </Step>
 
         {software && erstinfo ? (
