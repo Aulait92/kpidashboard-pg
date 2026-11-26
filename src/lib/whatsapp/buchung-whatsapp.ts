@@ -20,7 +20,18 @@ export async function vermittlerWaNummer(customerId: string): Promise<string | n
  * Produkt mit automatischen Nachrichten, Vorbereitung noch nicht beantwortet.
  */
 export async function waWeiterMoeglich(t: { id: string; customerId: string; conversationId: string | null; leadId: string | null }): Promise<boolean> {
-  if (!t.conversationId || !(await vermittlerWaNummer(t.customerId))) return false;
+  if (!(await vermittlerWaNummer(t.customerId))) return false;
+  // Noch kein Chat (Ole, 26.11.2026: Lead bucht auf der Dankeseite schneller, als das Erstanschreiben rausgeht, bzw. die
+  // Vorlagen sind noch nicht freigegeben): Block trotzdem zeigen, wenn der Assistent beim Kunden an ist und das Produkt
+  // automatische Nachrichten erlaubt. Die Nachricht des Leads legt den Chat an, die Vorbereitung findet den Termin über
+  // den Lead (termin-strecke.ts terminZurZeit).
+  if (!t.conversationId) {
+    const [agent, lead] = await Promise.all([
+      prisma.agentConfig.findUnique({ where: { customerId: t.customerId }, select: { active: true } }),
+      t.leadId ? prisma.lead.findUnique({ where: { id: t.leadId }, select: { source: true } }) : null,
+    ]);
+    return !!agent?.active && !!t.leadId && !ohneAutoNachrichten(lead?.source);
+  }
   const conv = await prisma.conversation.findUnique({ where: { id: t.conversationId }, select: { botActive: true, optedOutAt: true, lead: { select: { source: true } } } });
   if (!conv?.botActive || conv.optedOutAt || ohneAutoNachrichten(conv.lead?.source)) return false;
   return !(await vorbereitungStand(t.conversationId, t.id)).antwort;

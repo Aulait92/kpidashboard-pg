@@ -381,6 +381,19 @@ describe("„Weiter auf WhatsApp“ von der Buchungsseite", () => {
     expect(await merker(y.conversationId, STRECKE.vorbereitungAntwort)).toHaveLength(0);
   });
 
+  it("ohne Chat (Buchung schneller als das Erstanschreiben): Knopf trotzdem, die Nachricht legt den Chat an und startet die Vorbereitung", async () => {
+    await prisma.whatsAppAccount.update({ where: { customerId }, data: { phoneNumber: "+49 151 2345678" } });
+    const phone = telefon();
+    const l = await prisma.lead.create({ data: { customerId, name: "Paula Ohnechat", phone, source: "Privatschutz", status: "Neuer Lead", formData: [] as never } });
+    const startsAt = naechsterMontag();
+    const t = await prisma.appointment.create({ data: { customerId, leadId: l.id, mode: "video", startsAt, endsAt: new Date(startsAt.getTime() + HOUR), status: "booked" } });
+    expect(await waWeiterMoeglich({ id: t.id, customerId, conversationId: null, leadId: l.id })).toBe(true);
+    await schreibt(phone, VORAB_TEXT);
+    const conv = await prisma.conversation.findFirst({ where: { customerId, contactPhone: phone } });
+    expect(conv).not.toBeNull();
+    expect(await merker(conv!.id, STRECKE.vorbereitungAntwort)).toHaveLength(1);
+  });
+
   it("Knopf auf der Seite: nur mit Nummer des Vermittlers; Klick einmal gemessen, Link zu wa.me mit Text; nach der Antwort weg", async () => {
     const x = await lead();
     const token = `mt-${uid()}`;
