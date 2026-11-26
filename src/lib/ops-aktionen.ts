@@ -129,6 +129,32 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `${c.name}: Video-Link gesetzt${n ? `, ${n} gebuchte Videotermine nachgetragen` : ""}.` };
     },
   },
+  beraterkalender_als_agentur: {
+    beschreibung:
+      "Google-Kalender einer Beraterin bzw. eines Beraters zusätzlich als Agentur-Kalender verbinden (Ole, 26.11.2026: „Lisas Kalender ist der Agenturkalender. Nur sie verkauft.“), damit die Buchungsseite /book/<slug> entsteht; nur Google (Microsoft tauscht Refresh-Tokens), nur ohne bestehenden Agentur-Kalender",
+    felder: { customerId: "Kunden-ID", name: "Teil des Namens oder der E-Mail des Logins (optional, wenn nur ein Berater-Kalender verbunden ist)" },
+    run: async (p) => {
+      const c = await kunde(text(p.customerId));
+      if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+      const vorhanden = await prisma.calendarConnection.findUnique({ where: { customerId: c.id }, select: { status: true, provider: true } });
+      if (vorhanden && vorhanden.status === "connected") return { ok: false, error: `${c.name}: Agentur-Kalender ist schon verbunden (${vorhanden.provider}).` };
+      const such = text(p.name).toLowerCase();
+      const kal = await prisma.advisorCalendar.findMany({
+        where: { customerId: c.id, status: "connected" },
+        select: { userId: true, provider: true, accountEmail: true, calendarId: true, accessTokenEnc: true, refreshTokenEnc: true, tokenExpiresAt: true, scope: true, user: { select: { email: true, displayName: true } } },
+      });
+      const passend = such ? kal.filter((k) => `${k.user.displayName ?? ""} ${k.user.email}`.toLowerCase().includes(such)) : kal;
+      if (passend.length !== 1) return { ok: false, error: `${passend.length} passende verbundene Berater-Kalender, bitte genauer.` };
+      const k = passend[0];
+      if (k.provider !== "google") return { ok: false, error: `Nur für Google-Kalender (hier: ${k.provider}).` };
+      const daten = { provider: k.provider, accountEmail: k.accountEmail, calendarId: k.calendarId, accessTokenEnc: k.accessTokenEnc, refreshTokenEnc: k.refreshTokenEnc, tokenExpiresAt: k.tokenExpiresAt, scope: k.scope, status: "connected" };
+      await prisma.calendarConnection.upsert({ where: { customerId: c.id }, create: { customerId: c.id, ...daten }, update: daten });
+      const { getOrCreateBookingSlug } = await import("@/lib/calendar");
+      const slug = await getOrCreateBookingSlug(c.id);
+      await audit("calendar.berater_als_agentur", { entity: "CalendarConnection", customerId: c.id, details: { berater: k.user.displayName ?? "…" }, actor: OPS_ACTOR });
+      return { ok: true, info: `${c.name}: Kalender von ${k.user.displayName ?? "Berater"} ist jetzt auch Agentur-Kalender. Buchungsseite /book/${slug}` };
+    },
+  },
   app_kalender_einschalten: {
     beschreibung:
       "Kunden ohne Online-Kalender umstellen („Ich habe keinen Online-Kalender“): App-Kalender an, Termine als Einladung per Mail, freie Zeiten aus den Beratungszeiten, eigene Termine per Weiterleitung; bleibt an, auch ohne Allianz oder Kalender-Link",
