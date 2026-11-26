@@ -219,6 +219,19 @@ describe("Antwort auf die Frage", () => {
     expect(JSON.parse((await merker(x.conversationId, STRECKE.vorbereitungAntwort))[0].body!)).toMatchObject({ art: "ja" });
   });
 
+  it("Komplettcheck schon auf der Buchungsseite gewählt: „Ja, gern“ fragt ihn nicht noch einmal", async () => {
+    await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
+    const x = await lead();
+    await prisma.appointment.update({ where: { id: x.termin.id }, data: { komplettcheck: true } });
+    await bestaetigen(x);
+    sent.length = 0;
+    await knopf(x.phone, "Ja, gern", "vorbereitung:ja");
+    const m = letzte(x.phone);
+    expect(m?.interactive?.action.buttons?.map((b) => b.reply.id) ?? []).not.toContain("komplettcheck:ja");
+    expect(await merker(x.conversationId, STRECKE.komplettFrage)).toHaveLength(0);
+    expect(an(x.phone).length).toBeGreaterThan(0);
+  });
+
   it("„Ja, gern“ ohne Payload (Knopftext) bzw. getippt „Ja gerne“ zählt nur direkt nach der Frage", async () => {
     await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
     const x = await lead();

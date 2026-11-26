@@ -1897,7 +1897,9 @@ async function weiterNachAngaben(k: StreckenKontext, einleitung: string): Promis
   if (!k.termin) return;
   const stand = await streckenStand(k.conversationId, k.termin.id);
   if (stand.abschlussAt) return;
-  if (stand.komplettBeantwortet) {
+  // Komplettcheck schon entschieden (Buchungsseite, Ole 26.11.2026: „hat der Lead auch schon ausgewählt“): nicht noch
+  // einmal fragen, auch wenn der Merker im Chat fehlt (Termin ohne verknüpften Chat beim Klick)
+  if (stand.komplettBeantwortet || k.termin.komplettcheck !== null) {
     if (stand.angebotsfragenAt || stand.vertragsfrageAt || stand.policenBitteAt || stand.langAngebotAt || stand.partnerFrageAt) return;
     const ja = k.termin.komplettcheck === true;
     await weiterNachKomplettcheck(k, einleitung, ja ? null : abschlussEinleitung(k.an, k.person, "komplett_nein"));
