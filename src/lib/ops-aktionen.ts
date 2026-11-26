@@ -207,6 +207,17 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `Nummer korrigiert (…${neu.slice(-4)})${r ? `, Erstanschreiben: ${r.sent} gesendet, ${r.failed} Fehler, ${r.skipped} übersprungen${r.errors.length ? ` (${r.errors.slice(0, 2).join("; ").slice(0, 300)})` : ""}` : ""}` };
     },
   },
+  einwilligung_knopf_pruefen: {
+    beschreibung: "Formular bei Meta prüfen: Einwilligung per Knopf (Text über „Senden“, ohne Häkchen) → an der Zuordnung speichern und ältere Leads des Formulars nachtragen",
+    felder: { formId: "Formular-ID" },
+    run: async (p) => {
+      const formId = text(p.formId).replace(/\D/g, "");
+      if (!formId) return { ok: false, error: "formId fehlt." };
+      const ok = await (await import("@/lib/einwilligung-knopf-server")).knopfEinwilligungNachtragen(formId);
+      await audit("leadsource.einwilligung_knopf", { entity: "LeadSource", entityId: formId, details: { ok }, actor: OPS_ACTOR });
+      return ok ? { ok: true, info: "Einwilligung per Knopf gespeichert, ältere Leads nachgetragen." } : { ok: false, error: "Keine Knopf-Fassung erkannt (oder Formular nicht zugeordnet)." };
+    },
+  },
   whatsapp_neu_versuchen: {
     beschreibung: "Lead galt als „kein WhatsApp“ (z. B. falsche Nummer, inzwischen korrigiert): Sperre aufheben und neu versuchen, mit Termin die Terminbestätigung, sonst das Erstanschreiben",
     felder: { customerId: "Kunden-ID", name: "Teil des Lead-Namens" },
