@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { normalizePhone } from "@/lib/whatsapp/phone";
 import { attachLeadToContact } from "@/lib/whatsapp/lead-link";
 import { sendToAdmins } from "@/lib/push";
-import { assignLead, notifyLeadPush } from "@/lib/team";
+import { assignLead } from "@/lib/team";
 import { EMPFEHLUNG_SOURCE } from "@/lib/lead-herkunft";
 import { empfehlungPush } from "@/lib/empfehlung/shared";
 import { reportError } from "@/lib/monitoring";
@@ -355,7 +355,8 @@ export async function processNewLead(leadId: string) {
   await attachLeadToContact(lead.id).catch((err) => reportError(err, "lead-intake-attach"));
   // Empfohlene Person hat sich eingetragen: eigener Push „Empfehlung von {Vorname}: jetzt anrufen“ mit Gesprächseinstieg
   // (lib/empfehlung/shared.ts empfehlungPush, ohne Nummern). Geht wie jeder Push nur an Geräte mit erlaubten Mitteilungen.
-  await notifyLeadPush(
+  // Push je Login nach „nur meine / alle im Team“ (lib/lead-benachrichtigung.ts, Ole 26.11.2026)
+  await (await import("@/lib/lead-benachrichtigung")).neuerLeadPush(
     lead.id,
     lead.source === EMPFEHLUNG_SOURCE && lead.referralLink
       ? empfehlungPush(lead.id, lead.referralLink.kind === "general" ? null : (lead.referralLink.lead?.name ?? lead.referralLink.existingCustomer?.firstName ?? null))
@@ -371,6 +372,8 @@ export async function processNewLead(leadId: string) {
   logTestLead(lead, "notify push");
   {
     await emailLeads(new Date(), lead.customerId).catch((err) => reportError(err, "lead-intake-email"));
+    // Teams: E-Mail je Login nach „nur meine / alle im Team“ (ohne Doppel zu emailLeads und Pay-per-Lead-PDF)
+    await (await import("@/lib/lead-benachrichtigung")).neuerLeadMail(lead.id).catch((err) => reportError(err, "lead-intake-team-mail", { lead: lead.id }));
   }
   logTestLead(lead, "notify mail checked");
   // WhatsApp-Erstanschreiben: sofort, wenn keine Wartezeit eingestellt ist

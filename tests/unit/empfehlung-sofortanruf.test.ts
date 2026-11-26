@@ -15,6 +15,8 @@ const m = vi.hoisted(() => ({
 vi.mock("@/lib/prisma", () => ({ prisma: m.prisma }));
 vi.mock("@/lib/monitoring", () => ({ reportError: vi.fn() }));
 vi.mock("@/lib/team", () => ({ assignLead: m.assignLead, notifyLeadPush: m.notifyLeadPush }));
+// Push „Neuer Lead“ läuft seit 26.11.2026 über lib/lead-benachrichtigung.ts (gleiche Signatur wie notifyLeadPush)
+vi.mock("@/lib/lead-benachrichtigung", () => ({ neuerLeadPush: m.notifyLeadPush, neuerLeadMail: vi.fn(async () => []) }));
 vi.mock("@/lib/whatsapp/lead-link", () => ({ attachLeadToContact: vi.fn(async () => {}) }));
 vi.mock("@/lib/push", () => ({ sendToAdmins: vi.fn() }));
 vi.mock("@/lib/onboarding-cron", () => ({ emailLeads: vi.fn(async () => {}) }));

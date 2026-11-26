@@ -129,6 +129,40 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: `${c.name}: Video-Link gesetzt${n ? `, ${n} gebuchte Videotermine nachgetragen` : ""}.` };
     },
   },
+  lead_benachrichtigung_setzen: {
+    beschreibung:
+      "Benachrichtigung bei neuen Leads für einen Login setzen (Ole, 26.11.2026: Inhaber will jeden Lead per E-Mail, auch wenn alle an die Beraterin gehen): E-Mail aus | meine | alle, Push meine | alle; „alle“ nur für Inhaber; leer = Standard nach Rolle. Gilt in Teams (mehr als ein Login)",
+    felder: { customerId: "Kunden-ID", name: "Teil des Namens oder der E-Mail des Logins", mail: "aus | meine | alle | standard (optional)", push: "meine | alle | standard (optional)" },
+    run: async (p) => {
+      const c = await kunde(text(p.customerId));
+      if (!c) return { ok: false, error: "Kunde nicht gefunden." };
+      const such = text(p.name).toLowerCase();
+      if (!such) return { ok: false, error: "name angeben (Teil des Namens oder der E-Mail)." };
+      const logins = await prisma.user.findMany({ where: { customerId: c.id, role: "BUYER" }, select: { id: true, email: true, displayName: true, teamRole: true, leadMailScope: true, leadPushScope: true } });
+      const passend = logins.filter((u) => `${u.displayName ?? ""} ${u.email}`.toLowerCase().includes(such));
+      if (passend.length !== 1) return { ok: false, error: `${passend.length} passende Logins, bitte genauer.` };
+      const u = passend[0];
+      const inhaber = u.teamRole !== "advisor";
+      const wahl = (v: unknown, erlaubt: string[]): string | null | undefined | false => {
+        const t = text(v, 20).toLowerCase();
+        if (!t) return undefined;
+        if (t === "standard") return null;
+        return erlaubt.includes(t) ? t : false;
+      };
+      const mail = wahl(p.mail, inhaber ? ["aus", "meine", "alle"] : ["aus", "meine"]);
+      const push = wahl(p.push, inhaber ? ["meine", "alle"] : ["meine"]);
+      if (mail === false || push === false) return { ok: false, error: inhaber ? "mail: aus|meine|alle|standard, push: meine|alle|standard." : "Berater: mail aus|meine|standard, push nur meine." };
+      if (mail === undefined && push === undefined) return { ok: false, error: "mail oder push angeben." };
+      const data = { ...(mail !== undefined ? { leadMailScope: mail } : {}), ...(push !== undefined ? { leadPushScope: push } : {}) };
+      await prisma.user.update({ where: { id: u.id }, data });
+      const { mailScope, pushScope } = await import("@/lib/lead-benachrichtigung-shared");
+      const cust = await prisma.customer.findUnique({ where: { id: c.id }, select: { leadEmail: true } });
+      const neu = { ...u, ...data };
+      await audit("user.lead_benachrichtigung", { entity: "User", entityId: u.id, customerId: c.id, details: { vorher: { mail: u.leadMailScope, push: u.leadPushScope }, nachher: data }, actor: OPS_ACTOR });
+      const hinweis = logins.length < 2 ? " Achtung: nur ein Login, die Wahl wirkt erst im Team." : "";
+      return { ok: true, info: `${c.name}, ${u.displayName ?? u.email}: neue Leads per E-Mail ${mailScope(neu, cust?.leadEmail ?? true)}, Push ${pushScope(neu)}.${hinweis}` };
+    },
+  },
   beraterkalender_als_agentur: {
     beschreibung:
       "Google-Kalender einer Beraterin bzw. eines Beraters zusätzlich als Agentur-Kalender verbinden (Ole, 26.11.2026: „Lisas Kalender ist der Agenturkalender. Nur sie verkauft.“), damit die Buchungsseite /book/<slug> entsteht; nur Google (Microsoft tauscht Refresh-Tokens), nur ohne bestehenden Agentur-Kalender",

@@ -834,6 +834,8 @@ model Lead {
   waUnavailableMailAt  DateTime?
   // „Nur Betreuung“: Lead per E-Mail an den Kunden zugestellt
   emailedAt            DateTime?
+  // E-Mail „Neuer Lead“ an das Team (lib/lead-benachrichtigung.ts) verschickt: höchstens einmal je Lead
+  teamMailAt           DateTime?
   // Meta-Lead-ID (leadgen_id) bei direkt eingegangenen Leads – gegen Dubletten
   externalId           String?           @unique
   // Zuständiger Berater (Team-Kunden); leer = Inhaber/alle
@@ -1183,6 +1185,11 @@ model User {
   // Tägliche Erinnerung um 8 Uhr: Leads ohne nächsten Schritt (lib/next-step-reminder.ts); Tag des letzten Laufs (Berlin)
   nextStepReminder           Boolean             @default(true)
   nextStepReminderDay        String?
+  // Benachrichtigung bei neuen Leads (Ole, 26.11.2026, lib/lead-benachrichtigung.ts): meine | alle (nur Inhaber), bei
+  // der E-Mail auch aus. null = Standard nach Rolle (Inhaber alle, Berater meine; E-Mail aus, wenn „Neue Leads per E-Mail“
+  // am Konto aus ist). Gilt nur in Teams (mehr als ein Login).
+  leadMailScope              String?
+  leadPushScope              String?
   linkedInConnection         LinkedInConnection?
 
   customer       Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
