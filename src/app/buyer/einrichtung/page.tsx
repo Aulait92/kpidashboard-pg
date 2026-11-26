@@ -614,7 +614,19 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             {done("policenGesundheit") && !gesundheitAn ? (
               <p className="text-sm text-[color:var(--muted)]">Übersprungen. Freischalten können Sie jederzeit unter Einstellungen.</p>
             ) : (
-              <PolicenFreischaltungKarte ctx={ctx} ort="einstellungen" className="-mx-5 -my-4" ohneKopf />
+              <PolicenFreischaltungKarte
+                ctx={ctx}
+                ort="einstellungen"
+                className="-mx-5 -my-4"
+                ohneKopf
+                leer={
+                  <p className="text-sm text-[color:var(--muted)]" data-policen-gesundheit-leer>
+                    {ctx.preview
+                      ? "Das schaltet der Inhaber mit seinem eigenen Login frei (mit Zwei-Faktor-Anmeldung), nicht in der Kundenansicht."
+                      : "Policen aus Kranken, BU und Leben schalten wir für Sie frei, sobald die geschützte Ablage bereit ist. Sie müssen jetzt nichts tun."}
+                  </p>
+                }
+              />
             )}
             {!done("policenGesundheit") ? <StepExits laterHref={laterHref("policenGesundheit")} readOnly={readOnly} skips={[{ kind: "skip:policenGesundheit:nicht_noetig", label: "Brauche ich nicht" }]} /> : null}
           </Step>
