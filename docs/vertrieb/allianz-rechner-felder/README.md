@@ -150,3 +150,4 @@ Legende: **ja** fragt die Allianz, **teilw.** nur eingeschränkt, **nein** fragt
 ## Nachtrag 26.11.2026 (Ole, Screenshots iPhone)
 - Tierhalterhaftpflicht: Schritt 1 bestätigt, deckungsgleich mit der Erfassung (PLZ, Geburtsdatum, Tierart/Anzahl, Rasse, Schäden 5 Jahre, Tarifwunsch).
 - Kombi „Privatschutz“: kein eigener Rechner mit eigenen Feldern. Die Allianz bündelt einzelne Produkte (2 oder mehr aus Linie Komfort oder Premium, Rabatt 5 bis 20 %) und leitet dann zur Beratung. Für die Chat-Abfrage gelten daher die Felder der einzelnen Sparten; zusätzlich vermerken „Bündel gewünscht“.
+- Bündelrabatt laut Ole (26.11.): 4 Produkte (Haftpflicht, Hausrat, Rechtsschutz, Wohngebäude) = 15 %. Staffel sichtbar 5/10/15/20 %, vermutlich 2/3/4/5 Produkte (20 % ab 5 noch zu bestätigen).
