@@ -207,6 +207,20 @@ describe("Vor dem frühesten Allianz-Buchungstag (Ole, 20.11.2026)", () => {
     expect((await connectAllianz(mitGoogle, "101511203", true)).ok).toBe(true);
     expect((await loadCalendarSetup(mitGoogle, mitGoogle)).status.allianz?.abFruehestemTag).toBe(false);
   });
+
+  it("Allianz liefert freie Zeiten davor (Ole, 26.11.2026): diese zählen als frei, Tage ohne Angaben bleiben belegt", async () => {
+    const c = await makeCustomer();
+    customers.push(c.id);
+    await prisma.agentConfig.create({ data: { customerId: c.id, advisorEmail: "test.vertreter@allianz.de" } });
+    const morgen = addDaysYmd(today, 1);
+    const d1 = workday(4);
+    bt.slots = [slotTs(morgen, "14:10"), slotTs(d1, "10:10")];
+    expect((await connectAllianz(c.id, "101511203", true)).ok).toBe(true);
+    await jedenTag(c.id);
+    const starts = (await suggestSlots(c.id, 30, 20, "lead", 8)).map((s) => s.start);
+    expect(starts).toContain(berlinAt(morgen, "14:00").toISOString());
+    expect(starts).not.toContain(berlinAt(morgen, "10:00").toISOString());
+  });
 });
 
 describe("Vorschläge mit Allianz-Online-Kalender, Lead-Zeiten und Blockierungen", () => {
