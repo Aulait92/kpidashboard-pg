@@ -304,18 +304,18 @@ describe("Fragen-Engine (Allianz-Sparten, Privatschutz als Bündel)", () => {
     await knopf(x.phone, "Ja, gern", "vorbereitung:ja");
     let m = letzte(x.phone);
     expect(m?.interactive?.type).toBe("list");
-    expect(textVon(m)).toBe("Super, danke! Noch 9 kurze Fragen. Wer soll versichert sein?");
+    expect(textVon(m)).toBe("Super, danke! Wer soll versichert sein?");
     expect(zeilen(m)).toEqual(["Nur mich", "Mich und Partner:in", "Mich und Kind(er)", "Mich, Partner:in, Kinder", "Rest im Termin"]);
     expect((m?.interactive?.action.sections?.[0].rows[1] as { description?: string }).description).toBe("mich und meine:n Partner:in");
     // Privatschutz als Bündel am Lead vermerkt
     const h = await prisma.leadHistory.findFirst({ where: { leadId: x.lead.id, text: { startsWith: "Bündel gewünscht" } } });
     expect(h?.text).toBe("Bündel gewünscht: Hausrat, Haftpflicht, Rechtsschutz");
     await knopf(x.phone, "Mich und Partner:in", "vf:gemeinsam.versicherte:partner", "interactive");
-    expect(textVon(letzte(x.phone))).toBe("Danke! Noch 8 kurze Fragen. Wie sind Sie beruflich tätig?");
+    expect(textVon(letzte(x.phone))).toBe("Danke! Wie sind Sie beruflich tätig?");
     await schreibt(x.phone, "Beamter");
     // eine Schadenfrage für alle drei Sparten, bei „Ja“ je Sparte die Anzahl (ohne Fortschritt)
     m = letzte(x.phone);
-    expect(textVon(m)).toBe("Danke! Noch 7 kurze Fragen. Gab es in den letzten 5 Jahren einen Schaden bei der Haftpflicht oder beim Hausrat, oder einen Rechtsstreit bzw. eine Rechtsberatung?");
+    expect(textVon(m)).toBe("Danke! Gab es in den letzten 5 Jahren einen Schaden bei der Haftpflicht oder beim Hausrat, oder einen Rechtsstreit bzw. eine Rechtsberatung?");
     expect(knoepfe(m)).toEqual(["Nein, nichts", "Ja", "Rest im Termin"]);
     await knopf(x.phone, "Ja", "vf:gemeinsam.schaeden:ja", "interactive");
     expect(textVon(letzte(x.phone))).toBe("Danke! Wie viele Haftpflichtschäden waren es? 0, wenn keiner.");
@@ -324,9 +324,9 @@ describe("Fragen-Engine (Allianz-Sparten, Privatschutz als Bündel)", () => {
     await schreibt(x.phone, "keiner");
     expect(textVon(letzte(x.phone))).toBe("Danke! Wie viele Rechtsstreitigkeiten oder Rechtsberatungen waren es? 0, wenn keine.");
     await schreibt(x.phone, "0");
-    expect(textVon(letzte(x.phone))).toBe("Danke! Noch 6 kurze Fragen. Wie wohnen Sie?");
+    expect(textVon(letzte(x.phone))).toBe("Danke! Wie wohnen Sie?");
     await knopf(x.phone, "Wohnung ab 1. Stock", "vf:hausrat.lage:wohnung-og", "interactive");
-    expect(textVon(letzte(x.phone))).toBe("Danke! Noch 5 kurze Fragen. Wie groß ist Ihre Wohnung ungefähr? Zum Beispiel 75 qm.");
+    expect(textVon(letzte(x.phone))).toBe("Danke! Wie groß ist Ihre Wohnung ungefähr? Zum Beispiel 75 qm.");
     await schreibt(x.phone, "ziemlich groß");
     expect(textVon(letzte(x.phone))).toBe("Das habe ich nicht ganz verstanden. Können Sie mir kurz eine Zahl schreiben?");
     await schreibt(x.phone, "75 qm");
@@ -334,14 +334,14 @@ describe("Fragen-Engine (Allianz-Sparten, Privatschutz als Bündel)", () => {
     // gemeinsame Vorvertragsfrage: Teilantwort, nichts nachgefragt
     m = letzte(x.phone);
     expect(textVon(m)).toBe(
-      "Danke! Noch 3 kurze Fragen. Wo sind Sie für Haftpflicht, Hausrat und Rechtsschutz aktuell versichert und bis wann laufen die Verträge? Ungefähr reicht, zum Beispiel: Haftpflicht HUK bis 03/2027, Hausrat noch nicht.",
+      "Danke! Wo sind Sie für Haftpflicht, Hausrat und Rechtsschutz aktuell versichert und bis wann laufen die Verträge? Ungefähr reicht, zum Beispiel: Haftpflicht HUK bis 03/2027, Hausrat noch nicht.",
     );
     expect(knoepfe(m)).toEqual(["Nicht versichert", "Weiß ich nicht", "Rest im Termin"]);
     await schreibt(x.phone, "Haftpflicht bei der HUK, den Rest weiß ich gerade nicht");
     // Zusatzbausteine: Mehrfachauswahl mit „Noch etwas davon?“ (nur passende Zeilen: Dienst-Haftpflicht für Beamte, keine
     // Öltank-Haftpflicht in der Mietwohnung)
     m = letzte(x.phone);
-    expect(textVon(m)).toBe("Danke! Noch 2 kurze Fragen. Soll noch etwas davon ins Angebot?");
+    expect(textVon(m)).toBe("Danke! Soll noch etwas davon ins Angebot?");
     expect(zeilen(m)).toEqual(["Nichts davon", "Ich vermiete Wohnraum", "Fahrräder", "Glasschutz", "Internetschutz", "Dienst-Haftpflicht", "Strafrechtsschutz Beruf", "Rest im Termin"]);
     await knopf(x.phone, "Fahrräder", "vf:gemeinsam.bausteine:fahrrad", "interactive");
     m = letzte(x.phone);
@@ -354,7 +354,7 @@ describe("Fragen-Engine (Allianz-Sparten, Privatschutz als Bündel)", () => {
     await schreibt(x.phone, "etwa 2.000 Euro");
     expect(textVon(letzte(x.phone))).toBe("Danke! Welches Glas soll versichert sein?");
     await knopf(x.phone, "Innen", "vf:gemeinsam.glas:innen", "interactive");
-    expect(textVon(letzte(x.phone))).toBe("Danke! Letzte kurze Frage: Wie lautet die Adresse Ihrer Wohnung? Straße und Hausnummer reichen.");
+    expect(textVon(letzte(x.phone))).toBe("Danke! Wie lautet die Adresse Ihrer Wohnung? Straße und Hausnummer reichen.");
     await schreibt(x.phone, "Musterweg 5");
     // danach der Komplettcheck
     m = letzte(x.phone);
@@ -382,7 +382,7 @@ describe("Fragen-Engine (Allianz-Sparten, Privatschutz als Bündel)", () => {
     const x = await lead({ formData: [{ label: "Welche Versicherungen interessieren Sie?", value: "Hausrat" }] });
     await bestaetigen(x);
     await knopf(x.phone, "Ja, gern", "vorbereitung:ja");
-    expect(textVon(letzte(x.phone))).toBe("Super, danke! Noch 8 kurze Fragen. Wann sind Sie geboren? Zum Beispiel 15.03.1985.");
+    expect(textVon(letzte(x.phone))).toBe("Super, danke! Wann sind Sie geboren? Zum Beispiel 15.03.1985.");
     sent.length = 0;
     await knopf(x.phone, "Rest im Termin", "vf:rest", "interactive");
     expect(an(x.phone)).toHaveLength(1);

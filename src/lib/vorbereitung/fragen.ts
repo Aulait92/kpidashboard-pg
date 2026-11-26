@@ -10,7 +10,7 @@
 //     Sammelfrage) → 5 Adresse; innerhalb eines Abschnitts in der Reihenfolge der Definitionen
 //   - gemeinsame Fragen (Sparte „gemeinsam“) nur einmal je Gespräch, auch wenn mehrere Sparten sie brauchen
 //   - was aus Formular oder Chat schon bekannt ist oder sich ableiten lässt, wird übersprungen (vorwissen)
-//   - Fortschritt („Noch 3 kurze Fragen.“), jederzeit „Rest im Termin“, unklare Antwort genau einmal nachfragen
+//   - kein Zähler („Noch 3 Fragen“ schreckt ab, Ole 26.11.2026), jederzeit „Rest im Termin“, unklare Antwort genau einmal nachfragen
 //   - keine Gesundheitsfragen zu Menschen; Vorschäden der letzten 5 Jahre und die Gesundheit von Tieren sind erlaubt
 // Die Definition je Sparte ist Daten (lib/vorbereitung/sparten.ts, Allianz-Rechner). Rein, ohne Datenbank (Server-Teil:
 // lib/whatsapp/termin-strecke.ts, Abschnitt Fragen-Engine).
@@ -329,7 +329,9 @@ function auswahl(f: GeplanteFrage, opts: readonly Option[]): Pick<FrageNachricht
  * Antworten mit „Rest im Termin“ auf 3 Knöpfe passen, sonst Liste. Freitext: Zusatzknöpfe und „Rest im Termin“.
  */
 export function frageNachricht(f: GeplanteFrage, an: Ansprache, anzahlOffen: number, einleitung?: string | null): FrageNachricht {
-  const text = [einleitung, f.folge ? null : fortschrittText(anzahlOffen), a(an, f.frage.du, f.frage.sie)].filter(Boolean).join(" ");
+  // Ohne Zähler (Ole, 26.11.2026: „Würde nicht noch 9 Fragen sagen. Das schreckt ab. Einfach fragen.“)
+  void anzahlOffen;
+  const text = [einleitung, a(an, f.frage.du, f.frage.sie)].filter(Boolean).join(" ");
   const opts = f.optionen ?? [];
   if (f.typ === "mehrfach") return { text, buttons: null, liste: { knopf: "Antwort wählen", zeilen: [...opts.slice(0, 9).map((o) => zeile(f, o)), REST_KNOPF] } };
   if ((f.typ === "knoepfe" || f.typ === "liste") && opts.length) return { text, ...auswahl(f, opts) };
