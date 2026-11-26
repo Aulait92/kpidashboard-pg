@@ -72,8 +72,28 @@ import {
 } from "@/lib/whatsapp/gespraech";
 import { detailNachfrageText, detailVerstaendlich, istTierStrecke, offeneTierFragen, tierAntwortAuswerten, tierFrage, type TierFrageKey } from "@/lib/whatsapp/tier-fragen";
 import { cleanQualificationData, mergeQualificationData } from "@/lib/whatsapp/qualification";
-import { antwortAuswerten, feldWert, vorbereitungAusText, frageNachricht, fragenPlan, nachfrageText, offeneFragen, restText, type FrageNachricht, type FragenQuelle, type GeplanteFrage } from "@/lib/vorbereitung/fragen";
-import { aktiveSparten } from "@/lib/vorbereitung/sparten";
+import {
+  antwortAuswerten,
+  anzahlHauptfragen,
+  feldWert,
+  FERTIG,
+  frageNachricht,
+  fragenPlan,
+  mehrfachFertig,
+  mehrfachRest,
+  mehrfachWeiterNachricht,
+  mehrfachWert,
+  nachfrageText,
+  offeneFragen,
+  restText,
+  vorbereitungAusText,
+  type Antwort,
+  type Auswertung,
+  type FrageNachricht,
+  type FragenQuelle,
+  type GeplanteFrage,
+} from "@/lib/vorbereitung/fragen";
+import { aktiveSparten, buendelGewuenscht, engineSparten, fragenAktiv, SPARTEN_DEFINITIONEN } from "@/lib/vorbereitung/sparten";
 import { tkvAngabenNormal } from "@/lib/tkv-umfang";
 import { tkvUmfangMerken } from "@/lib/tkv-umfang-server";
 import { ZWISCHEN_TEXT } from "@/lib/whatsapp/zwischenfrage";
@@ -162,6 +182,8 @@ export const STRECKE = {
   angabeFrage: "angabe_frage",
   angabeAntwort: "angabe_antwort",
   angabeNachfrage: "angabe_nachfrage",
+  /** Mehrfachauswahl: eine Zeile gewählt, Frage bleibt offen (body.id, opt) */
+  angabeTeil: "angabe_teil",
   /** „Rest im Termin“ (body.offen: Bezeichnungen der offenen Fragen) */
   angabenRest: "angaben_rest",
 } as const;
@@ -1944,23 +1966,43 @@ export function nachfassTag(frageAt: Date, now: Date): boolean {
 
 // ─── Fragen-Engine (lib/vorbereitung/fragen.ts) ──────────────────────────────────────────────────────────────────────
 
-export type AngabenStand = { letzteFrage: { id: string; at: Date } | null; erledigt: string[]; nachgefragt: string[]; rest: boolean };
+export type AngabenStand = {
+  letzteFrage: { id: string; at: Date } | null;
+  erledigt: string[];
+  nachgefragt: string[];
+  rest: boolean;
+  /** Antworten je Frage (für Bedingungen, Wiederholungen und abgeleitete Werte) */
+  antworten: Record<string, Antwort>;
+  /** Mehrfachauswahl: schon gewählte Zeilen der offenen Frage */
+  teil: string[];
+};
 
 /** Stand der Fragen-Engine für einen Termin (aus den Merkern). */
 export async function angabenStand(conversationId: string, appointmentId: string): Promise<AngabenStand> {
   const rows = await prisma.message.findMany({
-    where: { conversationId, direction: "internal", kind: { in: [STRECKE.angabeFrage, STRECKE.angabeAntwort, STRECKE.angabeNachfrage, STRECKE.angabenRest] }, body: { contains: appointmentId } },
+    where: { conversationId, direction: "internal", kind: { in: [STRECKE.angabeFrage, STRECKE.angabeAntwort, STRECKE.angabeNachfrage, STRECKE.angabenRest, STRECKE.angabeTeil] }, body: { contains: appointmentId } },
     orderBy: { createdAt: "asc" },
     select: { kind: true, createdAt: true, body: true },
   });
   const f = rows.filter((r) => r.kind === STRECKE.angabeFrage).at(-1);
+  const letzteFrage = f ? { id: String(daten(f.body).id ?? ""), at: f.createdAt } : null;
   const ids = (kind: string) => rows.filter((r) => r.kind === kind).map((r) => String(daten(r.body).id ?? ""));
-  return {
-    letzteFrage: f ? { id: String(daten(f.body).id ?? ""), at: f.createdAt } : null,
-    erledigt: ids(STRECKE.angabeAntwort),
-    nachgefragt: ids(STRECKE.angabeNachfrage),
-    rest: rows.some((r) => r.kind === STRECKE.angabenRest),
-  };
+  const antworten: Record<string, Antwort> = {};
+  for (const r of rows.filter((x) => x.kind === STRECKE.angabeAntwort)) {
+    const d = daten(r.body);
+    if (typeof d.wert !== "string") continue;
+    antworten[String(d.id ?? "")] = {
+      wert: d.wert,
+      ...(Array.isArray(d.opt) ? { opt: d.opt.map(String) } : {}),
+      ...(d.teile && typeof d.teile === "object" ? { teile: d.teile as Record<string, number> } : {}),
+    };
+  }
+  const teil = letzteFrage
+    ? rows
+        .filter((r) => r.kind === STRECKE.angabeTeil && r.createdAt >= letzteFrage.at && daten(r.body).id === letzteFrage.id)
+        .flatMap((r) => (Array.isArray(daten(r.body).opt) ? (daten(r.body).opt as unknown[]).map(String) : []))
+    : [];
+  return { letzteFrage, erledigt: ids(STRECKE.angabeAntwort), nachgefragt: ids(STRECKE.angabeNachfrage), rest: rows.some((r) => r.kind === STRECKE.angabenRest), antworten, teil: [...new Set(teil)] };
 }
 
 /** Wartet die Engine auf eine Antwort? */
@@ -1968,10 +2010,15 @@ export function angabeFrageOffen(s: AngabenStand): boolean {
   return !!s.letzteFrage && !s.rest && !s.erledigt.includes(s.letzteFrage.id);
 }
 
-/** Fragenplan und Quelle für einen Lead (gebuchte Sparten, nur aktive Definitionen). */
-function angabenPlan(k: Pick<StreckenKontext, "source" | "formular" | "angaben">, erledigt: readonly string[]): { plan: GeplanteFrage[]; quelle: FragenQuelle } {
-  const sparten = istTierStrecke(k.source) ? [] : spartenDesLeads(k.source, { formular: k.formular, angaben: k.angaben });
-  return { plan: fragenPlan(sparten, aktiveSparten()), quelle: { formular: k.formular, angaben: cleanQualificationData(k.angaben), erledigt } };
+/** Sparten der Engine für einen Lead (gebuchte Sparten; feste Tierstrecke TKV ausgenommen, lib/whatsapp/tier-fragen.ts). */
+function angabenSparten(k: Pick<StreckenKontext, "source" | "formular" | "angaben">): string[] {
+  return istTierStrecke(k.source) ? [] : engineSparten(spartenDesLeads(k.source, { formular: k.formular, angaben: k.angaben }));
+}
+
+/** Fragenplan und Quelle für einen Lead (nur aktive Definitionen; Schalter VORBEREITUNG_FRAGEN je Kunde). */
+function angabenPlan(k: Pick<StreckenKontext, "source" | "formular" | "angaben" | "customerId">, st: Pick<AngabenStand, "erledigt" | "antworten">): { plan: GeplanteFrage[]; quelle: FragenQuelle } {
+  const quelle: FragenQuelle = { formular: k.formular, angaben: cleanQualificationData(k.angaben), erledigt: st.erledigt, antworten: st.antworten };
+  return { plan: fragenPlan(angabenSparten(k), aktiveSparten(undefined, undefined, fragenAktiv(k.customerId)), quelle), quelle };
 }
 
 /** Nächste offene Frage der Engine als Nachricht mit Merker (ohne Senden); null = keine (mehr) offen. */
@@ -1982,11 +2029,29 @@ async function angabeFrageNachricht(
   if (!k.termin) return null;
   const st = await angabenStand(k.conversationId, k.termin.id);
   if (st.rest) return null;
-  const { plan, quelle } = angabenPlan(k, st.erledigt);
+  const { plan, quelle } = angabenPlan(k, st);
   const offen = offeneFragen(plan, quelle);
   if (!offen[0]) return null;
-  const n = frageNachricht(offen[0], k.an, offen.length, einleitung);
+  // Privatschutz als Bündel (Ole, 26.11.2026): keine eigene Strecke, aber am Lead vermerken
+  if (!st.letzteFrage) {
+    const sparten = angabenSparten(k);
+    if (buendelGewuenscht(sparten)) await buendelVermerken(k, sparten);
+  }
+  const n = frageNachricht(offen[0], k.an, anzahlHauptfragen(offen), einleitung);
   return { text: n.text, buttons: n.buttons, liste: n.liste, merker: STRECKE.angabeFrage, daten: { id: offen[0].id } };
+}
+
+/** „Bündel gewünscht“ am Lead (vorbereitungsAngaben.buendel und Verlauf), einmal. */
+async function buendelVermerken(k: StreckenKontext, sparten: string[]): Promise<void> {
+  if (!k.leadId) return;
+  const l = await prisma.lead.findUnique({ where: { id: k.leadId }, select: { vorbereitungsAngaben: true } });
+  if ((l?.vorbereitungsAngaben as { buendel?: unknown } | null)?.buendel) return;
+  const labels = SPARTEN_DEFINITIONEN.filter((d) => sparten.includes(d.sparte)).map((d) => d.label);
+  await leadAngabenSpeichern(k.leadId, (x) => {
+    x.buendel = labels;
+  });
+  const { logLeadHistory } = await import("@/lib/lead-history");
+  await logLeadHistory(k.leadId, "notiz", `Bündel gewünscht: ${labels.join(", ")}`, { customerId: k.customerId, userId: null }).catch(() => null);
 }
 
 /** Nächste offene Frage der Engine senden und merken. false = keine offen. */
@@ -1998,23 +2063,60 @@ export async function sendeAngabeFrage(k: StreckenKontext, einleitung?: string |
   return true;
 }
 
-/** Angaben der Vorbereitung am Lead (Lead.vorbereitungsAngaben): je Frage Sparte, Bezeichnung und Wert, offene Punkte. */
-type LeadAngaben = { at: string; werte: Record<string, { sparte: string; label: string; wert: string }>; offen: string[]; rest?: boolean };
+/**
+ * Angaben der Vorbereitung am Lead (Lead.vorbereitungsAngaben): je Frage Sparte, Bezeichnung und Wert, offene Punkte,
+ * Bündel (Sparten, wenn Privatschutz als Bündel gewünscht ist).
+ */
+type LeadAngaben = { at: string; werte: Record<string, { sparte: string; label: string; wert: string }>; offen: string[]; rest?: boolean; buendel?: string[] };
 
 async function leadAngabenSpeichern(leadId: string | null, fn: (x: LeadAngaben) => void): Promise<void> {
   if (!leadId) return;
   const l = await prisma.lead.findUnique({ where: { id: leadId }, select: { vorbereitungsAngaben: true } });
   const roh = (l?.vorbereitungsAngaben ?? null) as Partial<LeadAngaben> | null;
-  const x: LeadAngaben = { at: new Date().toISOString(), werte: { ...(roh?.werte ?? {}) }, offen: [...(roh?.offen ?? [])], ...(roh?.rest ? { rest: true } : {}) };
+  const x: LeadAngaben = {
+    at: new Date().toISOString(),
+    werte: { ...(roh?.werte ?? {}) },
+    offen: [...(roh?.offen ?? [])],
+    ...(roh?.rest ? { rest: true } : {}),
+    ...(roh?.buendel ? { buendel: roh.buendel } : {}),
+  };
   fn(x);
   x.offen = [...new Set(x.offen)];
   await prisma.lead.update({ where: { id: leadId }, data: { vorbereitungsAngaben: x as unknown as Prisma.InputJsonValue } }).catch((e) => console.error("[vorbereitung lead]", e instanceof Error ? e.message.slice(0, 120) : e));
 }
 
+/** Wert einer Frage speichern: Angaben (Terminvorbereitung), Protokoll, Lead, Merker mit Antwort (für Bedingungen). */
+async function angabeSpeichern(k: StreckenKontext, f: GeplanteFrage, r: { wert: string; opt?: string[]; teile?: Record<string, number>; offen?: string[] }, art: string, vermerk = false): Promise<void> {
+  if (!k.termin) return;
+  const vorher = cleanQualificationData(k.angaben)[f.feld];
+  const neu = mergeQualificationData(k.angaben, { [f.feld]: feldWert(f, r.wert, vorher) });
+  await prisma.conversation.update({ where: { id: k.conversationId }, data: { qualificationData: (neu ?? undefined) as Prisma.InputJsonValue | undefined } });
+  await prisma.message.create({ data: { conversationId: k.conversationId, direction: "internal", kind: "qualification", body: JSON.stringify({ angaben: { [f.feld]: r.wert }, via: "vorbereitung_fragen" }), sentBy: "system" } });
+  k.angaben = neu;
+  await leadAngabenSpeichern(k.leadId, (x) => {
+    x.werte[f.id] = { sparte: f.sparte, label: f.label, wert: r.wert };
+    // unklare Antwort mit Vermerk bzw. Teilantwort: im Termin prüfen
+    x.offen = [...(vermerk ? [...x.offen, f.label] : x.offen.filter((o) => o !== f.label)), ...(r.offen ?? [])];
+  });
+  await merke(k.conversationId, STRECKE.angabeAntwort, { appointmentId: k.termin.id, id: f.id, art, wert: r.wert, ...(r.opt ? { opt: r.opt } : {}), ...(r.teile ? { teile: r.teile } : {}) });
+}
+
+/** Abgeleitete Werte (z. B. Hausrat-Wohnfläche aus dem Wohngebäude) übernehmen, ohne zu fragen. */
+async function abgeleiteteSpeichern(k: StreckenKontext): Promise<void> {
+  if (!k.termin) return;
+  for (let runde = 0; runde < 3; runde++) {
+    const st = await angabenStand(k.conversationId, k.termin.id);
+    const neu = angabenPlan(k, st).plan.filter((f) => f.abgeleitetWert && !st.erledigt.includes(f.id));
+    if (!neu.length) return;
+    for (const f of neu) await angabeSpeichern(k, f, f.abgeleitetWert!, "abgeleitet");
+  }
+}
+
 /**
  * Antwort auf die offene Frage der Engine (Knopf vf:<id>:<option> bzw. vf:rest, knopf.ts; getippt: bot.ts). Wert in die
- * Angaben (Terminvorbereitung) und an den Lead, dann die nächste Frage bzw. der nächste Schritt. Unklar: genau einmal
- * nachfragen, danach mit Vermerk weiter. „Rest im Termin“: freundlich stoppen, offene Punkte vermerken.
+ * Angaben (Terminvorbereitung) und an den Lead, dann die nächste Frage bzw. der nächste Schritt. Mehrfachauswahl: nach
+ * jeder Wahl „Noch etwas davon?“, bis „Das war alles“. Unklar: genau einmal nachfragen (nicht bei Fragen ohne
+ * Nachfrage, z. B. Vorverträge), danach mit Vermerk weiter. „Rest im Termin“: freundlich stoppen, offene Punkte vermerken.
  * false = keine Frage offen bzw. keine Antwort darauf (der Assistent antwortet).
  */
 export async function angabeAntwort(conversationId: string, text: string | null | undefined, knopf: { id: string; option: string } | { rest: true } | null = null, now = new Date()): Promise<boolean> {
@@ -2022,17 +2124,37 @@ export async function angabeAntwort(conversationId: string, text: string | null 
   if (!k?.termin) return false;
   const st = await angabenStand(conversationId, k.termin.id);
   if (!angabeFrageOffen(st)) return !!knopf; // doppelter bzw. alter Klick
-  const { plan, quelle } = angabenPlan(k, st.erledigt);
+  const { plan, quelle } = angabenPlan(k, st);
   if (knopf && "rest" in knopf) return restImTermin(k, offeneFragen(plan, quelle), now);
   const f = plan.find((x) => x.id === (knopf?.id ?? st.letzteFrage!.id));
   if (!f || f.id !== st.letzteFrage!.id) return !!knopf;
-  let r = antwortAuswerten(f, text, knopf?.option ?? null, now);
+  let r: Auswertung;
+  if (f.typ === "mehrfach") {
+    const opt = knopf?.option ?? null;
+    if (opt === FERTIG.id || (!opt && st.teil.length && mehrfachFertig(text))) r = mehrfachWert(f, st.teil);
+    else {
+      const e = antwortAuswerten(f, text, opt, now);
+      const exklusiv = e.art === "wert" && f.optionen?.some((o) => o.exklusiv && e.opt?.includes(o.id));
+      if (e.art === "wert" && opt && !exklusiv) {
+        const gewaehlt = [...new Set([...st.teil, ...(e.opt ?? [])])];
+        if (mehrfachRest(f, gewaehlt).length) {
+          // weitere Wahl möglich: „Noch etwas davon?“ (dieselbe Frage bleibt offen)
+          await merke(conversationId, STRECKE.angabeTeil, { appointmentId: k.termin.id, id: f.id, opt: e.opt ?? [] });
+          const n = mehrfachWeiterNachricht(f, k.an, gewaehlt);
+          await sende(k, n.text, n.buttons, n.liste);
+          return true;
+        }
+        r = mehrfachWert(f, gewaehlt);
+      } else if (e.art === "wert" && st.teil.length) r = exklusiv ? mehrfachWert(f, st.teil) : mehrfachWert(f, [...st.teil, ...(e.opt ?? [])]);
+      else r = e;
+    }
+  } else r = antwortAuswerten(f, text, knopf?.option ?? null, now);
   if (r.art === "rest") return restImTermin(k, offeneFragen(plan, quelle), now);
   let vermerk = false;
   if (r.art === "unklar") {
-    if (!st.nachgefragt.includes(f.id)) {
+    if (!f.ohneNachfrage && !st.nachgefragt.includes(f.id)) {
       await merke(conversationId, STRECKE.angabeNachfrage, { appointmentId: k.termin.id, id: f.id });
-      const n = frageNachricht(f, k.an, 1);
+      const n = st.teil.length ? mehrfachWeiterNachricht(f, k.an, st.teil) : frageNachricht(f, k.an, 1);
       await sende(k, nachfrageText(f, k.an), n.buttons, n.liste);
       return true;
     }
@@ -2041,22 +2163,12 @@ export async function angabeAntwort(conversationId: string, text: string | null 
     r = { art: "wert", wert: `${roh} (bitte im Termin prüfen)` };
     vermerk = true;
   }
-  if (r.art === "wert") {
-    const wert = r.wert;
-    const vorher = cleanQualificationData(k.angaben)[f.feld];
-    const neu = mergeQualificationData(k.angaben, { [f.feld]: feldWert(f, wert, vorher) });
-    await prisma.conversation.update({ where: { id: conversationId }, data: { qualificationData: (neu ?? undefined) as Prisma.InputJsonValue | undefined } });
-    await prisma.message.create({ data: { conversationId, direction: "internal", kind: "qualification", body: JSON.stringify({ angaben: { [f.feld]: wert }, via: "vorbereitung_fragen" }), sentBy: "system" } });
-    k.angaben = neu;
-    await leadAngabenSpeichern(k.leadId, (x) => {
-      x.werte[f.id] = { sparte: f.sparte, label: f.label, wert };
-      // unklare Antwort mit Vermerk: im Termin prüfen
-      x.offen = vermerk ? [...x.offen, f.label] : x.offen.filter((o) => o !== f.label);
-    });
-  } else {
+  if (r.art === "wert") await angabeSpeichern(k, f, r, vermerk ? "vermerk" : "wert", vermerk);
+  else {
     await leadAngabenSpeichern(k.leadId, (x) => x.offen.push(f.label));
+    await merke(conversationId, STRECKE.angabeAntwort, { appointmentId: k.termin.id, id: f.id, art: r.art });
   }
-  await merke(conversationId, STRECKE.angabeAntwort, { appointmentId: k.termin.id, id: f.id, art: vermerk ? "vermerk" : r.art });
+  await abgeleiteteSpeichern(k);
   if (!(await sendeAngabeFrage(k, "Danke!"))) await weiterNachAngaben(k, "Danke!");
   return true;
 }

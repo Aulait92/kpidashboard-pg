@@ -4,7 +4,8 @@
 //      bis zur Freigabe die alte v4 (Rückfall). Anrede des Leads aus dem Formular, sonst nur bei eindeutigem Vornamen.
 //   2. „Ja, gern“ startet die Strecke (Fragen-Engine, sonst Komplettcheck), „Lieber im Termin“ → „Alles klar, bis Montag!“
 //   3. Keine Antwort: einmal am Folgetag die Nachfrage (eigene Vorlage), dann Ruhe
-//   4. Fragen-Engine (vorläufige Privatschutz-Definition): Liste/Knöpfe, Fortschritt, Bekanntes überspringen, einmal
+//   4. Fragen-Engine (Allianz-Sparten, Bündel ohne Dubletten): Liste/Knöpfe, Fortschritt, Folgefragen, Mehrfachauswahl,
+//      gemeinsame Vorvertragsfrage, Bekanntes überspringen, einmal
 //      nachfragen, „Rest im Termin“, Speicherung in den Angaben und am Lead
 //   5. Ops-Aktion buchung_vorbereitung_nachsenden mit Vorschau
 // Nachgebaut mit Anids Einstellungen: Sie, Anrede Herr in den Anbieterangaben, Telefon freigegeben, Allianz (Vertreter),
@@ -118,7 +119,7 @@ ohneSplittest("termin_zusage");
 beforeEach(async () => {
   process.env.ENCRYPTION_KEY ||= Buffer.alloc(32, 7).toString("base64");
   process.env.APP_URL = "https://app.example.de";
-  delete process.env.VORBEREITUNG_FRAGEN_VORLAEUFIG;
+  process.env.VORBEREITUNG_FRAGEN = "0";
   sent.length = 0;
   vi.stubGlobal("fetch", vi.fn(fake360));
   await prisma.customer.deleteMany({ where: { name: KUNDE } });
@@ -204,7 +205,7 @@ describe("Antwort auf die Frage", () => {
     expect(an(x.phone)).toHaveLength(1);
   });
 
-  it("„Ja, gern“ (ohne vorläufige Fragen): die Strecke startet mit dem Komplettcheck", async () => {
+  it("„Ja, gern“ (Fragen-Engine aus): die Strecke startet mit dem Komplettcheck", async () => {
     await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
     const x = await lead();
     await bestaetigen(x);
@@ -278,51 +279,102 @@ describe("Nachfrage am Folgetag", () => {
   });
 });
 
-describe("Fragen-Engine (vorläufige Privatschutz-Definition)", () => {
+describe("Fragen-Engine (Allianz-Sparten, Privatschutz als Bündel)", () => {
   beforeEach(() => {
-    process.env.VORBEREITUNG_FRAGEN_VORLAEUFIG = "1";
+    process.env.VORBEREITUNG_FRAGEN = "1";
   });
+  afterEach(() => {
+    process.env.VORBEREITUNG_FRAGEN = "0";
+  });
+  const zeilen = (m: Gesendet | undefined) => m?.interactive?.action.sections?.[0].rows.map((r) => r.title) ?? [];
+  const knoepfe = (m: Gesendet | undefined) => m?.interactive?.action.buttons?.map((b) => b.reply.title) ?? [];
 
-  it("Liste, Fortschritt, Bekanntes überspringen, Zusammengesetztes, einmal nachfragen, dann Komplettcheck", async () => {
+  it("Bündel ohne Dubletten: Liste, Fortschritt, Folgefragen, Mehrfachauswahl, gemeinsame Vorvertragsfrage, Adresse, dann Komplettcheck", async () => {
     await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
-    // Beruf ist aus dem Formular bekannt, Hausrat und Haftpflicht gebucht
-    const x = await lead({ formData: [{ label: "Welche Versicherungen interessieren Sie?", value: "Haftpflicht, Hausrat" }, { label: "Beruf", value: "Angestellt" }] });
+    // Geburtsdatum und PLZ aus dem Formular (nicht gefragt)
+    const x = await lead({
+      formData: [
+        { label: "Welche Versicherungen interessieren Sie?", value: "Haftpflicht, Hausrat, Rechtsschutz" },
+        { label: "Geburtsdatum", value: "01.01.1985" },
+        { label: "Postleitzahl", value: "10115" },
+      ],
+    });
     await bestaetigen(x);
     sent.length = 0;
     await knopf(x.phone, "Ja, gern", "vorbereitung:ja");
     let m = letzte(x.phone);
-    // 1. Mitversicherte: 3 Antworten + „Rest im Termin“ passen nicht auf Knöpfe → Liste
     expect(m?.interactive?.type).toBe("list");
-    expect(textVon(m)).toMatch(/^Super, danke! Noch \d kurze Fragen\. Wer soll mitversichert sein\?$/);
-    expect(m?.interactive?.action.sections?.[0].rows.map((r) => r.title)).toEqual(["Nur ich", "Mit Partner", "Familie mit Kindern", "Rest im Termin"]);
-    expect(textVon(m)).not.toMatch(/beruflich/);
-    await knopf(x.phone, "Mit Partner", "vf:haftpflicht.mitversicherte:paar", "interactive");
+    expect(textVon(m)).toBe("Super, danke! Noch 9 kurze Fragen. Wer soll versichert sein?");
+    expect(zeilen(m)).toEqual(["Nur mich", "Mich und Partner:in", "Mich und Kind(er)", "Mich, Partner:in, Kinder", "Rest im Termin"]);
+    expect((m?.interactive?.action.sections?.[0].rows[1] as { description?: string }).description).toBe("mich und meine:n Partner:in");
+    // Privatschutz als Bündel am Lead vermerkt
+    const h = await prisma.leadHistory.findFirst({ where: { leadId: x.lead.id, text: { startsWith: "Bündel gewünscht" } } });
+    expect(h?.text).toBe("Bündel gewünscht: Hausrat, Haftpflicht, Rechtsschutz");
+    await knopf(x.phone, "Mich und Partner:in", "vf:gemeinsam.versicherte:partner", "interactive");
+    expect(textVon(letzte(x.phone))).toBe("Danke! Noch 8 kurze Fragen. Wie sind Sie beruflich tätig?");
+    await schreibt(x.phone, "Beamter");
+    // eine Schadenfrage für alle drei Sparten, bei „Ja“ je Sparte die Anzahl (ohne Fortschritt)
     m = letzte(x.phone);
-    // 2. Wohnfläche und Baujahr (Pflicht Hausrat), Beruf übersprungen (Formular)
-    expect(textVon(m)).toMatch(/^Danke! Noch \d kurze Fragen\. Wie groß ist Ihre Wohnung/);
-    expect(m?.interactive?.action.buttons?.map((b) => b.reply.title)).toEqual(["Rest im Termin"]);
+    expect(textVon(m)).toBe("Danke! Noch 7 kurze Fragen. Gab es in den letzten 5 Jahren einen Schaden bei der Haftpflicht oder beim Hausrat, oder einen Rechtsstreit bzw. eine Rechtsberatung?");
+    expect(knoepfe(m)).toEqual(["Nein, nichts", "Ja", "Rest im Termin"]);
+    await knopf(x.phone, "Ja", "vf:gemeinsam.schaeden:ja", "interactive");
+    expect(textVon(letzte(x.phone))).toBe("Danke! Wie viele Haftpflichtschäden waren es? 0, wenn keiner.");
+    await schreibt(x.phone, "1");
+    expect(textVon(letzte(x.phone))).toBe("Danke! Wie viele Hausratschäden waren es? 0, wenn keiner.");
+    await schreibt(x.phone, "keiner");
+    expect(textVon(letzte(x.phone))).toBe("Danke! Wie viele Rechtsstreitigkeiten oder Rechtsberatungen waren es? 0, wenn keine.");
+    await schreibt(x.phone, "0");
+    expect(textVon(letzte(x.phone))).toBe("Danke! Noch 6 kurze Fragen. Wie wohnen Sie?");
+    await knopf(x.phone, "Wohnung ab 1. Stock", "vf:hausrat.lage:wohnung-og", "interactive");
+    expect(textVon(letzte(x.phone))).toBe("Danke! Noch 5 kurze Fragen. Wie groß ist Ihre Wohnung ungefähr? Zum Beispiel 75 qm.");
     await schreibt(x.phone, "ziemlich groß");
-    expect(textVon(letzte(x.phone))).toMatch(/^Das habe ich nicht ganz verstanden\. Können Sie mir kurz Wohnfläche und Baujahr schreiben\?/);
-    await schreibt(x.phone, "75 qm, Baujahr 1990");
-    const conv = await prisma.conversation.findUniqueOrThrow({ where: { id: x.conversationId } });
-    expect(conv.qualificationData).toMatchObject({ versichern: "Paar", wohnflaeche: "75 m², Baujahr 1990" });
-    // 3. optionale Bausteine: bisheriger Vertrag Haftpflicht (Versicherer + Ablauf), Vorschäden (geteilt), Hausrat
-    expect(textVon(letzte(x.phone))).toContain("Sind Sie bei Haftpflicht schon versichert?");
-    await schreibt(x.phone, "Ja bei der HUK bis 03/2027");
-    // Vorschäden (Knöpfe: 2 Antworten + Rest)
+    expect(textVon(letzte(x.phone))).toBe("Das habe ich nicht ganz verstanden. Können Sie mir kurz eine Zahl schreiben?");
+    await schreibt(x.phone, "75 qm");
+    await knopf(x.phone, "Alle vier Bereiche", "vf:rechtsschutz.bereiche:alle", "interactive");
+    // gemeinsame Vorvertragsfrage: Teilantwort, nichts nachgefragt
     m = letzte(x.phone);
-    expect(textVon(m)).toMatch(/^Danke! Noch 2 kurze Fragen\. Gab es in den letzten 5 Jahren Schäden\?$/);
-    expect(m?.interactive?.action.buttons?.map((b) => b.reply.title)).toEqual(["Keine Schäden", "Ja, gab es", "Rest im Termin"]);
-    await knopf(x.phone, "Keine Schäden", "vf:haftpflicht.vorschaeden:keine", "interactive");
-    expect(textVon(letzte(x.phone))).toMatch(/^Danke! Letzte kurze Frage: Sind Sie bei Hausrat schon versichert\?/);
-    await schreibt(x.phone, "nein");
+    expect(textVon(m)).toBe(
+      "Danke! Noch 3 kurze Fragen. Wo sind Sie für Haftpflicht, Hausrat und Rechtsschutz aktuell versichert und bis wann laufen die Verträge? Ungefähr reicht, zum Beispiel: Haftpflicht HUK bis 03/2027, Hausrat noch nicht.",
+    );
+    expect(knoepfe(m)).toEqual(["Nicht versichert", "Weiß ich nicht", "Rest im Termin"]);
+    await schreibt(x.phone, "Haftpflicht bei der HUK, den Rest weiß ich gerade nicht");
+    // Zusatzbausteine: Mehrfachauswahl mit „Noch etwas davon?“ (nur passende Zeilen: Dienst-Haftpflicht für Beamte, keine
+    // Öltank-Haftpflicht in der Mietwohnung)
+    m = letzte(x.phone);
+    expect(textVon(m)).toBe("Danke! Noch 2 kurze Fragen. Soll noch etwas davon ins Angebot?");
+    expect(zeilen(m)).toEqual(["Nichts davon", "Ich vermiete Wohnraum", "Fahrräder", "Glasschutz", "Internetschutz", "Dienst-Haftpflicht", "Strafrechtsschutz Beruf", "Rest im Termin"]);
+    await knopf(x.phone, "Fahrräder", "vf:gemeinsam.bausteine:fahrrad", "interactive");
+    m = letzte(x.phone);
+    expect(textVon(m)).toBe("Danke! Noch etwas davon?");
+    expect(zeilen(m)[0]).toBe("Das war alles");
+    expect(zeilen(m)).not.toContain("Fahrräder");
+    await knopf(x.phone, "Glasschutz", "vf:gemeinsam.bausteine:glas", "interactive");
+    await knopf(x.phone, "Das war alles", "vf:gemeinsam.bausteine:fertig", "interactive");
+    expect(textVon(letzte(x.phone))).toBe("Danke! Wie viel sind Ihre Fahrräder zusammen ungefähr wert?");
+    await schreibt(x.phone, "etwa 2.000 Euro");
+    expect(textVon(letzte(x.phone))).toBe("Danke! Welches Glas soll versichert sein?");
+    await knopf(x.phone, "Innen", "vf:gemeinsam.glas:innen", "interactive");
+    expect(textVon(letzte(x.phone))).toBe("Danke! Letzte kurze Frage: Wie lautet die Adresse Ihrer Wohnung? Straße und Hausnummer reichen.");
+    await schreibt(x.phone, "Musterweg 5");
     // danach der Komplettcheck
     m = letzte(x.phone);
     expect(m?.interactive?.action.buttons?.map((b) => b.reply.id)).toContain("komplettcheck:ja");
-    const fertig = await prisma.conversation.findUniqueOrThrow({ where: { id: x.conversationId } });
-    expect((fertig.qualificationData as Record<string, string>).vorhanden).toBe("Haftpflicht: HUK-Coburg, Ablauf 03/2027; Hausrat: noch nicht versichert");
+    const conv = await prisma.conversation.findUniqueOrThrow({ where: { id: x.conversationId } });
+    expect(conv.qualificationData).toMatchObject({
+      versichern: "Versichert: Mich und Partner:in",
+      beruf: "Öffentlicher Dienst",
+      vorschaeden: "ja; Haftpflicht: 1; Hausrat: 0; Rechtsschutz: 0",
+      wohnflaeche: "Lage: Wohnung ab 1. Stock; Fläche: 75 m²",
+      bereiche: "Privat, Beruf, Verkehr und Wohnen",
+      vorhanden: "Vorverträge: Haftpflicht bei der HUK, den Rest weiß ich gerade nicht",
+      sonstiges: "Bausteine: Fahrräder, Glasschutz; Fahrräder: 2000 €; Glas: Innen",
+      plz: "Musterweg 5",
+    });
     const l = await prisma.lead.findUniqueOrThrow({ where: { id: x.lead.id } });
-    expect((l.vorbereitungsAngaben as { werte: Record<string, { wert: string }> }).werte["hausrat.wohnung"].wert).toBe("75 m², Baujahr 1990");
+    const va = l.vorbereitungsAngaben as { werte: Record<string, { wert: string }>; offen: string[]; buendel: string[] };
+    expect(va.werte["hausrat.flaeche"].wert).toBe("75 m²");
+    expect(va.offen).toEqual(["Ablauf der bisherigen Verträge"]);
+    expect(va.buendel).toEqual(["Hausrat", "Haftpflicht", "Rechtsschutz"]);
   });
 
   it("„Rest im Termin“: freundlich stoppen, offene Punkte am Lead und im Verlauf, keine weiteren Fragen", async () => {
@@ -330,16 +382,28 @@ describe("Fragen-Engine (vorläufige Privatschutz-Definition)", () => {
     const x = await lead({ formData: [{ label: "Welche Versicherungen interessieren Sie?", value: "Hausrat" }] });
     await bestaetigen(x);
     await knopf(x.phone, "Ja, gern", "vorbereitung:ja");
+    expect(textVon(letzte(x.phone))).toBe("Super, danke! Noch 8 kurze Fragen. Wann sind Sie geboren? Zum Beispiel 15.03.1985.");
     sent.length = 0;
     await knopf(x.phone, "Rest im Termin", "vf:rest", "interactive");
     expect(an(x.phone)).toHaveLength(1);
     expect(textVon(an(x.phone)[0])).toBe("Alles klar, den Rest klärt Herr Testkopf mit Ihnen im Termin. Bis Montag!");
     const l = await prisma.lead.findUniqueOrThrow({ where: { id: x.lead.id } });
-    expect((l.vorbereitungsAngaben as { offen: string[]; rest: boolean })).toMatchObject({ rest: true, offen: expect.arrayContaining(["Wer wird mitversichert?", "Wohnfläche und Baujahr"]) });
+    expect(l.vorbereitungsAngaben as { offen: string[]; rest: boolean }).toMatchObject({ rest: true, offen: expect.arrayContaining(["Geburtsdatum", "Wohnfläche"]) });
+    expect((l.vorbereitungsAngaben as { buendel?: unknown }).buendel).toBeUndefined();
     const h = await prisma.leadHistory.findFirst({ where: { leadId: x.lead.id, text: { startsWith: "Im Termin klären" } } });
-    expect(h?.text).toContain("Wohnfläche und Baujahr");
+    expect(h?.text).toContain("Wohnfläche");
     await schreibt(x.phone, "Danke!");
     expect(await merker(x.conversationId, STRECKE.komplettFrage)).toHaveLength(0);
+  });
+
+  it("Schalter aus (VORBEREITUNG_FRAGEN=0): „Ja, gern“ startet direkt mit dem Komplettcheck", async () => {
+    process.env.VORBEREITUNG_FRAGEN = "0";
+    await freigeben("booking_confirmation", "pg_booking_confirmation_v6_sie", "sie");
+    const x = await lead({ formData: [{ label: "Welche Versicherungen interessieren Sie?", value: "Hausrat" }] });
+    await bestaetigen(x);
+    await knopf(x.phone, "Ja, gern", "vorbereitung:ja");
+    expect(letzte(x.phone)?.interactive?.action.buttons?.map((b) => b.reply.id)).toContain("komplettcheck:ja");
+    expect(await merker(x.conversationId, STRECKE.angabeFrage)).toHaveLength(0);
   });
 });
 

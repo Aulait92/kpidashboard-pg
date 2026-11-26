@@ -685,7 +685,7 @@ export async function sendWhatsAppMessage(opts: {
   flow?: { flowId: string; token: string; cta: string; screen: string; data: Record<string, string> } | null;
   vorlage?: { name: string; language: string; components: unknown[] } | null;
   /** Auswahlliste (bis 10 Zeilen, nur im offenen Fenster), Fragen-Engine der Terminvorbereitung; Vorrang vor buttons */
-  liste?: { knopf: string; zeilen: { id: string; title: string }[] } | null;
+  liste?: { knopf: string; zeilen: { id: string; title: string; description?: string }[] } | null;
 }): Promise<SendResult> {
   const account = await prisma.whatsAppAccount.findUnique({
     where: { customerId: opts.customerId },

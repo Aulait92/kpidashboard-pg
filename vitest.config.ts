@@ -11,5 +11,8 @@ export default defineConfig({
     // Integrationstests teilen sich eine Datenbank → nacheinander ausführen.
     fileParallelism: false,
     testTimeout: 30_000,
+    // Fragen-Engine der Terminvorbereitung (lib/vorbereitung) ist im Betrieb an; in Tests aus, außer der Test schaltet
+    // sie ein (tests/integration/buchung-vorbereitung.test.ts), damit die übrigen Strecken-Tests unverändert bleiben.
+    env: { VORBEREITUNG_FRAGEN: "0" },
   },
 });

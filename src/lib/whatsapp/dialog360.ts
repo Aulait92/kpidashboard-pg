@@ -123,10 +123,10 @@ export function sendButtons(
 
 /**
  * Text mit einer Auswahlliste (interaktive Liste, nur im 24-Stunden-Fenster; Fragen-Engine der Terminvorbereitung,
- * lib/vorbereitung/fragen.ts): ein Knopf öffnet bis zu 10 Zeilen (Titel höchstens 24 Zeichen). Die Antwort kommt als
+ * lib/vorbereitung/fragen.ts): ein Knopf öffnet bis zu 10 Zeilen (Titel höchstens 24 Zeichen, Beschreibung höchstens 72). Die Antwort kommt als
  * `interactive.list_reply` mit `id` (Payload) und `title` zurück (gateway.ts → inboundPayload).
  */
-export function sendList(apiKey: string, to: string, body: string, liste: { knopf: string; zeilen: { id: string; title: string }[] }): Promise<SendResult> {
+export function sendList(apiKey: string, to: string, body: string, liste: { knopf: string; zeilen: { id: string; title: string; description?: string }[] }): Promise<SendResult> {
   return postMessage(apiKey, {
     messaging_product: "whatsapp",
     recipient_type: "individual",
@@ -137,7 +137,7 @@ export function sendList(apiKey: string, to: string, body: string, liste: { knop
       body: { text: body.slice(0, 1024) },
       action: {
         button: liste.knopf.slice(0, 20),
-        sections: [{ title: "Antworten", rows: liste.zeilen.slice(0, 10).map((z) => ({ id: z.id.slice(0, 200), title: z.title.slice(0, 24) })) }],
+        sections: [{ title: "Antworten", rows: liste.zeilen.slice(0, 10).map((z) => ({ id: z.id.slice(0, 200), title: z.title.slice(0, 24), ...(z.description ? { description: z.description.slice(0, 72) } : {}) })) }],
       },
     },
   });
