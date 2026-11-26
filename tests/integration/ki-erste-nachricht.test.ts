@@ -334,7 +334,8 @@ describe("Jede erste Nachricht an einen Lead trägt den KI-Hinweis", () => {
     expect(vorlage(phone)?.name).toBe("pg_booking_confirmation_v4_ki_sie");
     const erst = (await ausgehend(phone))[0];
     expect(erst.purpose).toBe("booking_confirmation");
-    expect(erst.body).toMatch(new RegExp(`^Guten Tag Herr Kranert, Ihr Termin bei ${FIRMA} ist bestätigt: `));
+    // Bestätigung ab v5 (26.11.2026): der Vermittler als Person statt der Firma
+    expect(erst.body).toMatch(/^Guten Tag Herr Kranert, Ihr Termin bei Henrik Lohmann ist bestätigt: /);
     expect(erst.body).toMatch(/\n\nDigitaler KI-Assistent$/);
     // derselbe Chat, zweite Bestätigung (z. B. neuer Termin): Hinweis steht schon da, normale Fassung ohne Fußzeile
     await sendBookingConfirmation({ customerId, to: phone, name: l.name, leadId: l.id, startsAt: new Date(start.getTime() + 24 * HOUR), mode: "video", meetUrl: "https://meet.example.de/abc" });

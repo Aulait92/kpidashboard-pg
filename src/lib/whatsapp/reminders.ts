@@ -5,8 +5,8 @@
 
 import { sendLeadEmail } from "@/lib/calendar/lead-email";
 import { prisma } from "@/lib/prisma";
-import { firstNameOf, neuePlatzhalter, NoTemplateError, sendWhatsAppNotice } from "@/lib/whatsapp/templates";
-import { a, anredeZeile, asAnsprache, type Ansprache } from "@/lib/ansprache";
+import { firstNameOf, KNOPF, neuePlatzhalter, NoTemplateError, sendWhatsAppNotice, VORBEREITUNG_PAYLOADS } from "@/lib/whatsapp/templates";
+import { a, anredeNurAusAngaben, anredeZeile, asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import { advisorDisplayName } from "@/lib/advisor-name";
 import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
@@ -71,7 +71,15 @@ export function kfzUnterlagenSatz(an: Ansprache): string {
   );
 }
 
-/** Bestätigung nach Buchung (z. B. über die Buchungsseite). */
+/**
+ * Bestätigung nach Buchung (z. B. über die Buchungsseite, Dankeseite des Leadformulars, Vermittler, Assistent).
+ * Fenster zu (Ole, 26.11.2026, Kundenfall Schwarzkopf): Vorlage ab v5 mit „Ihr Termin bei Herrn Schwarzkopf“ und der
+ * Frage nach der Vorbereitung [Ja, gern] [Lieber im Termin]; die Antwort öffnet das 24-h-Fenster, „Ja, gern“ startet die
+ * Vorbereitungsstrecke (termin-strecke.ts vorbereitungAntwort), ohne Antwort einmal am Folgetag nachfragen
+ * (runVorbereitungNachfassen). Bis zur Freigabe der v5 bei Meta die freigegebene v4 (ohne Frage, wie bisher).
+ * Fenster offen: Freitext wie bisher, die Strecke startet von selbst (Assistent bzw. runBuchungsseiteNachholen).
+ * Anrede des Leads nur aus Angaben („Guten Tag Herr Müller“), sonst mit vollem Namen; nie aus dem Vornamen geraten.
+ */
 export async function sendBookingConfirmation(opts: {
   customerId: string;
   to: string;
@@ -84,9 +92,12 @@ export async function sendBookingConfirmation(opts: {
   ort?: string | null;
   /** Link zum Absagen/Verschieben: nur noch für E-Mail/Kalender; per WhatsApp wird im Chat verschoben. */
   manageUrl?: string | null;
+  /** Termin (für den Merker der Vorbereitungsfrage); ohne: der kommende Termin zur Startzeit */
+  appointmentId?: string | null;
 }): Promise<void> {
   const an = await anspracheOf(opts.customerId);
   const who = await ansprechpartner({ customerId: opts.customerId, leadId: opts.leadId, phone: opts.to, name: opts.name });
+  const kontakt = anredeNurAusAngaben(who.kontakt);
   // Verschieben per Knopf „Termin verschieben“ (v4) bzw. per Chat (ältere Vorlagen: Satz im Parameter)
   const lead = opts.leadId ? await prisma.lead.findUnique({ where: { id: opts.leadId }, select: { source: true } }).catch(() => null) : null;
   const { istKfzProdukt } = await import("@/lib/whatsapp/produkt-fragen");
@@ -96,14 +107,14 @@ export async function sendBookingConfirmation(opts: {
   // „Guten Tag Frau Schneider, Ihr Videocall mit Herrn Kannapinn ist bestätigt: …“ (Nennungsregel, lib/vermittler-nennung.ts)
   const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || who.firm });
   const text =
-    `${anredeZeile(an, who.kontakt)} ${terminWort(opts.mode, an)} mit ${person.dat} ist bestätigt: ${params[1]}. ` +
+    `${anredeZeile(an, kontakt)} ${terminWort(opts.mode, an)} mit ${person.dat} ist bestätigt: ${params[1]}. ` +
     (opts.mode === "video" && opts.meetUrl
       ? `Hier der Link zum Videocall: ${opts.meetUrl}`
       : opts.mode === "onsite"
         ? linkOrHint("onsite", null, an, opts.ort)
       : a(an, `${person.nom} ruft dich zur vereinbarten Zeit an.`, `${person.nom} ruft Sie zur vereinbarten Zeit an.`)) +
     `\n\n${kfz ?? prepHint(an)} Bis dann! 🙂`;
-  await sendWhatsAppNotice({
+  const r = await sendWhatsAppNotice({
     customerId: opts.customerId,
     to: opts.to,
     purpose: "booking_confirmation",
@@ -112,7 +123,51 @@ export async function sendBookingConfirmation(opts: {
     text,
     leadId: opts.leadId ?? null,
     contactName: opts.name,
-    anrede: who.kontakt,
+    anrede: kontakt,
+    // Vorlage ab v5: [Ja, gern] [Lieber im Termin]; im offenen Fenster wie bisher „Termin verschieben“
+    buttonPayloads: [...VORBEREITUNG_PAYLOADS],
+    textButtons: [KNOPF.terminVerschieben],
+    textPayloads: [KNOPF.terminVerschieben],
+  });
+  // Vorlage mit der Frage nach der Vorbereitung: merken (Antwort per Knopf, Nachfrage am Folgetag)
+  if (r.mode === "template" && (r.version ?? 0) >= 5) {
+    const { vorbereitungGefragt } = await import("@/lib/whatsapp/termin-strecke");
+    await vorbereitungGefragt(r.conversationId, { appointmentId: opts.appointmentId ?? null, leadId: opts.leadId ?? null, startsAt: opts.startsAt }, "bestaetigung").catch((e) =>
+      console.error("[bestaetigung vorbereitung]", e instanceof Error ? e.message.slice(0, 120) : e),
+    );
+  }
+}
+
+/** Termin für die Nachfrage am Folgetag: „Montag, 30.11., 16:00 Uhr“ (wie in der Bestätigung). */
+export function terminFuerNachfrage(d: Date): string {
+  return formatWhenDE(d);
+}
+
+/**
+ * Nachfrage zur Vorbereitung am Folgetag (Vorlage booking_prep_nudge, Knöpfe wie die Bestätigung ab v5). Im offenen
+ * Fenster als Freitext mit Knöpfen. NoTemplateError, solange die Vorlage nicht freigegeben ist (der Aufrufer lässt es).
+ */
+export async function sendVorbereitungNachfrage(opts: { customerId: string; to: string; name: string | null; leadId: string | null; startsAt: Date }): Promise<void> {
+  const an = await anspracheOf(opts.customerId);
+  const who = await ansprechpartner({ customerId: opts.customerId, leadId: opts.leadId, phone: opts.to, name: opts.name });
+  const kontakt = anredeNurAusAngaben(who.kontakt);
+  const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || who.firm });
+  const wann = terminFuerNachfrage(opts.startsAt);
+  const text = `${anredeZeile(an, kontakt)} ${a(
+    an,
+    `kurze Frage zu deinem Termin am ${wann}: Damit sich ${person.nom} gut auf dich vorbereiten kann, darf ich dir vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.`,
+    `kurze Frage zu Ihrem Termin am ${wann}: Damit sich ${person.nom} gut auf Sie vorbereiten kann, darf ich Ihnen vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.`,
+  )}`;
+  await sendWhatsAppNotice({
+    customerId: opts.customerId,
+    to: opts.to,
+    purpose: "booking_prep_nudge",
+    params: [firstNameOf(opts.name), wann],
+    text,
+    leadId: opts.leadId,
+    contactName: opts.name,
+    anrede: kontakt,
+    buttonPayloads: [...VORBEREITUNG_PAYLOADS],
   });
 }
 

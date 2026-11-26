@@ -343,9 +343,12 @@ describe("C) Vermittler-Nennung", () => {
     expect(templateBodyFor("followup_noshow", names, "sie")).toContain("neuen Termin mit Herrn Kannapinn finden?");
     expect(templateBodyFor("followup_last", names, "sie", "b")).toContain("Soll Herr Kannapinn sich noch um Ihre Anfrage kümmern?");
     // andere eingereichte Texte ändern sich dadurch nicht (keine ungewollte Neueinreichung)
-    for (const p of ["booking_confirmation", "followup_last"] as NoticePurpose[]) {
+    for (const p of ["followup_last"] as NoticePurpose[]) {
       expect(templateBodyFor(p, names, "sie")).toBe(templateBodyFor(p, templateNamesOf("Agentur Ole Kannapinn"), "sie"));
     }
+    // Bestätigung ab v5 (Ole, 26.11.2026, Kundenfall Schwarzkopf): ebenfalls der Vermittler als Person
+    expect(templateBodyFor("booking_confirmation", names, "sie")).toContain("Ihr Termin bei Herrn Kannapinn ist bestätigt");
+    expect(templateBodyFor("booking_confirmation", names, "sie")).not.toContain("Ole Kannapinn");
   });
 
   it("Bot-Prompt: feste Regel und keine Vorschläge mit Vor- und Nachnamen", () => {

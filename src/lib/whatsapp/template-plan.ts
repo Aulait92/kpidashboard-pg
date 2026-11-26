@@ -68,6 +68,8 @@ export const CORE_PURPOSES: NoticePurpose[] = [
   "outreach_kfz_wechsel",
   "outreach_kfz_neu",
   "booking_confirmation",
+  // Nachfrage zur Vorbereitung am Folgetag (Ole, 26.11.2026, Kundenfall Schwarzkopf: Bestätigung ohne Frage, Fenster blieb zu)
+  "booking_prep_nudge",
   "reminder",
   "reminder_soon",
   // Show-up-Paket (Ole, freigegeben 17.11.2026, docs/vorlagen-showup.md): 15 Minuten vorher, „wartet im Videoraum“
@@ -181,7 +183,7 @@ export function templateNameFor(purpose: NoticePurpose, version = TEMPLATE_VERSI
  * alles andere ist Ansprache (MARKETING). Meta prüft und stuft ggf. selbst um.
  */
 export function categoryFor(purpose: NoticePurpose): "UTILITY" | "MARKETING" {
-  return ["booking_confirmation", "reminder", "reminder_soon", "reminder_start", "appt_waiting", "appt_halbzeit", "reschedule", "offer_send", "maklervollmacht", "maklervollmacht_erinnerung"].includes(purpose)
+  return ["booking_confirmation", "booking_prep_nudge", "reminder", "reminder_soon", "reminder_start", "appt_waiting", "appt_halbzeit", "reschedule", "offer_send", "maklervollmacht", "maklervollmacht_erinnerung"].includes(purpose)
     ? "UTILITY"
     : "MARKETING";
 }
@@ -421,7 +423,8 @@ export const CUSTOMER_TITLES: Record<NoticePurpose, { title: string; when: strin
   outreach_kfz: { title: "Erste Nachricht: Kfz", when: "Wenige Minuten nach dem Formular, wenn der Anlass nicht angegeben ist: jetziges oder neues Auto, mit der Erstinformation als PDF." },
   outreach_kfz_wechsel: { title: "Erste Nachricht: Kfz-Wechsel", when: "Wenige Minuten nach dem Formular bei einem Wechsel fürs jetzige Auto: wann der Vertrag ausläuft, mit der Erstinformation als PDF." },
   outreach_kfz_neu: { title: "Erste Nachricht: Kfz für ein neues Auto", when: "Wenige Minuten nach dem Formular bei einem neuen Auto: ob es schon da ist, mit der Erstinformation als PDF." },
-  booking_confirmation: { title: "Terminbestätigung", when: "Sobald ein Lead einen Termin gebucht hat." },
+  booking_confirmation: { title: "Terminbestätigung", when: "Sobald ein Lead einen Termin gebucht hat, mit der Frage, ob er vorab ein paar kurze Fragen beantwortet." },
+  booking_prep_nudge: { title: "Nachfrage zur Vorbereitung", when: "Einmal am Tag nach der Buchung, wenn der Lead auf die Frage in der Bestätigung nicht geantwortet hat." },
   reminder: { title: "Terminerinnerung", when: "Etwa 24 Stunden vor dem Termin." },
   reminder_soon: { title: "Kurz vor dem Termin", when: "Etwa eine Stunde vor dem Termin: passt alles?" },
   reminder_start: { title: "Gleich geht es los", when: "15 Minuten vor einem Videotermin, mit dem Link zum Videoraum." },

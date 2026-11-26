@@ -641,7 +641,8 @@ export async function rescheduleAppointment(opts: {
   const lead = old.leadId
     ? await prisma.lead.findUnique({ where: { id: old.leadId }, select: { source: true } })
     : null;
-  const mode = opts.mode ?? (old.mode === "video" ? "video" : old.mode === "onsite" ? "onsite" : "phone");
+  // Video ist Standard (Ole, 26.11.2026): Telefon nur, wenn der Termin ausdrücklich ein Telefonat war
+  const mode = opts.mode ?? (old.mode === "phone" ? "phone" : old.mode === "onsite" ? "onsite" : "video");
   const name = conv?.contactName ?? conv?.contactPhone ?? "Lead";
   const booked = await bookAppointment({
     customerId: opts.customerId,

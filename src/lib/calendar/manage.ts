@@ -114,7 +114,7 @@ export async function rescheduleOpenAppointment(
       name: conv.contactName,
       leadId: appt.leadId,
       startsAt: new Date(res.start),
-      mode: fresh?.mode ?? "phone",
+      mode: fresh?.mode ?? "video",
       meetUrl: res.meetUrl,
       manageUrl: res.manageUrl,
     }).catch((e) => console.error("[manage reschedule confirmation]", e));

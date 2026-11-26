@@ -547,6 +547,26 @@ export const AKTIONEN: Record<string, Aktion> = {
       return { ok: true, info: "Buchungslink gesendet." };
     },
   },
+  buchung_vorbereitung_nachsenden: {
+    beschreibung:
+      "Einmalig die neue Terminbestätigung mit der Frage nach der Vorbereitung (Vorlage booking_confirmation ab v5, Knöpfe „Ja, gern“/„Lieber im Termin“) an einen Lead mit kommendem Termin nachschicken, z. B. wenn er nach einer Online-Buchung nur die alte Bestätigung ohne Frage bekam. Ohne freigegebene v5 wird nichts gesendet. vorschau=true: nur prüfen.",
+    felder: { customerId: "Kunden-ID", name: "Teil des Lead-Namens (oder leadId)", leadId: "optional statt name", vorschau: "true = nur prüfen, nichts senden" },
+    run: async (p) => {
+      const customerId = text(p.customerId);
+      const leadId = text(p.leadId);
+      const name = text(p.name);
+      if (!leadId && name.length < 3) return { ok: false, error: "leadId oder Name (mind. 3 Zeichen) angeben." };
+      const leads = await prisma.lead.findMany({
+        where: { customerId, erasedAt: null, ...(leadId ? { id: leadId } : { name: { contains: name, mode: "insensitive" } }) },
+        select: { id: true, name: true, phone: true },
+        take: 3,
+      });
+      if (leads.length !== 1) return { ok: false, error: `${leads.length} passende Leads, bitte genauer.` };
+      const r = await (await import("@/lib/whatsapp/termin-strecke")).vorbereitungNachsenden(leads[0].id, { vorschau: text(p.vorschau) === "true" });
+      if (r.gesendet) await audit("lead.vorbereitung_nachgesendet", { entity: "Lead", entityId: leads[0].id, details: { termin: r.termin, vorlage: r.vorlage }, actor: OPS_ACTOR });
+      return r.gesendet || (r.vorschau && r.wuerdeSenden) ? { ok: true, info: r.info, daten: r } : { ok: false, error: r.info };
+    },
+  },
   bezug_aktiv: {
     beschreibung: "Pay-per-Lead-Bezug pausieren bzw. wieder einschalten (aktiv true/false), z. B. für einen Tag keine Lieferung",
     felder: { subscriptionId: "ID des Bezugs", aktiv: "true oder false" },

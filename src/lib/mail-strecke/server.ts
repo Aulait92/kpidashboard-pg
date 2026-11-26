@@ -640,6 +640,8 @@ export type SeitenStand = {
   durationMin: number;
   abgemeldet: boolean;
   hatTelefon: boolean;
+  /** Telefon als Terminart freigegeben (AgentConfig.allowPhone); sonst nur Video (Ole, 26.11.2026) */
+  telefonErlaubt: boolean;
   termin: { id: string; startsAt: Date; mode: string; meetUrl: string | null; manageToken: string | null; komplettcheck: boolean | null; einladungAt: Date | null } | null;
   /** Nächster Schritt nach der Buchung */
   nach: "komplettcheck" | "angaben" | "adresse" | "fertig" | null;
@@ -702,6 +704,7 @@ export async function seitenStand(streckeId: string, now = new Date()): Promise<
     durationMin,
     abgemeldet: s.schritt === "abgemeldet" || (!!lead.email && (await istAbgemeldet(lead.customerId, lead.email, lead.id))),
     hatTelefon: !!lead.phone,
+    telefonErlaubt: (await import("@/lib/termin-formate-server").then((m) => m.loadTerminFormate(lead.customerId)).catch(() => ({ telefon: false }))).telefon,
     termin: termin ? { id: termin.id, startsAt: termin.startsAt, mode: termin.mode, meetUrl: termin.meetUrl, manageToken: termin.manageToken, komplettcheck: termin.komplettcheck, einladungAt: termin.einladungAt } : null,
     nach,
     folgefragen: ff.map((f) => ({ key: f.key, text: an === "du" ? f.du : f.sie, ...(f.knoepfe ? { knoepfe: f.knoepfe } : {}) })),
@@ -765,6 +768,10 @@ export async function terminFestmachen(streckeId: string, o: { start: string; mo
   }
   const start = new Date(o.start);
   if (Number.isNaN(start.getTime()) || !s.zeiten.includes(start.toISOString())) return { ok: false, grund: "zeit" };
+  // Video ist Standard; Telefon nur, wenn der Vermittler es freigegeben hat (Ole, 26.11.2026)
+  const { loadTerminFormate } = await import("@/lib/termin-formate-server");
+  const { buchungsModus } = await import("@/lib/termin-formate");
+  o = { ...o, mode: buchungsModus(o.mode, await loadTerminFormate(lead.customerId).catch(() => ({ telefon: false, vorOrt: false }))) === "phone" ? "phone" : "video" };
   // Telefon nur mit Nummer (vorhanden oder neu eingegeben)
   const { normalizePhone } = await import("@/lib/whatsapp/phone");
   const neueNummer = o.phone ? normalizePhone(o.phone) : null;

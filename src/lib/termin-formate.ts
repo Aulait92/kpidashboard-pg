@@ -39,6 +39,17 @@ export function erlaubterModus(wunsch: unknown, f: TerminFormate): TerminModus |
   return "video";
 }
 
+/**
+ * Modus einer Online-Buchung (Buchungsseite, Dankeseite des Leadformulars, Mail-Strecke): Video ist Standard. Telefon nur,
+ * wenn der Lead es ausdrücklich gewählt hat UND der Vermittler es freigegeben hat; vor Ort nur freigegeben und mit
+ * Anschrift (ortBekannt). Ohne bzw. mit unbekannter Wahl immer Video (Ole, 26.11.2026).
+ */
+export function buchungsModus(wunsch: unknown, f: TerminFormate, ortBekannt = false): TerminModus {
+  if (wunsch === "phone" && f.telefon) return "phone";
+  if (wunsch === "onsite" && f.vorOrt && ortBekannt) return "onsite";
+  return "video";
+}
+
 /** Prompt-Zeilen zur Terminart für den Assistenten. */
 export function terminArtRegel(an: Ansprache, f: TerminFormate): string {
   const andere = [f.telefon ? "Telefon (modus phone)" : "", f.vorOrt ? "einen Termin vor Ort in der Agentur (modus onsite)" : ""].filter(Boolean);

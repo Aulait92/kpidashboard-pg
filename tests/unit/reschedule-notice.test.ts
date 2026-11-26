@@ -42,7 +42,8 @@ describe("Termin verschoben", () => {
   it("Text: vier Platzhalter, Firma, keine Gedankenstriche", () => {
     const t = SUGGESTED_TEMPLATE_TEXT.reschedule;
     expect(t.match(/\{\{\d\}\}/g)).toHaveLength(PURPOSE_PARAMS.reschedule.length);
-    expect(t).toContain("Termin bei [Firma]");
+    // v5 (Ole, 26.11.2026): der Vermittler als Person im Dativ („bei Herrn Schwarzkopf“) statt der Firma
+    expect(t).toContain("Termin bei [BeraterDat]");
     expect(t).not.toMatch(/[–—]/);
   });
 });

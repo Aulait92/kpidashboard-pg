@@ -8,7 +8,7 @@ import { isSupportCustomer } from "@/lib/whatsapp/support-inbox";
 import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 import { ohneAutoNachrichten } from "@/lib/lead-kontakt-sperre";
-import { sendButtons, sendFlow, sendTemplate, sendText, type SendResult } from "@/lib/whatsapp/dialog360";
+import { sendButtons, sendFlow, sendList, sendTemplate, sendText, type SendResult } from "@/lib/whatsapp/dialog360";
 import { linkLeadToConversation } from "@/lib/whatsapp/lead-link";
 import { profilNameErlaubt } from "@/lib/lead-name";
 import type { StatusError } from "@/lib/whatsapp/zustellfehler";
@@ -523,6 +523,16 @@ async function persistInbound(
     }
   }
 
+  // Getippte Antwort auf die Frage nach der Vorbereitung unter der Bestätigung (Ole, 26.11.2026: „Ja“, „lieber im Termin“)
+  if (botErlaubt && type === "text" && !botHint) {
+    try {
+      const { vorbereitungFreitext } = await import("@/lib/whatsapp/termin-strecke");
+      if (await vorbereitungFreitext(conversation.id, body, now)) return;
+    } catch (e) {
+      console.error("[whatsapp vorbereitung]", e instanceof Error ? e.name : "Fehler");
+    }
+  }
+
   // Freie Antwort auf die Kfz-Einstiegsfrage (Ole, 21.11.2026, knopf.ts erstfrageFreitext): wie ein Knopf festhalten
   if (botErlaubt && type === "text" && !botHint) {
     try {
@@ -674,6 +684,8 @@ export async function sendWhatsAppMessage(opts: {
    */
   flow?: { flowId: string; token: string; cta: string; screen: string; data: Record<string, string> } | null;
   vorlage?: { name: string; language: string; components: unknown[] } | null;
+  /** Auswahlliste (bis 10 Zeilen, nur im offenen Fenster), Fragen-Engine der Terminvorbereitung; Vorrang vor buttons */
+  liste?: { knopf: string; zeilen: { id: string; title: string }[] } | null;
 }): Promise<SendResult> {
   const account = await prisma.whatsAppAccount.findUnique({
     where: { customerId: opts.customerId },
@@ -696,9 +708,11 @@ export async function sendWhatsAppMessage(opts: {
     ? await sendTemplate(apiKey, opts.to, opts.vorlage.name, opts.vorlage.language, opts.vorlage.components)
     : opts.flow
       ? await sendFlow(apiKey, opts.to, { ...opts.flow, body: opts.body, footer })
-      : knoepfe
-        ? await sendButtons(apiKey, opts.to, opts.body, knoepfe, footer)
-        : await sendText(apiKey, opts.to, opts.body);
+      : opts.liste?.zeilen.length
+        ? await sendList(apiKey, opts.to, opts.body, opts.liste)
+        : knoepfe
+          ? await sendButtons(apiKey, opts.to, opts.body, knoepfe, footer)
+          : await sendText(apiKey, opts.to, opts.body);
 
   const now = new Date();
   const conversation = await prisma.conversation.upsert({

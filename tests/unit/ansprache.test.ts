@@ -110,7 +110,9 @@ describe("Meta-Vorlagen: Fassungen, Namen, Regeln", () => {
     // Erstanschreiben ab v7 nur mit PDF-Kopf; Kfz-Einstiegsfrage (Ole, 21.11.2026): 3 Zwecke je 3 Fassungen, a und b
     // Nachfassen nach Absage (Ole, 23.11.2026): followup_absage in Du, Sie, Sie ohne Namen
     // Fassung mit KI-Fußzeile für die erste Nachricht (Ole, 24.11.2026): Terminbestätigung und Erinnerung, je 3 Fassungen
-    expect(names).toHaveLength(114);
+    // Nachfrage zur Vorbereitung am Folgetag (Ole, 26.11.2026): booking_prep_nudge in Du, Sie, Sie ohne Namen
+    expect(names).toHaveLength(117);
+    expect(names).toContain("pg_booking_prep_nudge_v2_sie");
     expect(names).toContain("pg_booking_confirmation_v2_ki_sie");
     expect(names).toContain("pg_followup_nudge_v2_ki_sie_ohne_name");
     expect(names.filter((n) => /_ki(_|$)/.test(n))).toHaveLength(6);
@@ -124,9 +126,10 @@ describe("Meta-Vorlagen: Fassungen, Namen, Regeln", () => {
   });
 
   it("Texte: Du „Hallo {{1}},“, Sie „Guten Tag {{1}},“, ohne Namen „Guten Tag,“ mit nachgerückten Platzhaltern", () => {
-    expect(templateTextFor("booking_confirmation", "du")).toMatch(/^Hallo \{\{1\}\}, dein Termin bei \[Firma\] ist bestätigt: \{\{2\}\} \(\{\{3\}\}\)\. \{\{4\}\}/);
-    expect(templateTextFor("booking_confirmation", "sie")).toMatch(/^Guten Tag \{\{1\}\}, Ihr Termin bei \[Firma\] ist bestätigt: \{\{2\}\}/);
-    expect(templateTextFor("booking_confirmation", "sie_ohne_name")).toMatch(/^Guten Tag, Ihr Termin bei \[Firma\] ist bestätigt: \{\{1\}\} \(\{\{2\}\}\)\. \{\{3\}\}/);
+    // Bestätigung v5 (Ole, 26.11.2026): Vermittler als Person im Dativ, Frage nach der Vorbereitung am Ende
+    expect(templateTextFor("booking_confirmation", "du")).toMatch(/^Hallo \{\{1\}\}, dein Termin bei \[BeraterDat\] ist bestätigt: \{\{2\}\} \(\{\{3\}\}\)\. \{\{4\}\}/);
+    expect(templateTextFor("booking_confirmation", "sie")).toMatch(/^Guten Tag \{\{1\}\}, Ihr Termin bei \[BeraterDat\] ist bestätigt: \{\{2\}\}/);
+    expect(templateTextFor("booking_confirmation", "sie_ohne_name")).toMatch(/^Guten Tag, Ihr Termin bei \[BeraterDat\] ist bestätigt: \{\{1\}\} \(\{\{2\}\}\)\. \{\{3\}\}/);
     // Erstanschreiben v10: „Hallo“ auch gesiezt, eine Zeile, feste Frage fett; Thema fest, ohne Vermittler.
     // Tierkrankenversicherung: Tier {{2}}
     expect(templateTextFor("outreach_zahn", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zur Zahnzusatzversicherung! *Was ist Ihnen am wichtigsten?*");
@@ -170,7 +173,8 @@ describe("Meta-Vorlagen: Fassungen, Namen, Regeln", () => {
   it("Firma und Berater getrennt: „Buchung bei Agentur Susanne Meier“, „hier ist Susanne Meier“", () => {
     const names = templateNamesOf("Agentur Susanne Meier");
     expect(names).toMatchObject({ firm: "Agentur Susanne Meier", advisor: "Susanne Meier", kurz: "Agentur Susanne Meier" });
-    expect(templateBodyFor("booking_confirmation", names, "sie")).toContain("Ihr Termin bei Agentur Susanne Meier ist bestätigt");
+    // Bestätigung ab v5: der Vermittler als Person (ohne Anrede in den Anbieterangaben: Vor- und Nachname)
+    expect(templateBodyFor("booking_confirmation", names, "sie")).toContain("Ihr Termin bei Susanne Meier ist bestätigt");
     // Erinnerung v5 (Ole, 24.11.2026): „hier ist noch einmal [Firma]“, ohne „digitaler KI-Assistent“
     expect(templateBodyFor("followup_nudge", names, "du")).toBe("Hallo {{1}}, hier ist noch einmal Agentur Susanne Meier. Sollen wir mit {{2}} weitermachen? Es dauert nur ein paar Minuten.");
     expect(templateBodyFor("followup", names, "du")).toContain("digitale KI-Assistent von Agentur Susanne Meier");
@@ -208,7 +212,7 @@ describe("Vorschau auf der Seite WhatsApp-Vorlagen", () => {
     const t = previewBodyFor("outreach", names, "sie");
     expect(t.startsWith("Hallo Frau Schneider, danke für Ihre Anfrage! *")).toBe(true);
     expect(t).not.toContain("Julia");
-    expect(previewBodyFor("booking_confirmation", names, "sie")).toContain("Guten Tag Frau Schneider, Ihr Termin bei Agentur Susanne Meier ist bestätigt");
+    expect(previewBodyFor("booking_confirmation", names, "sie")).toContain("Guten Tag Frau Schneider, Ihr Termin bei Susanne Meier ist bestätigt");
     expect(previewBodyFor("booking_confirmation", names, "sie")).toContain("Wir rufen Sie unter Ihrer Nummer an.");
   });
   it("Du: „Hallo Julia, danke für deine Anfrage!“", () => {
@@ -247,7 +251,7 @@ describe("Vorlage wählen und Parameter setzen", () => {
     for (const k of [NUR_VORNAME, NUR_VORNAME_FRAU]) {
       const r = send([v2sie, v2ohne, v1sie], "sie", k)!;
       expect(r.name).toBe("pg_booking_confirmation_v2_sie_ohne_name");
-      expect(r.text).toBe(`Guten Tag, Ihr Termin bei X ist bestätigt: ${rest[0]} (${rest[1]}). ${rest[2]} Zur Vorbereitung: Legen Sie sich gern Ihre bisherigen Unterlagen zum Thema bereit, falls vorhanden.`);
+      expect(r.text).toBe(`Guten Tag, Ihr Termin bei X ist bestätigt: ${rest[0]} (${rest[1]}). ${rest[2]} Damit sich X gut auf Sie vorbereiten kann: Darf ich Ihnen vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.`);
     }
     // Nur die Fassung mit Namen freigegeben → nie mit leerem Namen, sondern die bisherige
     expect(send([v2sie, v1sie], "sie", NUR_VORNAME)!.name).toBe("pg_booking_confirmation_v1_sie");

@@ -818,6 +818,9 @@ model Lead {
   // Bestehende Verträge laut Lead (Komplettcheck im WhatsApp-Assistenten, Ole 17.11.2026, lib/whatsapp/vorvertraege.ts):
   // { at, liste: [{ sparte, gesellschaft?, fuer?, tarif? }], keine? }. Nur Sparte, Gesellschaft, Tarifname und Person, nie Gesundheitsangaben.
   vorvertraege         Json?
+  // Angaben aus der Terminvorbereitung im Chat (Fragen-Engine, Ole 26.11.2026, lib/vorbereitung/fragen.ts):
+  // { at, werte: { "<sparte>.<frage>": { sparte, label, wert } }, offen: [Bezeichnung], rest? }. Keine Gesundheitsangaben.
+  vorbereitungsAngaben Json?
   // Tierkrankenversicherung: gewünschter Umfang (Ole, 19.11.2026, lib/tkv-umfang.ts): op | voll | offen; null = nicht gefragt
   tkvUmfang            String?
   // WhatsApp-Erstanschreiben (Outreach-Job): Zeitpunkt + Ergebnis

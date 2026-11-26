@@ -227,7 +227,8 @@ describe("Mail-Strecke und Betroffenenrechte", () => {
     expect(neu.zeiten).not.toContain(s.zeiten[0]);
     expect(neu.buchungAt).toBeNull();
     expect(await prisma.appointment.count({ where: { leadId: l.id } })).toBe(0);
-    // Telefon ohne Nummer geht nicht
+    // Telefon ohne Nummer geht nicht (Telefon freigegeben; sonst wird per Video gebucht, Ole 26.11.2026)
+    await prisma.agentConfig.upsert({ where: { customerId: l.customerId }, create: { customerId: l.customerId, allowPhone: true }, update: { allowPhone: true } });
     expect(await terminFestmachen(s.id, { start: neu.zeiten[0], mode: "phone" })).toEqual({ ok: false, grund: "telefon" });
   });
 

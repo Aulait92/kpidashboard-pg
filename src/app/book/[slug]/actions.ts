@@ -63,7 +63,8 @@ export async function bookPublicAction(
   const wunsch = formData.get("mode");
   // „In der Agentur“ nur freigegeben und mit Anschrift (Ole, 20.11.2026)
   const ort = wunsch === "onsite" && formate.vorOrt ? await agenturOrt(customerId).catch(() => null) : null;
-  const mode: "phone" | "video" | "onsite" = wunsch === "phone" && formate.telefon ? "phone" : ort ? "onsite" : "video";
+  const { buchungsModus } = await import("@/lib/termin-formate");
+  const mode = buchungsModus(wunsch, formate, !!ort);
   let name = String(formData.get("name") ?? "").trim().slice(0, 80);
   let phone = normalizePhone(String(formData.get("phone") ?? ""));
   // Chat-Kontext: gebucht wird über die WhatsApp-Nummer des Chats, damit Termin, Lead und Strecke im selben Chat landen
@@ -299,6 +300,7 @@ export async function bookPublicAction(
       ort,
       meetUrl: res.meetUrl,
       manageUrl: res.manageUrl,
+      appointmentId: res.appointmentId,
     }).catch((e) => console.error("[booking page confirmation]", e));
   } catch (err) {
     if (err instanceof SlotBusyError) fail("taken");

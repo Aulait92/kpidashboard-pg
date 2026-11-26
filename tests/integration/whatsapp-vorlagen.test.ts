@@ -115,7 +115,8 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     // PDF-Kopf (keine _ohnepdf mehr); seit 21.11.2026 dazu die Kfz-Erstanschreiben je Anlass mit A/B (+18, 6e6a2d2f);
     // seit 23.11.2026 dazu „Nachfassen nach Absage“ (followup_absage, +3, 528f70f);
     // seit 24.11.2026 dazu die Fassungen mit KI-Fußzeile für die erste Nachricht (Terminbestätigung und Erinnerung, +6)
-    expect(created).toHaveLength(114);
+    // seit 26.11.2026 dazu die Nachfrage zur Vorbereitung am Folgetag (booking_prep_nudge, +3)
+    expect(created).toHaveLength(117);
     const outreach = created.find((c) => c.name === "pg_outreach_v12")!;
     expect(outreach.category).toBe("MARKETING");
     // Erstanschreiben v10: eine Zeile ohne Vermittler, feste Frage fett mit Knöpfen, nur „KI-Assistent“ in der Fußzeile
@@ -142,8 +143,14 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     // ohne Namen und ohne Tier: kein Platzhalter, also kein Beispiel
     expect(created.find((c) => c.name === "pg_outreach_pkv_v12_sie_ohne_name")!.components.find((c) => c.type === "BODY")?.example).toBeUndefined();
     expect(created.find((c) => c.name === "pg_reminder_v5")!.category).toBe("UTILITY");
-    expect(created.find((c) => c.name === "pg_reschedule_v4_sie")!.category).toBe("UTILITY");
+    expect(created.find((c) => c.name === "pg_reschedule_v5_sie")!.category).toBe("UTILITY");
     expect(created.find((c) => c.name === "pg_reminder_soon_v5")!.category).toBe("UTILITY");
+    // Bestätigung v5 und Nachfrage zur Vorbereitung (Ole, 26.11.2026): UTILITY mit [Ja, gern] [Lieber im Termin]
+    for (const n of ["pg_booking_confirmation_v5_sie", "pg_booking_confirmation_v5_ki_sie", "pg_booking_prep_nudge_v1_sie", "pg_booking_prep_nudge_v1_sie_ohne_name"]) {
+      const t = created.find((c) => c.name === n);
+      expect(t?.category, n).toBe("UTILITY");
+      expect(t?.components.find((c) => c.type === "BUTTONS"), n).toEqual({ type: "BUTTONS", buttons: [{ type: "QUICK_REPLY", text: "Ja, gern" }, { type: "QUICK_REPLY", text: "Lieber im Termin" }] });
+    }
     // Show-up-Paket (freigegeben 17.11.2026): 15 Minuten vorher und „wartet im Videoraum“ werden mit eingereicht
     for (const n of ["pg_reminder_start_v5", "pg_reminder_start_v5_sie", "pg_reminder_start_v5_sie_ohne_name", "pg_appt_waiting_v5", "pg_appt_waiting_v5_sie", "pg_appt_waiting_v5_sie_ohne_name"]) {
       expect(created.find((c) => c.name === n)?.category, n).toBe("UTILITY");
@@ -169,9 +176,9 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
       ["pg_followup_nudge_v5", "pg_followup_nudge_v5_ki"],
       ["pg_followup_nudge_v5_sie", "pg_followup_nudge_v5_ki_sie"],
       ["pg_followup_nudge_v5_sie_ohne_name", "pg_followup_nudge_v5_ki_sie_ohne_name"],
-      ["pg_booking_confirmation_v4", "pg_booking_confirmation_v4_ki"],
-      ["pg_booking_confirmation_v4_sie", "pg_booking_confirmation_v4_ki_sie"],
-      ["pg_booking_confirmation_v4_sie_ohne_name", "pg_booking_confirmation_v4_ki_sie_ohne_name"],
+      ["pg_booking_confirmation_v5", "pg_booking_confirmation_v5_ki"],
+      ["pg_booking_confirmation_v5_sie", "pg_booking_confirmation_v5_ki_sie"],
+      ["pg_booking_confirmation_v5_sie_ohne_name", "pg_booking_confirmation_v5_ki_sie_ohne_name"],
     ]) {
       const a = created.find((c) => c.name === normal)!;
       const b = created.find((c) => c.name === ki)!;
@@ -189,7 +196,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     });
 
     const local = await prisma.messageTemplate.findMany({ where: { customerId } });
-    expect(local).toHaveLength(114);
+    expect(local).toHaveLength(117);
     // Kopf und Knöpfe gespeichert (beim Senden: PDF-Link bzw. Knopf-Payloads)
     expect(local.find((t) => t.name === "pg_outreach_tkv_v12")).toMatchObject({ headerFormat: "DOCUMENT", buttons: ["Nur Operationen", "Auch Behandlungen", "Noch unsicher"] });
     expect(local.find((t) => t.name === "pg_outreach_zahn_v12_b_sie")).toMatchObject({ headerFormat: "DOCUMENT", buttons: ["Starker Zahnersatz", "Mit Zahnreinigung", "Beides vergleichen"] });
@@ -207,7 +214,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     const s = await submitTemplatesForCustomer(customerId);
     // 21 Zwecke × 3 Fassungen + A/B followup_last (3) + A/B Erstanschreiben (18) + 4 Kampagnen × 2 (nur gesiezt) + A/B Cross-Selling (2)
     // + Fassungen mit KI-Fußzeile für Terminbestätigung und Erinnerung (6, Ole 24.11.2026)
-    expect(s.submitted).toHaveLength(124);
+    expect(s.submitted).toHaveLength(127);
     expect(created.map((c) => c.name).sort()).toEqual(plannedNames(true).sort());
     const camp = created.find((c) => c.name === "pg_campaign_review_v4_sie")!;
     // Selbstbezeichnung nach Status laut Erstinformation, nie „Versicherungsberater“
@@ -228,12 +235,12 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
   it("zweiter Lauf reicht nichts doppelt ein; Freigabe → approved, Ablehnung → Aufgabe + Push", async () => {
     await connect();
     await submitTemplatesForCustomer(customerId);
-    expect(created).toHaveLength(114);
+    expect(created).toHaveLength(117);
 
     remote.find((t) => t.name === "pg_outreach_v12")!.status = "APPROVED";
     Object.assign(remote.find((t) => t.name === "pg_reminder_v5")!, { status: "REJECTED", rejected_reason: "INVALID_FORMAT" });
     const s = await submitTemplatesForCustomer(customerId);
-    expect(created).toHaveLength(114);
+    expect(created).toHaveLength(117);
     expect(s.approved).toEqual(["pg_outreach_v12"]);
     expect(s.rejected).toEqual(["pg_reminder_v5"]);
 
@@ -276,7 +283,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     const s = await submitTemplatesForCustomer(customerId);
     expect(s.skipped).toEqual(["outreach"]);
     expect(created.map((c) => c.name).filter((n) => /^pg_outreach_v\d/.test(n))).toEqual([]);
-    expect(created).toHaveLength(108);
+    expect(created).toHaveLength(111);
   });
 
   it("Cron: gedrosselt, Liste nicht abrufbar → Fehler nur gemeldet", async () => {
@@ -508,7 +515,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
   it("Live-Test 17.11.2026: Liste seitenweise; bei Meta vorhandene Vorlagen nie erneut einreichen, Status übernehmen", async () => {
     await connect();
     await submitTemplatesForCustomer(customerId);
-    expect(created).toHaveLength(114);
+    expect(created).toHaveLength(117);
     // Server liefert je Abruf höchstens 20: früher fehlten die neuesten Vorlagen, sie wurden bei jedem Lauf neu eingereicht
     listCap = 20;
     remote.find((t) => t.name === "pg_outreach_privatschutz_v14_sie")!.status = "APPROVED";
@@ -541,8 +548,8 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     await connect();
     const [a, b] = await Promise.all([submitTemplatesForCustomer(customerId), submitTemplatesForCustomer(customerId)]);
     expect(a).toBe(b);
-    expect(posts).toHaveLength(114);
-    expect(new Set(posts).size).toBe(114);
+    expect(posts).toHaveLength(117);
+    expect(new Set(posts).size).toBe(117);
   });
 
   it("nicht verbunden → nichts eingereicht", async () => {

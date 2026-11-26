@@ -788,6 +788,15 @@ export async function runBotTurn(
     logTestLead(lead, "vorvertraege erfasst");
     return;
   }
+  // Antwort auf eine Frage der Fragen-Engine (Terminvorbereitung, Ole 26.11.2026, lib/vorbereitung/fragen.ts): auswerten,
+  // speichern, nächste Frage (ohne Assistent). Keine Antwort auf die Frage (Rückfrage): der Assistent antwortet.
+  if (upcoming && latest?.direction === "inbound" && !opts.anstoss && !opts.knopfZeit && !opts.hint) {
+    const ast = await strecke.angabenStand(conversation.id, upcoming.id);
+    if (strecke.angabeFrageOffen(ast) && latest.createdAt > ast.letzteFrage!.at && (await strecke.angabeAntwort(conversation.id, latest.body ?? ""))) {
+      logTestLead(lead, "vorbereitung angabe", { id: ast.letzteFrage!.id });
+      return;
+    }
+  }
   // Antwort auf eine Tierfrage (TKV, vor dem Komplettcheck): speichern, nächste Frage bzw. Komplettcheck (ohne
   // Assistent). Eine Rückfrage des Leads beantwortet der Assistent, danach kommt die Frage noch einmal.
   if (upcoming && stand && strecke.tierFrageOffen(stand) && latest?.direction === "inbound" && latest.createdAt > stand.tierFrageLetzte!.at && !opts.anstoss && !opts.knopfZeit) {
@@ -1618,7 +1627,7 @@ export async function runBotTurn(
 
   // Gebucht: kurze Buchungsnachricht (Termin fett, Link), danach als eigene Nachricht der Komplettcheck (Reihenfolge P2,
   // Ole 17.11.2026; die Adresse für die Einladung kommt erst am Schluss)
-  let zweite: { text: string; buttons: Knopf[] | null; merker?: string; daten?: Record<string, unknown> } | null = null;
+  let zweite: { text: string; buttons: Knopf[] | null; merker?: string; daten?: Record<string, unknown>; liste?: { knopf: string; zeilen: Knopf[] } | null } | null = null;
   let knoepfe: Knopf[] | null = null;
   /** Nachricht der Strecke statt eigener Worte des Assistenten (Merker nach dem Senden) */
   let schritt: import("@/lib/whatsapp/termin-strecke").Schritt | null = null;
@@ -1699,7 +1708,11 @@ export async function runBotTurn(
       const sk = await strecke.streckenKontext(conversation.id).catch(() => null);
       // Zusage-Frage offen bzw. „Lieber andere Zeit“ und noch nicht verlegt (Splittest termin_zusage): noch keine Frage
       // der Strecke (die kommt nach dem Tipp, nach dem Verlegen bzw. ohne Tipp nach 1 Std.)
-      if (sk?.termin?.id === upcoming.id && (zusageWartet || zusageAndere)) zweite = null;
+      // Frage nach der Vorbereitung (Bestätigung ab v5, Ole 26.11.2026): erst nach „Ja, gern“; nach „Lieber im Termin“
+      // bzw. „Rest im Termin“ keine Fragen der Strecke mehr
+      const vb = await strecke.vorbereitungStand(conversation.id, upcoming.id);
+      const vorbereitungWartet = (!!vb.frageAt || !!vb.nachfrageAt || !!vb.antwort) && vb.antwort?.art !== "ja";
+      if (sk?.termin?.id === upcoming.id && (zusageWartet || zusageAndere || vorbereitungWartet)) zweite = null;
       else if (sk?.termin?.id === upcoming.id) zweite = await strecke.ersteNachBuchung(sk);
       else {
         const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, conversation.qualificationData), variante: await strecke.komplettcheckVariante(conversation.leadId ?? conversation.id), source: lead?.source ?? null });
@@ -1789,7 +1802,7 @@ export async function runBotTurn(
     if (schritt?.folge && !zweite) await strecke.sendeFolge({ customerId: conversation.customerId, phone: conversation.contactPhone }, schritt.folge);
     // Nach der Buchung als eigene Nachricht: Komplettcheck (nie in der Buchungsnachricht) bzw. der Schluss
     if (zweite) {
-      await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: zweite.text, sentBy: "bot", buttons: zweite.buttons });
+      await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: zweite.text, sentBy: "bot", buttons: zweite.buttons, liste: zweite.liste ?? null });
       if (zweite.merker) {
         const appt = await prisma.appointment.findFirst({ where: { conversationId: conversation.id, status: "booked", startsAt: { gt: new Date() } }, orderBy: { startsAt: "asc" }, select: { id: true } });
         if (appt) await persistInternal(conversation.id, zweite.merker, { appointmentId: appt.id, ...(zweite.daten ?? {}) });

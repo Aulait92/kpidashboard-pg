@@ -26,11 +26,11 @@ describe("Vorlagen-Plan", () => {
     // inkl. Show-up-Paket (freigegeben 17.11.2026): 15 Minuten vorher, „wartet im Videoraum“; Angebot (P3, 17.11.2026); Halbzeit-Erinnerung (20.11.2026)
     // Kfz-Einstiegsfrage je Anlass (Ole, 21.11.2026): outreach_kfz, outreach_kfz_wechsel, outreach_kfz_neu
     // Nachfassen nach Absage (Ole, 23.11.2026): followup_absage
-    expect(purposesFor({ bestand: false })).toHaveLength(26);
+    expect(purposesFor({ bestand: false })).toHaveLength(27);
     expect(purposesFor({ bestand: false })).toContain("reschedule");
     expect(purposesFor({ bestand: false })).toEqual(expect.arrayContaining(["reminder_start", "appt_waiting", "appt_halbzeit"]));
     expect(purposesFor({ bestand: false })).not.toContain("campaign_review");
-    expect(purposesFor({ bestand: true })).toHaveLength(30);
+    expect(purposesFor({ bestand: true })).toHaveLength(31);
     expect(purposesFor({ bestand: false })).toEqual(expect.arrayContaining(["outreach_tkv", "outreach_zahn", "outreach_pkv", "outreach_privatschutz", "outreach_hausrat", "outreach_kfz", "outreach_kfz_wechsel", "outreach_kfz_neu"]));
   });
 
@@ -95,7 +95,9 @@ describe("Vorlagen-Plan", () => {
     expect(TEMPLATE_BUTTONS.reminder).toEqual(["Ja, passt", "Bitte verschieben"]);
     expect(TEMPLATE_BUTTONS.followup_noshow).toEqual(["Ja, neuer Termin", "Kein Bedarf mehr"]);
     expect(TEMPLATE_BUTTONS.followup_last).toEqual(["Ja, noch aktuell", "Nein, danke"]);
-    expect(TEMPLATE_BUTTONS.booking_confirmation).toEqual(["Termin verschieben"]);
+    // ab v5 (Ole, 26.11.2026): Frage nach der Vorbereitung; Nachfrage am Folgetag mit denselben Knöpfen
+    expect(TEMPLATE_BUTTONS.booking_confirmation).toEqual(["Ja, gern", "Lieber im Termin"]);
+    expect(TEMPLATE_BUTTONS.booking_prep_nudge).toEqual(["Ja, gern", "Lieber im Termin"]);
     expect(TEMPLATE_BUTTONS.campaign_cross_sell).toEqual(["Ja, gern prüfen", "Kein Bedarf", OPT_OUT_BUTTON]);
     // Erstanschreiben v10 (Ole, 19.11.2026): Antwortknöpfe der festen Frage, höchstens 3 und je 20 Zeichen (auch interaktiv)
     for (const p of OUTREACH_PURPOSES) {

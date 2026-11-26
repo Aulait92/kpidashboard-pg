@@ -323,7 +323,7 @@ describe("Fassung mit KI-Fußzeile für die erste Nachricht (KI_ERST)", () => {
         expect(ki.category).toBe(normal.category);
       }
     }
-    expect(templateNameFor("booking_confirmation", undefined, "sie", "a", true, true)).toBe("pg_booking_confirmation_v4_ki_sie");
+    expect(templateNameFor("booking_confirmation", undefined, "sie", "a", true, true)).toBe("pg_booking_confirmation_v5_ki_sie");
     expect(templateNameFor("followup_nudge", undefined, "du", "a", true, true)).toBe("pg_followup_nudge_v5_ki");
     expect(templateNameFor("followup_nudge", undefined, "sie_ohne_name", "a", true, true)).toBe("pg_followup_nudge_v5_ki_sie_ohne_name");
     // andere Zwecke haben keine solche Fassung

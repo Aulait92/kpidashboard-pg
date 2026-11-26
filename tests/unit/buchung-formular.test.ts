@@ -25,7 +25,7 @@ const db = vi.hoisted(() => ({
   booked: [] as Record<string, unknown>[],
   messages: [] as { body: string }[],
   history: [] as { leadId: string; text: string }[],
-  confirmations: [] as { to: string; name: string }[],
+  confirmations: [] as { to: string; name: string; appointmentId?: string | null; mode?: string }[],
   uebernahmeVorBestaetigung: null as boolean | null,
 }));
 
@@ -45,7 +45,9 @@ vi.mock("@/lib/rate-limit", async (orig) => ({ ...(await orig<typeof import("@/l
 vi.mock("@/lib/termin-formate-server", () => ({ loadTerminFormate: vi.fn(async () => ({ telefon: true, vorOrt: false })), agenturOrt: vi.fn(async () => null) }));
 vi.mock("@/lib/experimente", () => ({ ereignis: vi.fn(async () => null), variante: vi.fn(async () => "a") }));
 vi.mock("@/lib/lead-history", () => ({ logLeadHistory: vi.fn(async (leadId: string, _k: string, text: string) => void db.history.push({ leadId, text })) }));
-vi.mock("@/lib/whatsapp/reminders", () => ({ sendBookingConfirmation: vi.fn(async (o: { to: string; name: string }) => void db.confirmations.push({ to: o.to, name: o.name })) }));
+vi.mock("@/lib/whatsapp/reminders", () => ({
+  sendBookingConfirmation: vi.fn(async (o: { to: string; name: string; appointmentId?: string | null; mode?: string }) => void db.confirmations.push({ to: o.to, name: o.name, appointmentId: o.appointmentId, mode: o.mode })),
+}));
 vi.mock("@/lib/whatsapp/lead-link", () => ({
   // wie das Original: gleiche Nummer, sonst gleiche E-Mail, neuester Lead
   linkLeadToConversation: vi.fn(async (id: string) => {
@@ -290,6 +292,17 @@ describe("bookPublicAction mit von=formular", () => {
     expect(db.booked[0]).toMatchObject({ leadId: "lead1", conversationId: "convLead", attendeeEmail: "max@example.de", leadName: "Max Muster", leadPhone: "4915112345678" });
     expect(JSON.parse(db.messages[0].body)).toMatchObject({ via: "booking_page", von: "formular", dk: "b", nurHandy: true });
     expect(db.convs).toHaveLength(1);
+    // Dankeseite des Leadformulars: Bestätigung mit Termin-ID (Frage nach der Vorbereitung, Ole 26.11.2026), Video ohne Wahl
+    expect(db.confirmations[0]).toMatchObject({ to: "4915112345678", appointmentId: "appt1", mode: "video" });
+    expect(db.booked[0]).toMatchObject({ mode: "video" });
+  });
+
+  it("Terminart: ohne Wahl Video, Telefon nur ausdrücklich gewählt (hier freigegeben)", async () => {
+    await run(form({ von: "formular", phone: "+4915112345678", mode: "" }));
+    expect(db.booked.at(-1)).toMatchObject({ mode: "video" });
+    db.convs[0].leadId = "lead1";
+    await run(form({ von: "formular", phone: "+4915112345678", mode: "phone" }));
+    expect(db.booked.at(-1)).toMatchObject({ mode: "phone" });
   });
 
   it("kein frischer Lead (zu alt): zurück mit Feldern, Uhrzeit und Gesprächsart vorgemerkt, Nummer verschlüsselt", async () => {

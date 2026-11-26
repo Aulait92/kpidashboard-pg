@@ -45,6 +45,8 @@ export type NoticePurpose =
   | "outreach_kfz_wechsel"
   | "outreach_kfz_neu"
   | "booking_confirmation"
+  // Nachfassen am Folgetag, wenn der Lead auf die Frage in der Bestätigung (ab v5) nicht geantwortet hat (Ole, 26.11.2026)
+  | "booking_prep_nudge"
   | "reminder"
   | "reminder_soon"
   | "reminder_start"
@@ -85,6 +87,7 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   outreach_kfz_wechsel: "Erstanschreiben Kfz (Wechsel, jetziges Auto)",
   outreach_kfz_neu: "Erstanschreiben Kfz (neues Auto)",
   booking_confirmation: "Buchungsbestätigung",
+  booking_prep_nudge: "Terminvorbereitung: Nachfrage am Folgetag",
   reminder: "Termin-Erinnerung",
   reminder_soon: "Termin gleich: passt alles?",
   reminder_start: "Termin in 15 Minuten: Link zum Videoraum",
@@ -189,6 +192,13 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   outreach_kfz_neu: "v12",
   // Show-up-Paket (Ole, freigegeben 17.11.2026, docs/vorlagen-showup.md): Vortag und 1 Stunde mit neuen Platzhaltern
   // (bis zur Freigabe bei Meta die bisherige v4, PLATZHALTER_AB), 15 Minuten und „wartet im Videoraum“ neu
+  // Bestätigung v5 (Ole, 26.11.2026, Kundenfall Schwarzkopf): Vermittler als Person („bei Herrn Schwarzkopf“ statt
+  // „bei Anid Schwarzkopf“) und am Ende die Frage nach der Vorbereitung mit [Ja, gern] [Lieber im Termin], damit sich das
+  // 24-h-Fenster öffnet. Platzhalter gleich; bis zur Freigabe bei Meta sendet die App die freigegebene v4 (rankTemplates).
+  booking_confirmation: "v5",
+  booking_prep_nudge: "v1",
+  // Verschoben v5 (26.11.2026): „Ihr Termin bei Herrn Schwarzkopf“ statt „bei [Firma]“; Platzhalter gleich
+  reschedule: "v5",
   reminder: "v5",
   reminder_soon: "v5",
   reminder_start: "v5",
@@ -259,6 +269,7 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
   outreach_kfz_wechsel: [],
   outreach_kfz_neu: [],
   booking_confirmation: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
+  booking_prep_nudge: ["Termin (Wochentag, Datum, Uhrzeit)"],
   // Ab v5 (Show-up-Paket); ältere freigegebene Fassungen: PLATZHALTER_AB
   reminder: ["Wann (z. B. morgen um 10 Uhr)", "Nutzen (ein Satz, ggf. mit Verträgen)", "Zugang (Videolink bzw. Anruf)"],
   reminder_soon: ["Terminart (Videotermin bzw. Telefontermin)", "Vermittler (Dativ)"],
@@ -311,10 +322,17 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
   outreach_kfz: erstanschreibenV10("outreach_kfz"),
   outreach_kfz_wechsel: erstanschreibenV10("outreach_kfz_wechsel"),
   outreach_kfz_neu: erstanschreibenV10("outreach_kfz_neu"),
-  // Service (UTILITY): Bestätigung mit Vorbereitungshinweis und Knopf zum Verschieben
+  // Service (UTILITY), v5 (Ole, 26.11.2026): Bestätigung mit dem Vermittler als Person und der Frage nach der Vorbereitung
+  // (Knöpfe [Ja, gern] [Lieber im Termin], knopf.ts vorbereitung:ja|termin). Die freigegebene v4 hatte „bei [Firma]“, den
+  // Satz zum Bereitlegen der Unterlagen und den Knopf „Termin verschieben“.
   booking_confirmation: {
-    du: "dein Termin bei [Firma] ist bestätigt: {{2}} ({{3}}). {{4}} Zur Vorbereitung: Leg dir gern deine bisherigen Unterlagen zum Thema bereit, falls vorhanden.",
-    sie: "Ihr Termin bei [Firma] ist bestätigt: {{2}} ({{3}}). {{4}} Zur Vorbereitung: Legen Sie sich gern Ihre bisherigen Unterlagen zum Thema bereit, falls vorhanden.",
+    du: "dein Termin bei [BeraterDat] ist bestätigt: {{2}} ({{3}}). {{4}} Damit sich [BeraterNom] gut auf dich vorbereiten kann: Darf ich dir vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.",
+    sie: "Ihr Termin bei [BeraterDat] ist bestätigt: {{2}} ({{3}}). {{4}} Damit sich [BeraterNom] gut auf Sie vorbereiten kann: Darf ich Ihnen vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.",
+  },
+  // Einmal am Folgetag (Geschäftszeit), wenn auf die Frage in der Bestätigung keine Antwort kam (UTILITY, gleiche Knöpfe)
+  booking_prep_nudge: {
+    du: "kurze Frage zu deinem Termin am {{2}}: Damit sich [BeraterNom] gut auf dich vorbereiten kann, darf ich dir vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.",
+    sie: "kurze Frage zu Ihrem Termin am {{2}}: Damit sich [BeraterNom] gut auf Sie vorbereiten kann, darf ich Ihnen vorab ein paar kurze Fragen stellen? Dauert etwa eine Minute.",
   },
   // Show-up-Paket v5 (Ole, freigegeben 17.11.2026; Freitext: lib/showup.ts). Vortag (ca. 24 h vorher): Wann, Nutzensatz
   // aus den Angaben (bei Komplettcheck mit dem Satz zu den Verträgen), Zugang, Frage
@@ -344,8 +362,8 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
     sie: "kurzer Gruß von {{2}}: Ihr Termin am {{3}} steht. Passt es weiterhin?",
   },
   reschedule: {
-    du: "dein Termin bei [Firma] musste leider verschoben werden. Die neue Zeit ist {{2}} ({{3}}). {{4}} Passt dir die neue Zeit?",
-    sie: "Ihr Termin bei [Firma] musste leider verschoben werden. Die neue Zeit ist {{2}} ({{3}}). {{4}} Passt Ihnen die neue Zeit?",
+    du: "dein Termin bei [BeraterDat] musste leider verschoben werden. Die neue Zeit ist {{2}} ({{3}}). {{4}} Passt dir die neue Zeit?",
+    sie: "Ihr Termin bei [BeraterDat] musste leider verschoben werden. Die neue Zeit ist {{2}} ({{3}}). {{4}} Passt Ihnen die neue Zeit?",
   },
   // Zwei konkrete freie Zeiten aus dem Kalender (lib/whatsapp/termin-vorschlaege.ts); ohne Kalender followup_nudge
   // Nachfass-Vorlagen v5 (Ole, freigegeben zur Einreichung 18.11.2026): Vermittler als Person nach der Nennungsregel
@@ -1010,7 +1028,12 @@ export const KNOPF = {
   gernPruefen: "Ja, gern prüfen",
   keinBedarf: "Kein Bedarf",
   gern: "Ja, gern",
+  /** Bestätigung ab v5 und Nachfrage am Folgetag: Vorbereitung lieber im Termin (Ole, 26.11.2026) */
+  imTermin: "Lieber im Termin",
 } as const;
+
+/** Payloads der Knöpfe unter der Bestätigung ab v5 bzw. der Nachfrage am Folgetag (knopf.ts). */
+export const VORBEREITUNG_PAYLOADS = ["vorbereitung:ja", "vorbereitung:termin"] as const;
 
 /**
  * Schnellantwort-Knöpfe je Zweck (statisch in der Vorlage; beim Senden optional mit eigenem Payload, z. B. der
@@ -1029,7 +1052,9 @@ export const TEMPLATE_BUTTONS: Partial<Record<NoticePurpose, string[]>> = {
   outreach_kfz: [...ERSTANSCHREIBEN_V10.outreach_kfz.knoepfe],
   outreach_kfz_wechsel: [...ERSTANSCHREIBEN_V10.outreach_kfz_wechsel.knoepfe],
   outreach_kfz_neu: [...ERSTANSCHREIBEN_V10.outreach_kfz_neu.knoepfe],
-  booking_confirmation: [KNOPF.terminVerschieben],
+  // ab v5 (Ole, 26.11.2026): Frage nach der Vorbereitung; v4 trug „Termin verschieben“ (bleibt an der freigegebenen v4)
+  booking_confirmation: [KNOPF.gern, KNOPF.imTermin],
+  booking_prep_nudge: [KNOPF.gern, KNOPF.imTermin],
   reminder: [KNOPF.passt, KNOPF.verschieben],
   reminder_soon: [KNOPF.passt, KNOPF.verschieben],
   reminder_start: [KNOPF.verschieben],
@@ -1214,6 +1239,8 @@ export async function sendWhatsAppNotice(opts: {
   buttonPayloads?: string[];
   /** Knöpfe im offenen Fenster (Standard: TEMPLATE_BUTTONS des Zwecks, wenn sie interaktiv passen); [] = keine. */
   textButtons?: string[];
+  /** Payloads der Knöpfe im offenen Fenster, falls sie von buttonPayloads (Vorlage) abweichen (z. B. Bestätigung ab v5). */
+  textPayloads?: string[];
   /** A/B-Fassung (Standard: fest je Lead bzw. Nummer zugeteilt, siehe lib/whatsapp/ab-test.ts). */
   variant?: TemplateVariant;
   /**
@@ -1294,7 +1321,7 @@ export async function sendWhatsAppNotice(opts: {
     const buttons = interactiveButtons(opts.textButtons ?? freitextButtonsOf(opts.purpose));
     if (buttons) {
       // Interaktive Knöpfe; die ID trägt den Payload (z. B. Terminvorschlag), sonst den Knopftext
-      const ids = buttons.map((b, i) => opts.buttonPayloads?.[i] ?? b);
+      const ids = buttons.map((b, i) => opts.textPayloads?.[i] ?? opts.buttonPayloads?.[i] ?? b);
       messageId = (await sendButtons(apiKey, opts.to, body, buttons.map((title, i) => ({ id: ids[i], title })))).messageId;
     } else {
       messageId = (await sendText(apiKey, opts.to, body)).messageId;

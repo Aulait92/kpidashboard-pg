@@ -23,6 +23,9 @@
 //   „Ja“/„Mache ich gleich“ (kalender:ja|gleich, frühere Kalenderfrage) → zugesagt, kurze Antwort
 //   „Ja“/„Nein“ zu einer Angebotsfrage (folge:<key>:ja|nein) → Assistent mit Hinweis, welche Frage beantwortet ist
 //   Tierfrage (TKV, tier:<key>:<wert>, z. B. „Ja, gesund“/„War in Behandlung“) → speichern, nächste Tierfrage bzw. Komplettcheck
+//   „Ja, gern“/„Lieber im Termin“ unter der Bestätigung ab v5 bzw. der Nachfrage am Folgetag (vorbereitung:ja|termin,
+//                                                    Ole 26.11.2026) → Strecke starten bzw. „Alles klar, bis Montag!“
+//   Antwort auf eine Frage der Fragen-Engine (vf:<sparte>.<frage>:<option>, „Rest im Termin“ vf:rest, lib/vorbereitung)
 // Bedenkzeit zum Angebot (Paket P5, lib/bedenkzeit-server.ts):
 //   „1 Woche“/„2 Wochen“/„Ende des Monats“ (bedenkzeit:1w|2w|monatsende) → eintragen, kurze Bestätigung, Assistent schweigt
 // Erstanschreiben v10/v11 (Ole, 19.11.2026, erstanschreiben.ts ERSTANSCHREIBEN_V10): Knopf auf die feste erste Frage
@@ -34,6 +37,7 @@
 import { a, asAnsprache } from "@/lib/ansprache";
 import { prisma } from "@/lib/prisma";
 import { KNOPF, OUTREACH_PURPOSES } from "@/lib/whatsapp/templates";
+import { payloadLesen } from "@/lib/vorbereitung/fragen";
 import { erstfrageFreitextWert, erstfrageKnopfWert } from "@/lib/whatsapp/erstanschreiben";
 export { ERSTFRAGE_HINWEIS_RE } from "@/lib/whatsapp/erstanschreiben";
 import { mergeQualificationData } from "@/lib/whatsapp/qualification";
@@ -57,7 +61,9 @@ export type KnopfAktion =
   | { aktion: "policenbitte"; titel: string }
   | { aktion: "folge"; key: string; wert: string }
   | { aktion: "tier"; key: string; wert: string; titel: string }
-  | { aktion: "bedenkzeit"; wahl: "1w" | "2w" | "monatsende" };
+  | { aktion: "bedenkzeit"; wahl: "1w" | "2w" | "monatsende" }
+  | { aktion: "vorbereitung"; art: "ja" | "termin" }
+  | { aktion: "angabe"; knopf: { id: string; option: string } | { rest: true } };
 
 const norm = (t: string | null | undefined) => (t ?? "").trim().toLowerCase();
 const is = (t: string, k: string) => t === k.toLowerCase();
@@ -74,6 +80,9 @@ export function knopfAktion(kind: string | null | undefined, text: string | null
     return { aktion: "zeit", start: Number.isNaN(new Date(iso).getTime()) ? null : iso };
   }
   if (p === "komplettcheck:ja" || p === "komplettcheck:nein") return { aktion: "komplettcheck", ja: p.endsWith(":ja") };
+  if (p === "vorbereitung:ja" || p === "vorbereitung:termin") return { aktion: "vorbereitung", art: p.endsWith(":ja") ? "ja" : "termin" };
+  const vf = payloadLesen(p);
+  if (vf) return { aktion: "angabe", knopf: vf };
   if (p === "zusage:ja" || p === "zusage:andere") return { aktion: "zusage", ja: p.endsWith(":ja") };
   if (p === "partner:ja" || p === "partner:nein") return { aktion: "partner", ja: p.endsWith(":ja") };
   if (p === "kalender:ja" || p === "kalender:gleich") return { aktion: "kalender", art: p.endsWith(":ja") ? "ja" : "gleich" };
@@ -92,6 +101,8 @@ export function knopfAktion(kind: string | null | undefined, text: string | null
   if (p === "andere_zeit") return { aktion: "andere_zeit" };
   const t = norm(text);
   if (is(t, KNOPF.passt)) return { aktion: "bestaetigt" };
+  // Vorlage ohne Payload (z. B. von Hand angelegt): „Lieber im Termin“ gibt es nur unter der Frage nach der Vorbereitung
+  if (is(t, KNOPF.imTermin)) return { aktion: "vorbereitung", art: "termin" };
   if (is(t, KNOPF.verschieben) || is(t, KNOPF.terminVerschieben)) return { aktion: "verschieben" };
   if (is(t, KNOPF.keinBedarfMehr) || is(t, KNOPF.neinDanke)) return { aktion: "kein_bedarf" };
   if (is(t, KNOPF.neuerTermin)) return { aktion: "neuer_termin" };
@@ -284,6 +295,11 @@ export async function handleButtonReply(
   if (!k) {
     // Knopf auf die feste erste Frage (v10/v11): festhalten, der Assistent antwortet mit Hinweis
     if (inbound.kind !== "button" && inbound.kind !== "interactive") return { handled: false };
+    // „Ja, gern“ ohne Payload unter der Frage nach der Vorbereitung (nur, wenn sie unsere letzte Nachricht war)
+    if (norm(inbound.text) === KNOPF.gern.toLowerCase()) {
+      const { vorbereitungFreitext } = await import("@/lib/whatsapp/termin-strecke");
+      if (await vorbereitungFreitext(conversationId, inbound.text, now)) return { handled: true };
+    }
     const hint = await erstfrageKnopf(conversationId, inbound.text);
     return hint ? { handled: false, hint } : { handled: false };
   }
@@ -327,6 +343,15 @@ export async function handleButtonReply(
       data: { rescheduleRequestedAt: now },
     });
     return { handled: false, hint: knopfHinweis(v, now)?.replace("„Bitte verschieben“", "„Lieber andere Zeit“") ?? null, zeit: null };
+  }
+  // Frage nach der Vorbereitung (Bestätigung ab v5, Nachfrage am Folgetag) und Fragen-Engine: ohne Assistent
+  if (k.aktion === "vorbereitung") {
+    const { vorbereitungAntwort } = await import("@/lib/whatsapp/termin-strecke");
+    return { handled: await vorbereitungAntwort(conversationId, k.art, now) };
+  }
+  if (k.aktion === "angabe") {
+    const { angabeAntwort } = await import("@/lib/whatsapp/termin-strecke");
+    return { handled: await angabeAntwort(conversationId, null, k.knopf, now) };
   }
   // Termin-Strecke nach der Buchung (lib/whatsapp/termin-strecke.ts): ohne Assistent
   if (k.aktion === "komplettcheck") {

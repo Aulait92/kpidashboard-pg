@@ -122,6 +122,28 @@ export function sendButtons(
 }
 
 /**
+ * Text mit einer Auswahlliste (interaktive Liste, nur im 24-Stunden-Fenster; Fragen-Engine der Terminvorbereitung,
+ * lib/vorbereitung/fragen.ts): ein Knopf öffnet bis zu 10 Zeilen (Titel höchstens 24 Zeichen). Die Antwort kommt als
+ * `interactive.list_reply` mit `id` (Payload) und `title` zurück (gateway.ts → inboundPayload).
+ */
+export function sendList(apiKey: string, to: string, body: string, liste: { knopf: string; zeilen: { id: string; title: string }[] }): Promise<SendResult> {
+  return postMessage(apiKey, {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to,
+    type: "interactive",
+    interactive: {
+      type: "list",
+      body: { text: body.slice(0, 1024) },
+      action: {
+        button: liste.knopf.slice(0, 20),
+        sections: [{ title: "Antworten", rows: liste.zeilen.slice(0, 10).map((z) => ({ id: z.id.slice(0, 200), title: z.title.slice(0, 24) })) }],
+      },
+    },
+  });
+}
+
+/**
  * Interaktive Flow-Nachricht (WhatsApp Flows, nur im 24-Stunden-Fenster; Policen-Strecke v2, lib/policen/flow): Text,
  * optional Fußzeile, genau ein Knopf (flow_cta), der das Formular öffnet (flow_action navigate mit Startdaten). Meta
  * erlaubt hier keine zusätzlichen Antwort-Knöpfe. Antwort kommt als interactive.nfm_reply (gateway.ts).

@@ -156,24 +156,29 @@ function VorBuchung({ st, token, sp }: { st: SeitenStand; token: string; sp: { a
           </label>
         ))}
       </fieldset>
-      <fieldset className="group">
-        <legend className="mb-2 text-sm font-semibold">{a(an, "Wie möchtest du sprechen?", "Wie möchten Sie sprechen?")}</legend>
-        <div className="grid grid-cols-2 gap-2">
-          <label className={auswahl}>
-            <input type="radio" name="mode" value="video" defaultChecked className="sr-only" />
-            <Video className="h-4 w-4" /> Video
-          </label>
-          <label className={auswahl}>
-            <input type="radio" name="mode" value="phone" className="sr-only" data-telefon />
-            <Phone className="h-4 w-4" /> Telefon
-          </label>
-        </div>
-        {!st.hatTelefon ? (
-          <div className="mt-3 hidden group-has-[[data-telefon]:checked]:block">
-            <PhoneField name="phone" label={a(an, "Deine Nummer für den Anruf", "Ihre Nummer für den Anruf")} required={false} />
+      {/* Nur Video (Telefon nicht freigegeben, Ole 26.11.2026): keine Auswahl mit einer einzigen Möglichkeit */}
+      {st.telefonErlaubt ? (
+        <fieldset className="group">
+          <legend className="mb-2 text-sm font-semibold">{a(an, "Wie möchtest du sprechen?", "Wie möchten Sie sprechen?")}</legend>
+          <div className="grid grid-cols-2 gap-2">
+            <label className={auswahl}>
+              <input type="radio" name="mode" value="video" defaultChecked className="sr-only" />
+              <Video className="h-4 w-4" /> Video
+            </label>
+            <label className={auswahl}>
+              <input type="radio" name="mode" value="phone" className="sr-only" data-telefon />
+              <Phone className="h-4 w-4" /> Telefon
+            </label>
           </div>
-        ) : null}
-      </fieldset>
+          {!st.hatTelefon ? (
+            <div className="mt-3 hidden group-has-[[data-telefon]:checked]:block">
+              <PhoneField name="phone" label={a(an, "Deine Nummer für den Anruf", "Ihre Nummer für den Anruf")} required={false} />
+            </div>
+          ) : null}
+        </fieldset>
+      ) : (
+        <input type="hidden" name="mode" value="video" />
+      )}
       <SubmitButton pendingLabel="Wird gebucht …" className={buttonClass("primary", "md", "h-12 w-full text-base")}>
         Termin festmachen
       </SubmitButton>

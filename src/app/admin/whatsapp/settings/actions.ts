@@ -22,6 +22,7 @@ async function requireAdmin() {
 const PURPOSES = new Set([
   "outreach",
   "booking_confirmation",
+  "booking_prep_nudge",
   "reminder",
   "reminder_soon",
   "reschedule",

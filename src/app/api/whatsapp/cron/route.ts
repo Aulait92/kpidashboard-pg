@@ -279,6 +279,13 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-strecke-buchungsseite");
       return { error: e instanceof Error ? e.message : String(e) };
     });
+  // Bestätigung mit Frage nach der Vorbereitung ohne Antwort: einmal am Folgetag nachfragen (Ole, 26.11.2026)
+  const vorbereitungNachfrage = await import("@/lib/whatsapp/termin-strecke")
+    .then((m) => m.runVorbereitungNachfassen(now))
+    .catch((e: unknown) => {
+      reportError(e, "cron-vorbereitung-nachfrage");
+      return { error: e instanceof Error ? e.message : String(e) };
+    });
   // Einladung an den Lead ohne Antwort: 30 Min. (kurzfristig 5 Min.), spätestens 60 Min. vor Beginn; ohne Adresse ein
   // Link zum Eintragen per WhatsApp (lib/whatsapp/einladung-rueckfall.ts). Bei 5-Min.-Takt geht „5 Min.“ nach 5 bis 10 Min.
   const einladungen = await import("@/lib/calendar/einladung")
@@ -629,7 +636,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, consentAsks, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, partnerVorTermin, buchungsseite, einladungen, kalenderFrage, policenErinnerung, abTests, funnelReife, vertriebAbZiele, experimente, naechsterSchritt, terminErgebnisPush, antwortEskalation, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, botStumm, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, consentAsks, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, partnerVorTermin, buchungsseite, vorbereitungNachfrage, einladungen, kalenderFrage, policenErinnerung, abTests, funnelReife, vertriebAbZiele, experimente, naechsterSchritt, terminErgebnisPush, antwortEskalation, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, botStumm, supportTemplates, status });
 }
 
 export const GET = handle;
