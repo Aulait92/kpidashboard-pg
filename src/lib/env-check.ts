@@ -16,7 +16,7 @@ export const PFLICHT_VARIABLEN: Check[] = [
   { name: "ENCRYPTION_KEY", zweck: "Verschlüsselte Zugangsdaten (WhatsApp, Postfächer)", ok: gesetzt },
   { name: "DIALOG360_PARTNER_ID", zweck: "WhatsApp verbinden", ok: gesetzt },
   { name: "DIALOG360_PARTNER_API_KEY", zweck: "WhatsApp verbinden", ok: gesetzt },
-  { name: "GOOGLE_MAIL_VERIFIED", zweck: "Gmail-Postfach verbinden", ok: (v) => v.trim() === "1" },
+  { name: "GOOGLE_MAIL_VERIFIED", zweck: "Gmail-Postfach verbinden", ok: (v) => /^(1|true|yes|ja|on)$/i.test(v.trim()), hinweis: "1 setzen" },
   { name: "SUPPORT_EMAIL", zweck: "Support-Kontakt im Hilfe-Chat", ok: (v) => /@/.test(v) },
 ];
 

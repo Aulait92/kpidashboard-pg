@@ -144,7 +144,7 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
               ) : null}
               {setup ? (
                 <div className="mt-5 border-t border-[color:var(--border)] pt-4">
-                  <VideoRaumForm action={saveVideoRaumAction} readOnly={ro} initial={setup.videoRoomUrl} noetig={!setup.status.native.meetOderTeams} />
+                  <VideoRaumForm action={saveVideoRaumAction} readOnly={ro} initial={setup.videoRoomUrl} weg={setup.videoWeg} teamsLinkFehlt={setup.teamsLinkFehlt} />
                 </div>
               ) : null}
             </>

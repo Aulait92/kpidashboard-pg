@@ -2,10 +2,11 @@ import { redirect } from "next/navigation";
 import { CheckCircle2, Mail, PenLine, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
+import { PostfachVerbindenKnoepfe } from "@/components/postfach-verbinden";
 import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
 import { buttonClass, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
-import { googleMailAvailable, microsoftMailAvailable, postfachOf, PROVIDER_LABEL } from "@/lib/mail/postfach";
+import { googleMailAvailable, googleMailFreigegeben, microsoftMailAvailable, postfachOf, PROVIDER_LABEL } from "@/lib/mail/postfach";
 import { loadVorlagen, PLATZHALTER, ZUSATZ_PLATZHALTER } from "@/lib/mail/vorlagen";
 import { AnspracheForm } from "@/components/ansprache-form";
 import { asAnsprache } from "@/lib/ansprache";
@@ -41,7 +42,7 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
   const readOnly = ctx.preview;
   // Gmail erst anbieten, wenn Google die App geprüft hat (sonst Warnseite „nicht überprüft“).
   // Zum Testen vorher: /buyer/postfach?google=1
-  const showGoogle = googleMailAvailable() && (process.env.GOOGLE_MAIL_VERIFIED === "1" || sp.google === "1");
+  const showGoogle = googleMailFreigegeben() || (googleMailAvailable() && sp.google === "1");
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 space-y-5 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader back="/buyer/einstellungen" title="E-Mail-Postfach" subtitle="E-Mails an Leads direkt aus der App senden, aus Ihrem eigenen Postfach, mit Vorlagen." />
@@ -90,20 +91,8 @@ export default async function PostfachPage({ searchParams }: { searchParams: Pro
               <p className="text-sm text-[color:var(--muted)]" data-postfach-datenschutz>
                 Wir senden nur E-Mails, die Sie selbst auslösen, und lesen Ihr Postfach nicht.
               </p>
-              {!readOnly ? (
-                <div className="flex flex-wrap gap-2">
-                  {showGoogle ? (
-                    <a href="/api/mail/connect?anbieter=google" className={buttonClass("secondary", "md")}>
-                      Mit Google (Gmail) verbinden
-                    </a>
-                  ) : null}
-                  {microsoftMailAvailable() ? (
-                    <a href="/api/mail/connect?anbieter=microsoft" className={buttonClass("secondary", "md")}>
-                      Mit Microsoft (Outlook/365) verbinden
-                    </a>
-                  ) : null}
-                </div>
-              ) : null}
+              {/* Firmenkonto-Hinweis nur, wenn der Freigabe-Hinweis oben nicht schon steht */}
+              <PostfachVerbindenKnoepfe google={showGoogle} microsoft={microsoftMailAvailable()} readOnly={readOnly} adminConsentUrl={sp.postfach === "consent" ? null : microsoftAdminConsentUrl()} />
               <details className="rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-3">
                 <summary className="cursor-pointer text-[15px] font-medium">Anderer Anbieter (SMTP, z. B. IONOS, Strato, T-Online, GMX, Gmail mit App-Passwort)</summary>
                 <div className="mt-3">
