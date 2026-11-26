@@ -13,6 +13,7 @@
 // Aus dem Formular bekannt (Geburtsdatum, PLZ, Lebenssituation, Wohnfläche, Tierart, Adresse …) wird übersprungen.
 // Texte ohne Gedankenstriche, Sie und Du, Listenzeilen höchstens 24 Zeichen (Beschreibung höchstens 72), Knöpfe 20.
 
+import { KENNZEICHNUNG_LABEL_RE, KENNZEICHNUNG_TEXT, kennzeichnungLesen, type Kennzeichnung } from "@/lib/tier-kennzeichnung";
 import { GEMEINSAM, frageId, vorvertraegeAuswerten, vorvertragAuswerten, type FrageDef, type Kontext, type Option, type SparteDef, type Text } from "@/lib/vorbereitung/fragen";
 
 /** Im Bündel eine gemeinsame Vorvertragsfrage statt je Sparte (Ole, 26.11.2026 bestätigt). */
@@ -837,6 +838,18 @@ const tierAnzahl = (sparte: string): FrageDef => ({
 
 const TK_GRUPPE = { name: "tier", anzahl: (c: Kontext) => tier(c).n };
 
+/** Kennzeichnung: Liste (4 Antworten passen nicht auf Knöpfe), ids wie lib/tier-kennzeichnung.ts. */
+const KENNZEICHNUNG_OPTIONEN: Option[] = (
+  [
+    ["chip", "Gechippt"],
+    ["tattoo", "Tätowiert"],
+    ["beides", "Beides"],
+    ["keine", "Weder noch"],
+  ] as [Kennzeichnung, string][]
+)
+  .map(([id, titel]): Option => ({ id, titel, wert: KENNZEICHNUNG_TEXT[id] }))
+  .concat({ id: "weissnicht", titel: "Weiß ich nicht" });
+
 const TIERKRANKEN: FrageDef[] = [
   {
     key: "tierart",
@@ -964,6 +977,30 @@ const TIERKRANKEN: FrageDef[] = [
       { id: "freigaenger", titel: "Freigänger", auch: /frei|drau(ß|ss)en|outdoor/i },
     ],
     formular: /haltung/i,
+  },
+  // Chip bzw. Tätowierung (Ole, 26.11.2026: wichtig fürs Angebot, kommt auch ins Meta-Formular), je Tier
+  {
+    key: "kennzeichnung",
+    typ: "knoepfe",
+    pflicht: true,
+    gruppe: TK_GRUPPE,
+    label: (c) => `Kennzeichnung (Tier ${c.i})`,
+    feld: "tier",
+    praefix: tierPraefix("Kennzeichnung"),
+    frage: (c) =>
+      tierFrage(
+        c,
+        (r) => T(`Ist ${r.sie} gechippt oder tätowiert?`, `Ist ${r.du} gechippt oder tätowiert?`),
+        (p) => T(`Ist ${p} gechippt oder tätowiert?`),
+      ),
+    optionen: KENNZEICHNUNG_OPTIONEN,
+    auswerten: (t) => {
+      const k = kennzeichnungLesen(t);
+      if (!k || k === "ja") return { art: "unklar" };
+      if (k === "unbekannt") return { art: "offen" };
+      return { art: "wert", wert: KENNZEICHNUNG_TEXT[k], opt: [k] };
+    },
+    formular: KENNZEICHNUNG_LABEL_RE,
   },
   {
     key: "gesundheit",

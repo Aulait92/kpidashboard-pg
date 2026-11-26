@@ -2,9 +2,12 @@
 import { describe, expect, it } from "vitest";
 import { istTierStrecke, offeneTierFragen, tierAntwortAuswerten, tierErgaenzen, tierFrage, type TierQuelle } from "@/lib/whatsapp/tier-fragen";
 import { testLeadAnswers } from "@/lib/testlead";
+import { kennzeichnungAusFormular, kennzeichnungLesen } from "@/lib/tier-kennzeichnung";
 
-const katze = (o: Partial<TierQuelle> = {}): TierQuelle => ({ source: "TKV-Katze", formular: testLeadAnswers("TKV-Katze"), angaben: {}, ...o });
-const ohne = (re: RegExp) => testLeadAnswers("TKV-Katze").filter((f) => !re.test(f.label));
+// Volles Formular mit der neuen Frage zur Kennzeichnung (Ole, 26.11.2026: kommt ins Meta-Formular)
+const VOLL = [...testLeadAnswers("TKV-Katze"), { label: "Ist Ihre Katze gechippt oder tätowiert?", value: "Gechippt" }];
+const katze = (o: Partial<TierQuelle> = {}): TierQuelle => ({ source: "TKV-Katze", formular: VOLL, angaben: {}, ...o });
+const ohne = (re: RegExp) => VOLL.filter((f) => !re.test(f.label));
 
 describe("Tierfragen (TKV)", () => {
   it("nur Tierkranken, nicht Privatschutz, Futter oder Halterhaftpflicht", () => {
@@ -23,10 +26,10 @@ describe("Tierfragen (TKV)", () => {
 
   it("fehlende Formularfelder: Geburtsjahr (Alter aus dem Chat zählt), Rasse, Geschlecht, Haltung nur bei Katzen", () => {
     const leer = { source: "TKV-Katze", formular: [{ label: "Tierart", value: "Katze" }], angaben: { tarifwunsch: "OP", vorhanden: "keine", geburt: "x" } };
-    expect(offeneTierFragen(leer, new Set())).toEqual(["gesundheit", "geburtTier", "rasse", "geschlecht", "haltung"]);
-    expect(offeneTierFragen({ ...leer, angaben: { ...leer.angaben, tier: "Katze, 3 Jahre alt" } }, new Set(["gesundheit"]))).toEqual(["rasse", "geschlecht", "haltung"]);
+    expect(offeneTierFragen(leer, new Set())).toEqual(["gesundheit", "geburtTier", "rasse", "geschlecht", "haltung", "kennzeichnung"]);
+    expect(offeneTierFragen({ ...leer, angaben: { ...leer.angaben, tier: "Katze, 3 Jahre alt" } }, new Set(["gesundheit"]))).toEqual(["rasse", "geschlecht", "haltung", "kennzeichnung"]);
     const hund = { source: "TKV-Hund", formular: [{ label: "Tierart", value: "Hund" }], angaben: leer.angaben };
-    expect(offeneTierFragen(hund, new Set())).toEqual(["gesundheit", "geburtTier", "rasse", "geschlecht"]);
+    expect(offeneTierFragen(hund, new Set())).toEqual(["gesundheit", "geburtTier", "rasse", "geschlecht", "kennzeichnung"]);
     expect(offeneTierFragen({ ...leer, formular: ohne(/haltung/i) }, new Set(["gesundheit"]))).toEqual(["haltung"]);
   });
 
@@ -38,11 +41,12 @@ describe("Tierfragen (TKV)", () => {
     expect(tierFrage("gesundheitDetail", katze(), "du", "Ole").text).toBe("Danke! Was war es ungefähr, und wann? Ein Stichwort reicht, z. B. Zahnbehandlung im Frühjahr. Ole bespricht das im Termin mit dir.");
     expect(tierFrage("geburt", katze(), "du", "Ole").text).toBe("Für das Angebot braucht Ole noch dein eigenes Geburtsdatum als Versicherungsnehmer. Wie lautet es?");
     expect(tierFrage("haltung", ohneName, "du", "Ole").text).toBe("Ist deine Katze eine Wohnungskatze oder ein Freigänger?");
-    for (const k of ["gesundheit", "gesundheitDetail", "geburtTier", "rasse", "geschlecht", "haltung", "weitere", "tarifwunsch", "vorhanden", "vorhandenAblauf", "geburt", "geburtEigen", "geburtNochmal"] as const) {
+    for (const k of ["gesundheit", "gesundheitDetail", "geburtTier", "rasse", "geschlecht", "haltung", "kennzeichnung", "weitere", "tarifwunsch", "vorhanden", "vorhandenAblauf", "geburt", "geburtEigen", "geburtNochmal"] as const) {
       for (const an of ["sie", "du"] as const) {
         const f = tierFrage(k, katze(), an, "Herr Kannapinn");
         expect(f.text).not.toMatch(/[–—]/);
         for (const b of f.buttons ?? []) expect(b.title.length).toBeLessThanOrEqual(20);
+        for (const z of f.liste?.zeilen ?? []) expect(z.title.length).toBeLessThanOrEqual(24);
       }
     }
   });
@@ -131,5 +135,96 @@ describe("Tierfragen (TKV)", () => {
     expect(tierErgaenzen("Minka, 4 Jahre; Rasse: Perser", "Rasse", "Maine Coon")).toBe("Minka, 4 Jahre; Rasse: Maine Coon");
     expect(tierErgaenzen("x".repeat(300), "Rasse", "Perser").length).toBeLessThanOrEqual(200);
     expect(tierErgaenzen("x".repeat(300), "Rasse", "Perser")).toMatch(/; Rasse: Perser$/);
+  });
+});
+
+describe("Kennzeichnung (Chip, Tätowierung), Ole 26.11.2026", () => {
+  const ohneChip = katze({ formular: ohne(/gechippt/i) });
+  it("Formular mit Antwort: keine Frage (deutsch, englisch, ohne Umlaut, Ja/Nein, auch unbekannte Werte)", () => {
+    expect(offeneTierFragen(katze(), new Set())).not.toContain("kennzeichnung");
+    for (const [label, value] of [
+      ["ist_ihre_katze_gechippt_oder_tätowiert?", "taetowiert"],
+      ["Is your pet microchipped?", "yes"],
+      ["Kennzeichnung", "beides"],
+      ["Chip / Tattoo", "irgendwas"],
+    ]) {
+      expect(offeneTierFragen(katze({ formular: [...ohneChip.formular, { label, value }] }), new Set()), label).not.toContain("kennzeichnung");
+    }
+    // schon im Chat genannt
+    expect(offeneTierFragen(katze({ formular: ohneChip.formular, angaben: { tier: "Katze, gechippt" } }), new Set())).not.toContain("kennzeichnung");
+  });
+
+  it("ohne Formular: Frage nach Haltung, als Liste mit fünf Zeilen, Text Sie und du", () => {
+    expect(offeneTierFragen(ohneChip, new Set())).toEqual(["gesundheit", "kennzeichnung", "tarifwunsch", "vorhanden", "geburt"]);
+    const leer = { source: "TKV-Katze", formular: [{ label: "Tierart", value: "Katze" }], angaben: {} };
+    const reihe = offeneTierFragen(leer, new Set());
+    expect(reihe.indexOf("kennzeichnung")).toBe(reihe.indexOf("haltung") + 1);
+    const f = tierFrage("kennzeichnung", ohneChip, "sie", "Herr Kannapinn");
+    expect(f.text).toBe("Ist Minka gechippt oder tätowiert?");
+    expect(f.buttons).toBeNull();
+    expect(f.liste?.zeilen).toEqual([
+      { id: "tier:kennzeichnung:chip", title: "Gechippt" },
+      { id: "tier:kennzeichnung:tattoo", title: "Tätowiert" },
+      { id: "tier:kennzeichnung:beides", title: "Beides" },
+      { id: "tier:kennzeichnung:keine", title: "Weder noch" },
+      { id: "tier:kennzeichnung:unbekannt", title: "Weiß ich nicht" },
+    ]);
+    const ohneName = katze({ formular: ohne(/gechippt|tiername/i) });
+    expect(tierFrage("kennzeichnung", ohneName, "sie", "Herr Kannapinn").text).toBe("Ist Ihre Katze gechippt oder tätowiert?");
+    expect(tierFrage("kennzeichnung", ohneName, "du", "Ole").text).toBe("Ist deine Katze gechippt oder tätowiert?");
+    const hund = { source: "TKV-Hund", formular: [{ label: "Tierart", value: "Hund" }], angaben: {} };
+    expect(tierFrage("kennzeichnung", hund, "sie", "Herr Kannapinn").text).toBe("Ist Ihr Hund gechippt oder tätowiert?");
+    expect(offeneTierFragen({ source: "Pferde-OP", formular: [{ label: "Tierart", value: "Pferd" }], angaben: {} }, new Set())).toContain("kennzeichnung");
+  });
+
+  it("mehrere Tiere: Frage zum ersten, die weiteren in der Sammelfrage", () => {
+    const zwei = katze({ formular: ohneChip.formular.map((f) => (/anzahl/i.test(f.label) ? { ...f, value: "2" } : f)) });
+    expect(offeneTierFragen(zwei, new Set(["gesundheit"]))).toEqual(["kennzeichnung", "weitere", "tarifwunsch", "vorhanden", "geburt"]);
+    expect(tierFrage("weitere", zwei, "sie", "Herr Kannapinn").text).toMatch(/ob gechippt oder tätowiert\.$/);
+  });
+
+  it("Antwort gespeichert: Knopf, getippt, weiß nicht", () => {
+    const q = katze({ formular: ohneChip.formular, angaben: { tier: "Rasse: Perser" } });
+    expect(tierAntwortAuswerten("kennzeichnung", "Gechippt", "chip", q)).toEqual({ angaben: { tier: "Rasse: Perser; Kennzeichnung: gechippt" }, beantwortet: ["kennzeichnung"] });
+    expect(tierAntwortAuswerten("kennzeichnung", "Weder noch", "keine", q)?.angaben.tier).toMatch(/Kennzeichnung: weder gechippt noch tätowiert$/);
+    expect(tierAntwortAuswerten("kennzeichnung", "Weiß ich nicht", "unbekannt", q)?.angaben.tier).toMatch(/Kennzeichnung: offen$/);
+    expect(tierAntwortAuswerten("kennzeichnung", "ja sie ist gechippt und tätowiert", null, q)?.angaben.tier).toMatch(/Kennzeichnung: gechippt und tätowiert$/);
+    expect(tierAntwortAuswerten("kennzeichnung", "nur tätowiert", null, q)?.angaben.tier).toMatch(/Kennzeichnung: tätowiert$/);
+    expect(tierAntwortAuswerten("kennzeichnung", "weiß ich nicht", null, q)?.angaben.tier).toMatch(/Kennzeichnung: offen$/);
+    expect(tierAntwortAuswerten("kennzeichnung", "Was bringt das?", null, q)).toBeNull();
+    expect(offeneTierFragen({ ...q, angaben: { tier: "Kennzeichnung: gechippt" } }, new Set())).not.toContain("kennzeichnung");
+  });
+});
+
+describe("kennzeichnungLesen (Formularwerte und Chat)", () => {
+  it("Werte und Schreibweisen", () => {
+    const fall: [string, string | null, string | null][] = [
+      ["Gechippt", null, "chip"],
+      ["Ja, gechippt", null, "chip"],
+      ["microchip", null, "chip"],
+      ["276098106543210", null, "chip"],
+      ["Tätowiert", null, "tattoo"],
+      ["taetowiert", null, "tattoo"],
+      ["tatowiert", null, "tattoo"],
+      ["tattoo", null, "tattoo"],
+      ["Beides", null, "beides"],
+      ["gechippt_und_tätowiert", null, "beides"],
+      ["both", null, "beides"],
+      ["Nein", null, "keine"],
+      ["weder noch", null, "keine"],
+      ["nicht gechippt", null, "keine"],
+      ["none", null, "keine"],
+      ["weiß nicht", null, "unbekannt"],
+      ["weiss ich nicht", null, "unbekannt"],
+      ["ja", "Ist Ihre Katze gechippt?", "chip"],
+      ["ja", "Tätowiert?", "tattoo"],
+      ["ja", "Gechippt oder tätowiert?", "ja"],
+      ["Bello", null, null],
+      ["", null, null],
+    ];
+    for (const [wert, label, erwartet] of fall) expect(kennzeichnungLesen(wert, label), wert).toBe(erwartet);
+    expect(kennzeichnungAusFormular([{ label: "Kastriert (Tier)", value: "Ja" }])).toBeNull();
+    expect(kennzeichnungAusFormular([{ label: "ist_ihre_katze_gechippt_oder_tätowiert?", value: "weder_noch" }])).toEqual({ art: "keine", text: "weder gechippt noch tätowiert" });
+    expect(kennzeichnungAusFormular([{ label: "Kennzeichnung", value: "Lebensnummer" }])).toEqual({ art: null, text: "Lebensnummer" });
   });
 });

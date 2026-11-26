@@ -18,6 +18,7 @@ vi.mock("@/lib/whatsapp/dialog360", async (orig) => {
     sendText: (...a: unknown[]) => waSend("text", ...a),
     sendTemplate: (...a: unknown[]) => waSend("template", ...a),
     sendButtons: (...a: unknown[]) => waSend("buttons", ...a),
+    sendList: (...a: unknown[]) => waSend("list", ...a),
     sendDocument: (...a: unknown[]) => waSend("document", ...a),
   };
 });
@@ -142,9 +143,15 @@ const POLICEN_BITTE_RE = /Termin gut vorbereiten kann: Schick(en Sie)? bitte vor
 /** Termindauer in einem Text an den Lead */
 const DAUER_RE = /\d+\s*(Minuten|Min\.)/i;
 
-type Sent = { art: string; to: string; body: string; buttons: { id: string; title: string }[] | null };
+type Sent = { art: string; to: string; body: string; buttons: { id: string; title: string }[] | null; liste?: { id: string; title: string }[] };
 const gesendet = (): Sent[] =>
-  waSend.mock.calls.map((c) => ({ art: c[0] as string, to: c[2] as string, body: String(c[3] ?? ""), buttons: c[0] === "buttons" ? (c[4] as { id: string; title: string }[]) : null }));
+  waSend.mock.calls.map((c) => ({
+    art: c[0] as string,
+    to: c[2] as string,
+    body: String(c[3] ?? ""),
+    buttons: c[0] === "buttons" ? (c[4] as { id: string; title: string }[]) : null,
+    ...(c[0] === "list" ? { liste: (c[4] as { zeilen: { id: string; title: string }[] }).zeilen } : {}),
+  }));
 
 
 describe("Termin-Strecke mit Knöpfen", () => {
@@ -155,6 +162,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     handleInboundPayload({ entry: [{ changes: [{ field: "messages", value: value({ contacts: [{ profile: { name: "Julia" } }], messages: [{ from, id: `wamid.in-${uid()}`, ...m }] }) }] }] });
   const text = (from: string, body: string) => inbound(from, { type: "text", text: { body } });
   const knopf = (from: string, id: string, title: string) => inbound(from, { type: "interactive", interactive: { type: "button_reply", button_reply: { id, title } } });
+  const listenWahl = (from: string, id: string, title: string) => inbound(from, { type: "interactive", interactive: { type: "list_reply", list_reply: { id, title } } });
 
   // „Wer entscheidet mit?“ (Ole, 21.11.2026) ist in den übrigen Pfaden schon beantwortet; eigener Test mit entscheidungOffen
   async function leadMitChat(o: { qualificationData?: Record<string, string>; now?: Date; email?: string | null; source?: string; formData?: { label: string; value: string }[]; id?: string; entscheidungOffen?: boolean } = {}) {
@@ -768,13 +776,20 @@ describe("Termin-Strecke mit Knöpfen", () => {
 
       await knopf(x.phone, "tier:rasse:mischling", "Hauskatze/Mischling");
       expect((await angaben(x.conv.id)).tier).toBe("Minka, 4 Jahre; Rasse: Hauskatze/Mischling");
+      // Kennzeichnung (Ole, 26.11.2026): nicht im Formular → Frage als Liste, Auswahl gespeichert
+      const chip = gesendet().at(-1)!;
+      expect(chip.body).toBe("Danke! Ist Minka gechippt oder tätowiert?");
+      expect(chip.art).toBe("list");
+      expect(chip.liste?.map((z) => z.title)).toEqual(["Gechippt", "Tätowiert", "Beides", "Weder noch", "Weiß ich nicht"]);
+      await listenWahl(x.phone, "tier:kennzeichnung:beides", "Beides");
+      expect((await angaben(x.conv.id)).tier).toBe("Minka, 4 Jahre; Rasse: Hauskatze/Mischling; Kennzeichnung: gechippt und tätowiert");
       expect(gesendet().at(-1)!.body).toBe("Danke! Hat Minka schon eine Tierversicherung?");
       await text(x.phone, "nein");
       expect(gesendet().at(-1)!.body).toBe("Danke! Für das Angebot braucht Herr Kannapinn noch Ihr eigenes Geburtsdatum als Versicherungsnehmer. Wie lautet es?");
       // Live-Test 19.11.2026: das Geburtsdatum der Katze kam als Antwort → beim Tier notiert, einmal nach dem eigenen gefragt
       await text(x.phone, "23.09.2025");
       expect((await angaben(x.conv.id)).geburt).toBeUndefined();
-      expect((await angaben(x.conv.id)).tier).toBe("Minka, 4 Jahre; Rasse: Hauskatze/Mischling; Datum aus dem Chat: 23.09.2025");
+      expect((await angaben(x.conv.id)).tier).toBe("Minka, 4 Jahre; Rasse: Hauskatze/Mischling; Kennzeichnung: gechippt und tätowiert; Datum aus dem Chat: 23.09.2025");
       expect(gesendet().at(-1)!.body).toBe(
         "Danke, das ist sicher das Geburtsdatum von Minka, das habe ich notiert. Für den Vertrag braucht Herr Kannapinn noch Ihr eigenes Geburtsdatum.",
       );
@@ -795,6 +810,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       expect(kundeWill(d).punkte).toContain("Gesundheit des Tieres: War in Behandlung: Zahnsteinentfernung im Mai");
       expect(abschnitte(d)[0].felder[0]).toEqual({ label: "Gesundheit des Tieres", wert: "War in Behandlung: Zahnsteinentfernung im Mai" });
       expect(abschnitte(d)[0].felder.find((f) => f.label === "Rasse")?.wert).toBe("Hauskatze/Mischling");
+      expect(abschnitte(d).flatMap((s) => s.felder).find((f) => f.label === "Kennzeichnung (Chip, Tätowierung)")?.wert).toBe("gechippt und tätowiert");
 
       // Komplettcheck „Nein“: keine Angebotsfragen der Rechner-Tabelle mehr, weiter zur Policen-Bitte bzw. zum Schluss
       await knopf(x.phone, "komplettcheck:nein", "Nein, danke");
@@ -807,8 +823,8 @@ describe("Termin-Strecke mit Knöpfen", () => {
       expect(an.at(-1)).toBe("schluss");
     });
 
-    it("„Ja, gesund“ per Text, Rückfrage dazwischen: Assistent antwortet, die Frage kommt noch einmal; alles da → direkt Komplettcheck", async () => {
-      const x = await tierLead({ formData: katze(), qualificationData: { tier: "Minka, 4 Jahre", tarifwunsch: "nur OP-Schutz", vorhanden: "keine", geburt: "01.01.1990" } });
+    it("„Ja, gesund“ per Text, Rückfrage dazwischen: Assistent antwortet, die Frage kommt noch einmal; alles da (Formular „gechippt“) → direkt Komplettcheck", async () => {
+      const x = await tierLead({ formData: [...katze(), { label: "Ist Ihre Katze gechippt oder tätowiert?", value: "gechippt" }], qualificationData: { tier: "Minka, 4 Jahre", tarifwunsch: "nur OP-Schutz", vorhanden: "keine", geburt: "01.01.1990" } });
       await knopf(x.phone, `slot:${slotsAb(cal.base)[0].start}`, "Heute 16 Uhr");
       expect(gesendet().at(-1)!.body).toBe("Ist Minka aktuell gesund?");
       // Rückfrage: der Assistent antwortet, danach dieselbe Frage mit Knöpfen

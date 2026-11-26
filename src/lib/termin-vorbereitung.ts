@@ -7,6 +7,7 @@
 import { formatPhone } from "@/lib/format";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
 import { KFZ_FORMULAR, produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
+import { kennzeichnungAusFormular } from "@/lib/tier-kennzeichnung";
 
 const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -76,7 +77,7 @@ export function abschnitte(d: VorbereitungDaten): Abschnitt[] {
     const ausChat = (label: string) => q("tier")?.match(new RegExp(`(?:^|;\\s*)${label}:\\s*([^;]+)`, "i"))?.[1]?.trim() || null;
     const tierRest = q("tier")
       ?.split(/;\s*/)
-      .filter((x) => !/^(geboren|rasse|geschlecht|haltung):/i.test(x))
+      .filter((x) => !/^(geboren|rasse|geschlecht|haltung|kennzeichnung):/i.test(x))
       .join("; ");
     return [
       {
@@ -99,6 +100,8 @@ export function abschnitte(d: VorbereitungDaten): Abschnitt[] {
         titel: "Für Angebot und Antrag",
         felder: [
           { label: "Gewünschter Schutz (OP oder voll)", wert: q("tarifwunsch") },
+          // Chip bzw. Tätowierung (Ole, 26.11.2026): nicht im Allianz-Rechner, aber wichtig fürs Angebot
+          { label: "Kennzeichnung (Chip, Tätowierung)", wert: kennzeichnungAusFormular(d.formular)?.text ?? ausChat("Kennzeichnung") },
           { label: "Geburtsdatum des Halters", wert: q("geburt") },
           { label: "Bestehende Tierversicherung", wert: q("vorhanden") },
         ],

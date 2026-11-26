@@ -6,7 +6,9 @@
 // Ablauf (lib/whatsapp/termin-strecke.ts): Buchungsnachricht → diese Fragen, eine pro Nachricht, nur was fehlt → Komplettcheck
 // → wie bisher (Vertragsfrage, Policen-Bitte, Schluss).
 //   1. Gesundheit: „Ist Minka aktuell gesund?“ [Ja, gesund] [War in Behandlung]; bei Behandlung frei: was und wann
-//   2. nur wenn das Formular es nicht liefert: Geburtsjahr, Rasse, Geschlecht, Haltung (nur Katzen); Kastration nie
+//   2. nur wenn das Formular es nicht liefert: Geburtsjahr, Rasse, Geschlecht, Haltung (nur Katzen), Kennzeichnung (Chip
+//      bzw. Tätowierung, Ole 26.11.2026: wichtig fürs Angebot, kommt auch ins Meta-Formular; Liste, weil 4 Antworten);
+//      Kastration nie
 //   3. weitere Tiere (Anzahl > 1, eine Frage für alle), gewünschter Schutz (nur wenn aus Frage 2 des Erstanschreibens
 //      noch offen), bestehende Tierversicherung (bei Ja: bis wann, Monat und Jahr), Geburtsdatum des Halters
 //   4. Geburtsdatum des Halters geprüft (Ole, 19.11.2026): unter 18 ist meist das Datum des Tieres (wird dort notiert, dann
@@ -18,6 +20,7 @@ import { a, type Ansprache } from "@/lib/ansprache";
 import { qualificationPoints, type QualificationData, type QualificationKey } from "@/lib/whatsapp/qualification";
 import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
 import { ablaufBeispiel, ablaufLesen, geburtsdatumPruefen, monatJahrText } from "@/lib/datum-antwort";
+import { KENNZEICHNUNG_TEXT, kennzeichnungAusFormular, kennzeichnungLesen, type Kennzeichnung } from "@/lib/tier-kennzeichnung";
 
 export type TierFrageKey =
   | "gesundheit"
@@ -26,6 +29,8 @@ export type TierFrageKey =
   | "rasse"
   | "geschlecht"
   | "haltung"
+  /** Chip bzw. Tätowierung (Liste: Gechippt, Tätowiert, Beides, Weder noch, Weiß ich nicht) */
+  | "kennzeichnung"
   | "weitere"
   | "tarifwunsch"
   | "vorhanden"
@@ -37,7 +42,9 @@ export type TierFrageKey =
   | "geburtNochmal";
 
 export type TierKnopf = { id: string; title: string };
-export type TierFrage = { key: TierFrageKey; text: string; buttons: TierKnopf[] | null };
+export type TierListe = { knopf: string; zeilen: TierKnopf[] };
+/** buttons: bis 3 Knöpfe; liste: WhatsApp-Liste, wenn die Antworten nicht auf 3 Knöpfe passen */
+export type TierFrage = { key: TierFrageKey; text: string; buttons: TierKnopf[] | null; liste?: TierListe | null };
 
 export type TierQuelle = { source: string | null | undefined; formular: { label: string; value: string }[]; angaben: unknown };
 
@@ -97,6 +104,8 @@ function bekannt(q: TierQuelle) {
     rasse: !!(f(/rasse/i) || /\brasse\b/i.test(tier)),
     geschlecht: !!(f(/geschlecht/i) || /\b(weiblich|männlich|maennlich|kater|katze \(w\)|rüde|ruede|hündin|huendin|stute|hengst|wallach)\b/i.test(tier.replace(/^katze\b/i, ""))),
     haltung: !!(f(/haltung/i) || /wohnungskatze|freig(ä|a)nger|wohnung\b|drinnen|draußen/i.test(tier)),
+    // Formularfeld mit Wert (auch nicht erkannt: steht dann wörtlich am Lead) bzw. schon im Chat genannt
+    kennzeichnung: !!(kennzeichnungAusFormular(q.formular) || /kennzeichnung:|gechippt|t(ä|ae)towiert|\bchip\b|tattoo/i.test(tier)),
     weitere: /weitere tiere|katze 2|hund 2|pferd 2/i.test(tier),
     tarifwunsch: !!g.tarifwunsch,
     vorhanden: !!g.vorhanden,
@@ -152,13 +161,21 @@ export function tierFrage(key: TierFrageKey, q: TierQuelle, an: Ansprache, perso
       return { key, text: `Ist ${w} weiblich oder männlich?`, buttons: [knopf(key, "w", "Weiblich"), knopf(key, "m", "Männlich")] };
     case "haltung":
       return { key, text: `Ist ${w} eine Wohnungskatze oder ein Freigänger?`, buttons: [knopf(key, "wohnung", "Wohnungskatze"), knopf(key, "frei", "Freigänger")] };
+    case "kennzeichnung":
+      // 4 Antworten passen nicht auf 3 Knöpfe: Liste (wie die Fragen-Engine, lib/vorbereitung/fragen.ts)
+      return {
+        key,
+        text: `Ist ${w} gechippt oder tätowiert?`,
+        buttons: null,
+        liste: { knopf: "Antwort wählen", zeilen: KENNZEICHNUNG_ZEILEN.map(([wert, title]) => knopf(key, wert, title)) },
+      };
     case "weitere":
       return {
         key,
         text: a(
           an,
-          `Du hast ${i.anzahl} Tiere angegeben: Wie heißen die anderen, und wie alt sind sie ungefähr? Gern auch Rasse und ob weiblich oder männlich.`,
-          `Sie haben ${i.anzahl} Tiere angegeben: Wie heißen die anderen, und wie alt sind sie ungefähr? Gern auch Rasse und ob weiblich oder männlich.`,
+          `Du hast ${i.anzahl} Tiere angegeben: Wie heißen die anderen, und wie alt sind sie ungefähr? Gern auch Rasse, ob weiblich oder männlich und ob gechippt oder tätowiert.`,
+          `Sie haben ${i.anzahl} Tiere angegeben: Wie heißen die anderen, und wie alt sind sie ungefähr? Gern auch Rasse, ob weiblich oder männlich und ob gechippt oder tätowiert.`,
         ),
         buttons: null,
       };
@@ -204,8 +221,17 @@ export function tierFrage(key: TierFrageKey, q: TierQuelle, an: Ansprache, perso
   }
 }
 
-/** Reihenfolge der Fragen. */
-const REIHE: TierFrageKey[] = ["gesundheit", "gesundheitDetail", "geburtTier", "rasse", "geschlecht", "haltung", "weitere", "tarifwunsch", "vorhanden", "vorhandenAblauf", "geburt", "geburtEigen", "geburtNochmal"];
+/** Zeilen der Kennzeichnungsfrage (Wert in der Payload, Titel höchstens 24 Zeichen). */
+const KENNZEICHNUNG_ZEILEN: [Kennzeichnung, string][] = [
+  ["chip", "Gechippt"],
+  ["tattoo", "Tätowiert"],
+  ["beides", "Beides"],
+  ["keine", "Weder noch"],
+  ["unbekannt", "Weiß ich nicht"],
+];
+
+/** Reihenfolge der Fragen (Kennzeichnung nach den übrigen Angaben zum Tier, vor den weiteren Tieren). */
+const REIHE: TierFrageKey[] = ["gesundheit", "gesundheitDetail", "geburtTier", "rasse", "geschlecht", "haltung", "kennzeichnung", "weitere", "tarifwunsch", "vorhanden", "vorhandenAblauf", "geburt", "geburtEigen", "geburtNochmal"];
 
 /** Offene Fragen in der Reihenfolge (nur was fehlt und noch nicht beantwortet ist). Leer = alles da. */
 export function offeneTierFragen(q: TierQuelle, beantwortet: ReadonlySet<string>): TierFrageKey[] {
@@ -219,6 +245,7 @@ export function offeneTierFragen(q: TierQuelle, beantwortet: ReadonlySet<string>
     rasse: !b.rasse && i.art !== "tier",
     geschlecht: !b.geschlecht,
     haltung: i.art === "katze" && !b.haltung,
+    kennzeichnung: !b.kennzeichnung,
     weitere: i.anzahl > 1 && !b.weitere,
     tarifwunsch: !b.tarifwunsch,
     vorhanden: !b.vorhanden,
@@ -308,6 +335,10 @@ export function tierAntwortAuswerten(key: TierFrageKey, text: string, knopfWert:
       return tier("Geschlecht", knopfWert === "w" ? "weiblich" : knopfWert === "m" ? "männlich" : offen ? "offen" : roh);
     case "haltung":
       return tier("Haltung", knopfWert === "wohnung" ? "Wohnungskatze" : knopfWert === "frei" ? "Freigänger" : offen ? "offen" : roh);
+    case "kennzeichnung": {
+      const k = knopfWert && knopfWert in KENNZEICHNUNG_TEXT ? (knopfWert as Kennzeichnung) : offen ? "unbekannt" : kennzeichnungLesen(roh);
+      return tier("Kennzeichnung", k ? KENNZEICHNUNG_TEXT[k] : roh);
+    }
     case "weitere":
       return tier("Weitere Tiere", offen ? "offen" : roh);
     case "tarifwunsch":
