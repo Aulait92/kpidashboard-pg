@@ -145,3 +145,8 @@ Legende: **ja** fragt die Allianz, **teilw.** nur eingeschränkt, **nein** fragt
 * Kombi und Tierhalterhaftpflicht laufen in einer anderen App (`inno-prod.allianz.de`) mit Cloudflare Turnstile vor der Berechnung. Für eine vollständige Erfassung müsste ein Mensch die Prüfung im Browser bestätigen.
 * Unfall läuft in einer Journey App (`live.inno.kxlabs.allianz.de`), deren gesamte Formularkonfiguration als JSON öffentlich geladen wird.
 * Beiträge sind Beispielwerte für die Testangaben und dienen nur zur Orientierung.
+
+
+## Nachtrag 26.11.2026 (Ole, Screenshots iPhone)
+- Tierhalterhaftpflicht: Schritt 1 bestätigt, deckungsgleich mit der Erfassung (PLZ, Geburtsdatum, Tierart/Anzahl, Rasse, Schäden 5 Jahre, Tarifwunsch).
+- Kombi „Privatschutz“: kein eigener Rechner mit eigenen Feldern. Die Allianz bündelt einzelne Produkte (2 oder mehr aus Linie Komfort oder Premium, Rabatt 5 bis 20 %) und leitet dann zur Beratung. Für die Chat-Abfrage gelten daher die Felder der einzelnen Sparten; zusätzlich vermerken „Bündel gewünscht“.

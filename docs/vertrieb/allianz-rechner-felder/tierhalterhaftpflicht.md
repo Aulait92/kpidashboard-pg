@@ -5,7 +5,7 @@
 **Technik:** eigene App (`inno-prod.allianz.de/thh`), GraphQL Backend (Rassenliste per öffentlicher Abfrage `getAnimalRaces`), öffentliche Textdatei `inno-prod.allianz.de/thh/assets/i18n/de.json`.
 **Testwerte (erfunden):** PLZ 10115, Geburtsdatum 01.01.1985, ein Hund, Rasse Labrador, keine Vorschäden, Bestes Preis-Leistungs-Verhältnis.
 
-**Status: nur Schritt 1 auslesbar.** Wie im Kombirechner steht vor "JETZT TARIF BERECHNEN" eine Cloudflare Turnstile Prüfung. Alle Felder waren gültig befüllt, ohne Fehlermeldung, der Button blieb trotzdem deaktiviert. Die Prüfung wurde nicht umgangen. Angaben zu Schritt 2 und 3 stammen aus der öffentlichen Textdatei und sind **nicht im Ablauf verifiziert**.
+**Status: Schritt 1 am 26.11.2026 von Ole am iPhone bestätigt (Tier, Rasse, PLZ, Geburtsdatum, Schäden 5 Jahre, Tarifwunsch; Startseite „ab 6,15 € im Monat“ für Hund, Mischling groß). Ab Schritt 2 weiter offen.** Wie im Kombirechner steht vor "JETZT TARIF BERECHNEN" eine Cloudflare Turnstile Prüfung. Alle Felder waren gültig befüllt, ohne Fehlermeldung, der Button blieb trotzdem deaktiviert. Die Prüfung wurde nicht umgangen. Angaben zu Schritt 2 und 3 stammen aus der öffentlichen Textdatei und sind **nicht im Ablauf verifiziert**.
 
 Es laufen zwei Layout-Varianten (A/B-Test) mit denselben Inhalten:
 * Variante A: Fragenblöcke "Angaben zum Versicherungsnehmer" und "Angaben zum Tier", Tierkategorie als Radio (Ein Hund, Mehrere Hunde, Ein Pferd, Mehrere Pferde).
