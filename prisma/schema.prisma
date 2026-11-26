@@ -1406,6 +1406,9 @@ model AgentConfig {
   // Fester Video-Link für alle Video-Termine (z. B. persönlicher Webex-Raum).
   // Leer = Google Meet bzw. Microsoft Teams wird pro Termin erzeugt.
   videoRoomUrl             String?
+  // Microsoft verbunden, aber beim letzten Videotermin kam kein Teams-Link zurück (keine Teams-Lizenz, 26.11.2026):
+  // Hinweis im Kalender-Schritt, Push nur beim ersten Mal. Wird beim nächsten Termin mit Teams-Link wieder leer.
+  teamsLinkFehltAt         DateTime?
   // Berater-Adresse (z. B. Allianz-Mail): bekommt jeden gebuchten Termin als
   // Kalendereinladung → landet direkt in seinem Firmenkalender (Outlook).
   advisorEmail             String?

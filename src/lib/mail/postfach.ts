@@ -58,6 +58,16 @@ function microsoft() {
 export const googleMailAvailable = () => !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REDIRECT_URI);
 export const microsoftMailAvailable = () => !!(process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET && process.env.MICROSOFT_REDIRECT_URI);
 
+/** Schalter tolerant lesen: "1", "true", "yes", "ja", "on" (Groß-/Kleinschreibung und Leerzeichen egal). (rein) */
+export const schalterAn = (v: string | null | undefined) => /^(1|true|yes|ja|on)$/i.test((v ?? "").trim());
+
+/**
+ * Gmail anbieten (Einrichtung und /buyer/postfach, 26.11.2026): OAuth eingerichtet und von Google geprüft
+ * (GOOGLE_MAIL_VERIFIED, sonst Warnseite „nicht überprüft“). Liest zur Laufzeit, nur in Server-Komponenten nutzen.
+ */
+export const googleMailFreigegeben = (env: Record<string, string | undefined> = process.env) =>
+  !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.GOOGLE_REDIRECT_URI) && schalterAn(env.GOOGLE_MAIL_VERIFIED);
+
 export function googleMailAuthUrl(userId: string, loginHint?: string | null): string {
   const g = google();
   const p = new URLSearchParams({

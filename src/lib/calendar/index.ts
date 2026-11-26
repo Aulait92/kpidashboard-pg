@@ -116,6 +116,8 @@ export async function adapterFor(customerId: string) {
         };
 
   return {
+    /** Anbieter des Buchungskalenders (google, microsoft, app) */
+    provider: conn.provider as string,
     // Belegt = Buchungskalender UND (falls hinterlegt) veröffentlichter
     // Firmenkalender UND Allianz-Online-Kalender UND „Zeit blockieren".
     // Fällt eine Quelle aus, wird geworfen — nie still „frei".
@@ -349,6 +351,26 @@ export async function findFreeCalendar(
   throw new SlotBusyError();
 }
 
+export const TEAMS_LINK_FEHLT_PUSH = {
+  title: "Kein Teams-Link erstellt",
+  body: "Für Ihren Termin konnte kein Teams-Link erstellt werden. Bitte tragen Sie in der Einrichtung Ihren Videolink ein.",
+  url: "/buyer/einrichtung?schritt=calendar#calendar",
+};
+
+/** Ergebnis eines Videotermins über Microsoft merken; beim ersten fehlenden Teams-Link einmal Push an den Vermittler. */
+export async function teamsLinkErgebnis(customerId: string, hatLink: boolean, advisorUserId: string | null): Promise<void> {
+  if (hatLink) {
+    await prisma.agentConfig.updateMany({ where: { customerId, teamsLinkFehltAt: { not: null } }, data: { teamsLinkFehltAt: null } });
+    return;
+  }
+  // Nur der erste Fehlschlag (seit dem letzten Erfolg) löst den Push aus
+  const n = await prisma.agentConfig.updateMany({ where: { customerId, teamsLinkFehltAt: null }, data: { teamsLinkFehltAt: new Date() } });
+  if (!n.count) return;
+  const payload = { ...TEAMS_LINK_FEHLT_PUSH, tag: `teams-link:${customerId}` };
+  if (advisorUserId) await sendToUser(advisorUserId, payload);
+  else await sendToBuyersOfCustomer(customerId, payload);
+}
+
 /** Termin anlegen: Kalender-Event (Video-Link bei Video) + Appointment-Zeile. */
 export async function bookAppointment(opts: {
   customerId: string;
@@ -435,6 +457,10 @@ export async function bookAppointment(opts: {
           : null),
   });
   const videoUrl = room ?? event.videoUrl;
+  // Teams-Link fehlt (26.11.2026): Ohne Teams-Lizenz liefert Microsoft keinen Videoraum. Einmal Push, Hinweis im Kalender-Schritt.
+  if (opts.mode === "video" && !room && adapter.provider === "microsoft") {
+    await teamsLinkErgebnis(opts.customerId, !!event.videoUrl, advisorUserId).catch((e) => console.error("[teams link]", e));
+  }
 
   const appt = await prisma.appointment.create({
     data: {

@@ -11,6 +11,7 @@ import { buttonClass } from "@/components/ui";
 import { TimeSelect } from "@/components/time-select";
 import { CopyField } from "@/components/termin/copy-field";
 import type { SourceResult } from "@/lib/calendar/sources";
+import { videoLinkHinweis, type VideoWeg } from "@/lib/video-raum";
 import { aktiveTage, aufTageVerteilen, gemeinsameZeiten } from "@/lib/calendar/zeiten-gleich";
 
 type FormAction = (prev: SourceResult, fd: FormData) => Promise<SourceResult>;
@@ -1071,20 +1072,30 @@ export function AllianzTemplateForm({
  * Fester Video-Link für Videotermine (Ole, 20.11.2026: Webex-Link gehört unbedingt ins Onboarding). Ohne Google/Outlook
  * (App-Kalender) gibt es sonst keinen Link; mit Google/Outlook ersetzt er Meet bzw. Teams.
  */
-export function VideoRaumForm({ action, readOnly, initial, noetig }: { action: FormAction; readOnly: boolean; initial: string | null; noetig: boolean }) {
+export function VideoRaumForm({
+  action,
+  readOnly,
+  initial,
+  weg,
+  teamsLinkFehlt = false,
+}: {
+  action: FormAction;
+  readOnly: boolean;
+  initial: string | null;
+  /** Woher der Videoraum kommt (lib/video-raum.ts): Hinweis erst dringend, wenn ein Weg ohne Google/Microsoft gewählt ist */
+  weg: VideoWeg;
+  teamsLinkFehlt?: boolean;
+}) {
   const [state, formAction, pending] = useActionState<SourceResult, FormData>(action, {});
+  const hinweis = videoLinkHinweis(weg, !!initial, teamsLinkFehlt);
   return (
-    <form action={formAction} className="space-y-2" data-video-raum>
+    <form action={formAction} className="space-y-2" data-video-raum data-video-weg={weg}>
       <label className="block text-[15px] font-medium" htmlFor="videoRoomUrl">
         Ihr Link für Videotermine (z. B. Webex)
       </label>
-      {noetig && !initial ? (
-        <p className="text-sm font-medium text-amber-700">Bitte eintragen: Ohne Link haben Videotermine keinen Raum.</p>
-      ) : (
-        <p className="text-sm text-[color:var(--muted)]">
-          {noetig ? "Diesen Link bekommen Ihre Kunden für jeden Videotermin." : "Leer lassen, dann erstellen wir für jeden Termin einen Meet- bzw. Teams-Link."}
-        </p>
-      )}
+      <p className={hinweis.dringend ? "text-sm font-medium text-amber-700" : "text-sm text-[color:var(--muted)]"} data-video-hinweis>
+        {hinweis.text}
+      </p>
       <div className="flex flex-col gap-2 sm:flex-row">
         <input id="videoRoomUrl" name="videoRoomUrl" inputMode="url" defaultValue={initial ?? ""} className={input} placeholder="https://allianz.webex.com/meet/vorname.nachname" autoComplete="off" />
         {/* Nebenaktion im Kalender-Schritt: blau ist dort nur „Kalender verbinden“ bzw. „Zeiten speichern“ */}
