@@ -189,7 +189,7 @@ const GEMEINSAME_FRAGEN: FrageDef[] = [
     label: "Postleitzahl",
     feld: "plz",
     frage: T("Wie lautet Ihre Postleitzahl?", "Wie lautet deine Postleitzahl?"),
-    schonBekannt: (c) => !!c.formular(/postleitzahl|\bplz\b|post ?code/i) || /\b\d{5}\b/.test(`${c.formular(/adresse|anschrift|wohnort/i) ?? ""} ${c.angabe("plz") ?? ""}`),
+    schonBekannt: (c) => !!c.formular(/postleitzahl|\bplz\b|post ?code/i) || /\b\d{5}\b/.test(`${c.formular(/adresse|anschrift|wohnort|street|address/i) ?? ""} ${c.angabe("plz") ?? ""}`),
     auswerten: (t) => {
       const m = /\b\d{5}\b/.exec(t);
       return m ? { art: "wert", wert: m[0] } : { art: "unklar" };
@@ -457,7 +457,7 @@ const GEMEINSAME_FRAGEN: FrageDef[] = [
       c.gebucht("wohngebaeude")
         ? T("Wie lautet die Adresse des Hauses? Straße und Hausnummer reichen.")
         : T("Wie lautet die Adresse Ihrer Wohnung? Straße und Hausnummer reichen.", "Wie lautet die Adresse deiner Wohnung? Straße und Hausnummer reichen."),
-    schonBekannt: (c) => /[a-zäöüß]{3,}.*\d/i.test(c.formular(/stra(ß|ss)e|adresse|anschrift/i) ?? "") || /[a-zäöüß]{3,}\s*\d+\s*[a-z]?\s*,/i.test(c.angabe("plz") ?? ""),
+    schonBekannt: (c) => /[a-zäöüß]{3,}.*\d/i.test(c.formular(/stra(ß|ss)e|adresse|anschrift|street|address/i) ?? "") || /[a-zäöüß]{3,}\s*\d+\s*[a-z]?\s*,/i.test(c.angabe("plz") ?? ""),
     auswerten: (t) => (/[a-zäöüß]{3,}.*\d/i.test(t) ? { art: "wert", wert: t.slice(0, 120) } : { art: "unklar" }),
     nachfrage: "Straße und Hausnummer",
   },

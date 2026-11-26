@@ -244,6 +244,21 @@ describe("Unfall ohne Invalidität, Tierkranken mit OP/Voll", () => {
 });
 
 describe("Bekanntes aus dem Formular wird übersprungen", () => {
+  it("Meta-Formular mit englischen Feldnamen (Anid, Privatschutz): Versicherte und Adresse nicht fragen", () => {
+    for (const wer of ["Nur für mich", "Für mich und meine Familie", "Für mich und meinen Partner", "Familie"]) {
+      const form = [
+        { label: "City", value: "Berlin" },
+        { label: "Post code", value: "10179" },
+        { label: "Street address", value: "Musterstraße 12" },
+        { label: "Für wen soll der Schutz gelten?", value: wer },
+        { label: "Welche Versicherungen interessieren Sie? (Mehrfachauswahl möglich!)", value: "Privathaftpflicht, Hausrat" },
+      ];
+      const q = quelle(form);
+      const offen = offeneFragen(fragenPlan(["haftpflicht", "hausrat"], SPARTEN_DEFINITIONEN, q), q).map((f) => f.id);
+      for (const id of ["gemeinsam.plz", "gemeinsam.versicherte", "gemeinsam.adresse"]) expect(offen, wer).not.toContain(id);
+    }
+  });
+
   it("Geburtsdatum, PLZ, Lebenssituation, Wohnfläche, Adresse, Beruf, Tierart", () => {
     const leer = fragenPlan(["haftpflicht", "hausrat", "rechtsschutz"], SPARTEN_DEFINITIONEN, quelle([]));
     expect(leer.slice(0, 2).map((f) => f.id)).toEqual(["gemeinsam.geburt", "gemeinsam.plz"]);
