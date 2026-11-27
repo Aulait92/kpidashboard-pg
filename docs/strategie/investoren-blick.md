@@ -35,3 +35,27 @@ Anzahl Software-Kunden, die live sind und zahlen (Onboarding abgeschlossen, erst
 - **A:** Eine Diagnose-Abfrage „investoren“, die die Wochenkennzahlen nur zusammengefasst liefert, und Freigabe, dass dieser Bericht sie jeden Freitag lesen darf.
 - **B:** Eine Pflichtfrage in der Einrichtung „Abschlüsse pro Monat bisher (ungefähr)“ und eine Auswertung nach 90 Tagen.
 - **C:** Eine Kennzahl „Bot-Antwortzeit“ im Admin mit Alarm, sobald ein Lead länger als 2 Minuten ohne Antwort bleibt.
+
+## KW 48 (27.11.2026)
+
+**Datenlage:** Zum zweiten Mal keine Kennzahlen aus Produktion geliefert (Anfrage 10:24, bis 13:20 keine Antwort). Bewertung aus dem Wochenverlauf.
+
+### Stärken der Woche
+1. Pipeline wird zu Umsatz: zwei Neukunden haben zugesagt, Teamtermin mit 4 Signal-Iduna-Vertretern am 30.11. (Gruppenrabatt als Hebel für mehrere Agenturen auf einmal).
+2. Vertriebs- und Plattformbasis gestärkt: iOS-App im App Store (DE, AT, CH), Partner Solution mit 360dialog aktiv, keine Obergrenze für WhatsApp-Kanäle bis zur Meta-Freigabe.
+3. Hohe Liefergeschwindigkeit mit Qualitätsschleife: wöchentlicher Usability-Check, Fehler am selben Tag behoben, AGB bereinigt (keine Garantien, nur geltende Abschnitte je Angebot).
+
+### Hätte ich gern (nach Hebel, nur neuer Stand)
+1. **Liquiditätspuffer von 3 Monaten Fixkosten:** Kontostand am 25.11. bei 3.700 €, offene Lead-USt 2026 von 6.200 bis 14.000 €. Ein Käufer prüft zuerst, ob das Unternehmen ohne ihn durch Q1 kommt. Wirkung: entscheidet über Verhandlungsposition.
+2. **Kennzahlen ohne Umweg:** Zweite Woche ohne Zahlen, weil die Freigaben zwischen den Sessions hängen. Ein Investor bewertet „keine Zahlen“ wie „schlechte Zahlen“.
+3. **Erste belegte Erfolgsgeschichte:** Ein Vermittler mit messbarem Ergebnis nach 30 Tagen (Leads, Termine, Abschlüsse, Provision). Gerade starten die ersten Software-Kunden, die Lernphase der Kampagnen läuft.
+4. **Zuverlässigkeit als Kennzahl:** Diese Woche fehlte ein Lead in der Software, und gebuchte Leads bekamen keine Vorbereitungsfragen. Beides ist behoben, aber ohne Kennzahl nicht belegbar.
+5. **Saubere Datenrechte:** Das gemeinsame Anzeigenlernen läuft jetzt mit Banner, Protokoll und Widerspruch. Gut. Für die Due Diligence fehlt noch die Klausel in den AGB für Neukunden.
+
+### Kennzahl für nächste Woche
+Kontostand am 4.12. gegen den Cash-Plan (Ziel: Vorkasse oder Einrichtung von mindestens 3 Neukunden bezahlt).
+
+### Vorschläge an PG Software (nur mit JA)
+- A bis C aus KW 47 bleiben offen.
+- D: Kachel „Cash“ im Admin: Kontostand aus dem Bankimport, erwartete Eingänge bis Monatsende, Ist gegen Plan.
+- E: Die Wochenkennzahlen als feste, nur lesende Abfrage, die dieser Bericht ohne Einzelfreigabe abrufen darf.
