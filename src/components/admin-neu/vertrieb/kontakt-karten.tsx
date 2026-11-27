@@ -24,6 +24,7 @@ import {
 import { ACTIVITY_LABEL, CUSTOMER_LABEL, CUSTOMER_STAGES, SOURCES, isTerminReview, shortName } from "@/lib/vertrieb/crm";
 import { dayKey, fmtDate, fmtDateTime, timeKey, todayKey } from "@/lib/vertrieb/dates";
 import { stripQuoted } from "@/lib/vertrieb/instantly";
+import { htmlZuText } from "@/lib/mail/eingang";
 import { LI_LABEL, LI_STATUSES } from "@/lib/vertrieb/linkedin";
 import { enrichedLine, waConfirmLabel, type Kontakt, type ladeKontaktakte } from "@/lib/vertrieb/kontaktakte";
 import { cn } from "@/lib/utils";
@@ -294,7 +295,9 @@ function ColdMailsInhalt({ c }: { c: Kontakt }) {
       {c.emails.length ? (
         <ol className="divide-y divide-[color:var(--border)] border-t border-[color:var(--border)]" data-funktion="actions-setreplysentiment--antworten-auf-cold-mails-ansehen-stimmung-setzen">
           {c.emails.map((e) => {
-            const body = e.text ?? "";
+            // Voller Text: ist das gespeicherte HTML länger als der Text (früher nur die Vorschau), das HTML (Ole, 27.11.2026)
+            const ausHtml = e.html ? htmlZuText(e.html) : "";
+            const body = (ausHtml.length > (e.text ?? "").trim().length + 10 ? ausHtml : e.text) ?? "";
             const main = stripQuoted(body);
             const quoted = body.length > main.length + 5 ? body.slice(main.length).trim() : "";
             return (

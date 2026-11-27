@@ -1,7 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 const thread = vi.hoisted(() => ({ items: [] as unknown[] }));
-vi.mock("@/lib/vertrieb/instantly", () => ({ threadEmails: async () => thread.items }));
+vi.mock("@/lib/vertrieb/instantly", () => ({
+  threadEmails: async () => thread.items,
+  volleMail: async (e: unknown) => e,
+  mailTextAus: (e: { body?: { text?: string } | null; content_preview?: string | null }) => e.body?.text ?? e.content_preview ?? null,
+}));
 
 import { prisma } from "@/lib/prisma";
 import { eigeneAntwortenAbgleichen, NACHFASSEN_VIDEO } from "@/lib/vertrieb/instantly-eigene-antwort";

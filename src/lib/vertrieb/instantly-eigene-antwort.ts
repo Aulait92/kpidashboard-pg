@@ -78,7 +78,10 @@ export async function eigeneAntwortenAbgleichen(now = new Date()): Promise<numbe
 async function verarbeite(contactId: string, mail: ApiEmail, now: Date): Promise<boolean> {
   if (await prisma.salesEmail.findUnique({ where: { instantlyId: mail.id }, select: { id: true } })) return false;
   const gesendet = zeit(mail);
-  const text = mail.body?.text ?? mail.content_preview ?? null;
+  // Voller Text statt der gekürzten Vorschau (Ole, 27.11.2026)
+  const { volleMail, mailTextAus } = await import("@/lib/vertrieb/instantly");
+  mail = await volleMail(mail);
+  const text = mailTextAus(mail);
   await prisma.salesEmail.create({
     data: {
       contactId,

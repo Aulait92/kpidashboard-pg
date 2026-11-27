@@ -454,6 +454,8 @@ async function handle(req: Request): Promise<Response> {
         await ensureInterestTasks();
         // Eigene Antwort in der Unibox: Aufgabe auf „Nachfassen: Video angesehen?“ in 2 Werktagen umstellen (24.11.2026)
         await (await import("@/lib/vertrieb/instantly-eigene-antwort")).eigeneAntwortenAbgleichen();
+        // Früher gekürzt gespeicherte Mails (nur Vorschau) nach und nach vervollständigen (27.11.2026)
+        await (await import("@/lib/vertrieb/instantly")).gekuerzteMailsNachladen(15);
       } catch (e) {
         // 429 (gedrosselt) höchstens einmal je Lauf nach Sentry (lib/vertrieb/instantly-drossel.ts)
         (await import("@/lib/vertrieb/instantly-drossel")).meldeInstantlyFehler(e, "cron-instantly");

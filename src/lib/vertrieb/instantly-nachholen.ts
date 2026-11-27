@@ -15,6 +15,7 @@ import {
   leadDetails,
   listCampaigns,
   listEmails,
+  mailTextAus,
   recordReply,
   stripQuoted,
   upsertCampaign,
@@ -149,7 +150,7 @@ export async function nachholenAntworten(
       }
       const sentAt = new Date(e.timestamp_email || e.timestamp_created);
       const subject = e.subject ?? null;
-      const text = e.body?.text ?? e.content_preview ?? null;
+      const text = mailTextAus(e);
       const campaign = e.campaign_id ? names.get(e.campaign_id) ?? null : null;
       const reply = {
         instantlyId: e.id,

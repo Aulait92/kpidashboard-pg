@@ -1,3 +1,4 @@
+import { htmlZuText } from "@/lib/mail/eingang";
 import Papa from "papaparse";
 import { reportError } from "@/lib/monitoring";
 import { instantlyFetch } from "@/lib/vertrieb/instantly-drossel";
@@ -336,6 +337,60 @@ export type ApiEmail = {
   i_status?: number | null;
 };
 
+/**
+ * Voller Text einer Instantly-Mail (Ole, 27.11.2026): body.text, sonst Text aus body.html, sonst die Vorschau
+ * (content_preview, von Instantly nach rund 60 bis 100 Zeichen mitten im Wort abgeschnitten).
+ */
+export function mailTextAus(e: Pick<ApiEmail, "body" | "content_preview">): string | null {
+  const text = e.body?.text?.trim();
+  if (text) return e.body!.text!;
+  const html = e.body?.html?.trim();
+  if (html) return htmlZuText(html) || null;
+  return e.content_preview ?? null;
+}
+
+/** Fehlt der Inhalt (nur Vorschau), die Mail einzeln abrufen (GET /emails/{id} liefert body). Fehler: wie geliefert. */
+export async function volleMail(e: ApiEmail): Promise<ApiEmail> {
+  if (e.body?.text?.trim() || e.body?.html?.trim()) return e;
+  try {
+    const voll = await api<ApiEmail>(`/emails/${encodeURIComponent(e.id)}`);
+    return voll?.body ? { ...e, body: voll.body } : e;
+  } catch {
+    return e;
+  }
+}
+
+/**
+ * Früher gekürzt gespeicherte Instantly-Mails nachladen (Ole, 27.11.2026): Einträge ohne HTML mit kurzem Text einzeln
+ * abrufen und vervollständigen. html "" markiert „geprüft, nichts Volleres da“, damit nicht jeder Lauf neu fragt.
+ */
+export async function gekuerzteMailsNachladen(limit = 15): Promise<number> {
+  const kandidaten = (
+    await prisma.salesEmail.findMany({
+      where: { instantlyId: { not: null }, html: null },
+      orderBy: { sentAt: "desc" },
+      take: 300,
+      select: { id: true, instantlyId: true, text: true },
+    })
+  )
+    .filter((m) => (m.text ?? "").length <= 300)
+    .slice(0, limit);
+  let n = 0;
+  for (const m of kandidaten) {
+    let voll: ApiEmail | null = null;
+    try {
+      voll = await api<ApiEmail>(`/emails/${encodeURIComponent(m.instantlyId!)}`);
+    } catch (err) {
+      if (/: 429\b/.test(err instanceof Error ? err.message : "")) break;
+    }
+    const text = voll ? mailTextAus(voll) : null;
+    const besser = !!text && text.trim().length > (m.text ?? "").trim().length;
+    await prisma.salesEmail.update({ where: { id: m.id }, data: besser ? { text, html: voll?.body?.html ?? "" } : { html: "" } });
+    if (besser) n++;
+  }
+  return n;
+}
+
 /** Holt empfangene E-Mails (Antworten) aus der Instantly-Unibox und speichert sie am Kontakt. */
 export async function syncReplies(full = false): Promise<number> {
   const last = full ? null : await prisma.salesEmail.findFirst({ where: { direction: "IN", instantlyId: { not: null } }, orderBy: { sentAt: "desc" } });
@@ -364,11 +419,12 @@ export async function syncReplies(full = false): Promise<number> {
         contactId = (await ensureInstantlyContact(leadEmail, await leadDetails(leadEmail), campaignNames.get(e.campaign_id) ?? "Instantly")).id;
         ids.set(leadEmail, contactId);
       }
+      const voll = await volleMail(e);
       const isNew = await recordReply(contactId, {
         instantlyId: e.id,
         subject: e.subject,
-        text: e.body?.text ?? e.content_preview ?? null,
-        html: e.body?.html ?? null,
+        text: mailTextAus(voll),
+        html: voll.body?.html ?? null,
         fromEmail: e.from_address_email,
         threadId: e.thread_id,
         eaccount: e.eaccount ?? null,
