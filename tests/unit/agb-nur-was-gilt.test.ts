@@ -193,12 +193,12 @@ describe("Gemischt (Betreuung mit Lead-Produkten)", () => {
 describe("Archivfassung „Stand 25.11.2026“ (Garantie-Kunden)", () => {
   const alt = { createdAt: new Date("2026-11-20T10:00:00Z") };
 
-  it("ohne Pay-per-Lead und ohne Vorauszahlung gefiltert, Garantien bleiben (§ 11)", () => {
+  it("ohne Pay-per-Lead, Vorauszahlung und Testphase gefiltert, Garantien bleiben (§ 10)", () => {
     const a = agbDesAngebots({ package: "software", ...alt });
     expect(a.archiv).toBe(true);
     expect(a.stand).toBe(AGB_ARCHIV_STAND);
-    expect(titel(a.abschnitte)).toEqual(titel(AGB_2026_11_25));
-    expect(titel(a.abschnitte).indexOf("Garantien") + 1).toBe(11);
+    expect(titel(a.abschnitte)).toEqual(titel(AGB_2026_11_25).filter((t) => t !== "Testphasen und kostenlose Zeiträume"));
+    expect(titel(a.abschnitte).indexOf("Garantien") + 1).toBe(10);
     expect(text(a.abschnitte)).not.toMatch(PPL_MUSTER);
     expect(text(a.abschnitte)).not.toMatch(VORAUS_MUSTER);
     expect(text(a.abschnitte)).toContain("Lead-Garantie");
@@ -212,10 +212,10 @@ describe("Archivfassung „Stand 25.11.2026“ (Garantie-Kunden)", () => {
 
 describe("Angenommene Angebote: gespeicherte Merkmale gelten", () => {
   it("Nachweis enthält Stand, Merkmale, Abschnitte und Hash; danach zeigt das Angebot genau diese Fassung", () => {
-    const o = { package: "software", annualChoice: true, createdAt: new Date("2026-11-26T20:00:00Z") };
+    const o = { package: "software", annualChoice: true, billingFreeStart: true, createdAt: new Date("2026-11-26T20:00:00Z") };
     const n = agbNachweis(o);
     expect(n.agbVersion).toBe(LEGAL_VERSION);
-    expect(n.agbMerkmale).toEqual({ paket: "software", ppl: false, kampagnen: true, vorauszahlung: "waehlbar", archiv: false, abschnitte: BETREUUNG_TITEL });
+    expect(n.agbMerkmale).toEqual({ paket: "software", ppl: false, kampagnen: true, vorauszahlung: "waehlbar", testphase: true, archiv: false, abschnitte: BETREUUNG_TITEL });
     expect(n.agbHash).toMatch(/^[0-9a-f]{64}$/);
     // Spätere Änderung am Angebot (z. B. Vorauszahlung abgewählt) ändert die angenommene Fassung nicht
     const spaeter = agbDesAngebots({ ...o, annualChoice: false, status: "accepted", agbMerkmale: n.agbMerkmale });
@@ -272,7 +272,7 @@ describe("Angebotsseite und PDF (gleiches Dokument)", () => {
   it("Betreuung + Software mit Zusatzsparte, ohne Vorauszahlung: nichts zu Pay-per-Lead, Umsatzsteuer auf Leads oder Vorauszahlung", () => {
     const t = plain(renderToStaticMarkup(createElement(OfferDocument, { offer: doc() })));
     expect(t).toContain("§ 1 Geltungsbereich");
-    expect(t).toContain("§ 17 Schlussbestimmungen");
+    expect(t).toContain("§ 16 Schlussbestimmungen");
     expect(t).not.toMatch(PPL_MUSTER);
     expect(t).not.toMatch(VORAUS_MUSTER);
   });
@@ -298,7 +298,7 @@ describe("Angebotsseite und PDF (gleiches Dokument)", () => {
       ),
     );
     expect(t).toContain("§ 9 Umsatzsteuer auf Leads");
-    expect(t).toContain("§ 18 Schlussbestimmungen");
+    expect(t).toContain("§ 17 Schlussbestimmungen");
     expect(t).not.toMatch(/Vorauszahlung: Ist sie vereinbart/);
   });
 });
@@ -335,5 +335,21 @@ describe("Öffentliche Seite /rechtliches/agb", () => {
     const t = plain(renderToStaticMarkup(await AgbPage({ searchParams: Promise.resolve({ paket: "ppl" }) })));
     expect(t).not.toContain("Welche Abschnitte für Sie gelten");
     expect(t).toContain("Paket „Nur Leads“");
+  });
+});
+
+describe("Testphasen nur mit Testphase im Angebot (Ole, 27.11.2026)", () => {
+  const titel = (o: Parameters<typeof agbDesAngebots>[0]) => agbDesAngebots(o).abschnitte.map((s) => s.title);
+  const basis = { package: "software", createdAt: new Date("2026-11-26T12:00:00Z"), status: "draft" };
+  it("ohne Startpreis und ohne kostenlosen Start: Abschnitt fällt weg (wie Haferstroh)", () => {
+    expect(titel({ ...basis, introMonthlyFee: null, introMonths: null, billingFreeStart: false })).not.toContain("Testphasen und kostenlose Zeiträume");
+  });
+  it("kostenloser Start bis zum Abrechnungstag (wie Niehues) oder Startpreis: Abschnitt bleibt", () => {
+    expect(titel({ ...basis, introMonthlyFee: null, introMonths: null, billingFreeStart: true })).toContain("Testphasen und kostenlose Zeiträume");
+    expect(titel({ ...basis, introMonthlyFee: 0, introMonths: 2, billingFreeStart: false })).toContain("Testphasen und kostenlose Zeiträume");
+  });
+  it("ohne Angaben (öffentliche AGB) und bei angenommenen Angeboten ohne gespeichertes Merkmal: Abschnitt bleibt", () => {
+    expect(agbFuerAngebot({ package: "software" }).agb.map((s) => s.title)).toContain("Testphasen und kostenlose Zeiträume");
+    expect(titel({ ...basis, status: "accepted", introMonthlyFee: null, introMonths: null, billingFreeStart: false })).toContain("Testphasen und kostenlose Zeiträume");
   });
 });

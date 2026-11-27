@@ -129,7 +129,7 @@ describe("Angebotsdokument (Seite und PDF)", () => {
     const t = text(renderToStaticMarkup(createElement(OfferDocument, { offer: doc() })));
     expect(t).not.toMatch(/garanti/i);
     expect(t).not.toContain(`Stand ${AGB_ARCHIV_STAND}`);
-    expect(t).toContain("§ 11 Datenschutz");
+    expect(t).toContain("§ 10 Datenschutz");
   });
 
   it("neues Angebot mit Sondervereinbarung: Garantie nur im Angebotstext (2.2), kein Verweis auf AGB-Abschnitt", () => {
@@ -153,7 +153,7 @@ describe("Angebotsdokument (Seite und PDF)", () => {
   it("neue Version eines alten Angebots (garantieStichtag) behält die archivierte Fassung", () => {
     const v2 = { ...doc({ version: 2 }), garantieStichtag: new Date("2026-11-20T10:00:00Z") } as OfferDoc;
     const t = text(renderToStaticMarkup(createElement(OfferDocument, { offer: v2 })));
-    expect(t).toContain("§ 11 Garantien");
+    expect(t).toContain("§ 10 Garantien");
   });
 });
 

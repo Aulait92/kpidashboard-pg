@@ -23,6 +23,9 @@ export type AgbAngebotInput = {
   seatsIncluded?: number | null;
   bestandMonthly?: unknown;
   empfehlungMonthly?: unknown;
+  introMonthlyFee?: unknown;
+  introMonths?: number | null;
+  billingFreeStart?: boolean | null;
   /** Bei der Annahme gespeicherte Merkmale (gehen bei angenommenen Angeboten vor) */
   agbMerkmale?: unknown;
 };
@@ -51,6 +54,8 @@ export function agbDesAngebots(o: AgbAngebotInput): AgbDesAngebots {
     annualChoice: o.annualChoice,
     pplProductKey: o.pplProductKey,
     pplProdukte: o.pplProdukte,
+    // Testphase nur für offene Angebote bestimmen; angenommene ohne gespeichertes Merkmal behalten den Abschnitt
+    ...(o.status === "accepted" ? {} : { introMonthlyFee: o.introMonthlyFee, introMonths: o.introMonths ?? null, billingFreeStart: o.billingFreeStart ?? false }),
     merkmale: gespeichert,
   });
   const archiv = agbMitGarantien(o);
