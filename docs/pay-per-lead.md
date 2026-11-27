@@ -63,7 +63,10 @@
    automatisch 50:50 (halbe Gutschrift, Umsatz zur Hälfte bleibt), keine Prüfung mehr.
    Bezug mit „immer automatisch anerkennen“ (`stornoAutoApprove`): alles voll.
    **Seit 24.11.2026 Nachlieferung** (Ole: „wir liefern Leads immer nach und erstatten nichts“), Schalter
-   `stornoErsatz` am Bezug (neue Bezüge an, alle vorher bestehenden aus = alte Regel oben): jede anerkannte
+   `stornoErsatz` am Bezug. **Seit 27.11.2026 für alle Bezüge an** (Ole: „gilt für alle“, Migration
+   `20261127100000_bestellkonto_nico_partner`; offene volle Gutschriften wurden zu Ersatzleads, Umsatz wieder aktiv;
+   auch Airtable-Import legt keine Gutschrift-Bezüge mehr an). Die alte Regel oben gilt nur noch, wenn der Schalter
+   im Admin bewusst ausgeschaltet wird: jede anerkannte
    Reklamation, auch „Sonstiges“, schuldet einen kostenlosen Ersatzlead (`Lead.ersatzGeschuldet`, der Ersatz trägt
    `ersatzFuerId`, keinen Umsatz, keine Bestellung). Keine Gutschrift, der Umsatz des reklamierten Leads bleibt.
    Die Verteilung (`engine.ts` `quotaFor`, `nachlieferung.ts`) liefert offene Ersatzleads zuerst, dann Reste bezahlter

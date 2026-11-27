@@ -30,16 +30,12 @@ WHERE "id" IN ('cmsd7o2pa000q1moz708v9jjp', 'cmvf9gswuiqy62imr04o27rrp')
 UPDATE "Customer" SET "vermittlerRegisterStatus" = 'makler', "vermittlerGeprueftAt" = NOW(), "vermittlerGeprueftVon" = 'Ole (27.11.2026)'
 WHERE "id" IN ('bestellkonto_nico_yagci', 'bestellkonto_tobias_dangelo') AND "vermittlerRegisterNr" IS NOT NULL;
 
--- Stornos werden nachgeliefert, nicht verrechnet (Ole, 27.11.2026), für alle Bezüge der Partner beider Hauptkunden.
+-- Stornos werden nachgeliefert, nicht verrechnet (Ole, 27.11.2026: „gilt für alle“), für alle Pay-per-Lead-Bezüge.
 -- Offene Gutschriften (noch nicht verrechnet) werden zu Ersatzleads; der Umsatz des reklamierten Leads bleibt wie bei
 -- der Nachlieferung bestehen (lib/ppl/storno.ts approveErsatz). Nur volle Gutschriften (Umsatz storniert) umstellen.
-WITH partner_bezug AS (
-  SELECT s."id" FROM "LeadSubscription" s
-  WHERE s."customerId" IN ('cmrorjboje89b1mp3n8s9pcww', 'cmuv436qmidrp2imrc21lcemv', 'cmsd7o2qr00111mozja8a14tb',
-                           'cmsd7o2pa000q1moz708v9jjp', 'cmvf9gswuiqy62imr04o27rrp')
-), offen AS (
+WITH offen AS (
   SELECT l."id" FROM "Lead" l
-  WHERE l."subscriptionId" IN (SELECT "id" FROM partner_bezug)
+  WHERE l."subscriptionId" IS NOT NULL
     AND l."stornoState" = 'approved' AND l."creditedAt" IS NULL AND l."creditAmount" > 0
     AND NOT EXISTS (SELECT 1 FROM "Revenue" r WHERE r."leadId" = l."id" AND r."cancelled" = false)
 ), umsatz AS (
@@ -47,6 +43,4 @@ WITH partner_bezug AS (
 )
 UPDATE "Lead" SET "ersatzGeschuldet" = true, "creditAmount" = NULL WHERE "id" IN (SELECT "id" FROM offen);
 
-UPDATE "LeadSubscription" SET "stornoErsatz" = true
-WHERE "customerId" IN ('cmrorjboje89b1mp3n8s9pcww', 'cmuv436qmidrp2imrc21lcemv', 'cmsd7o2qr00111mozja8a14tb',
-                       'cmsd7o2pa000q1moz708v9jjp', 'cmvf9gswuiqy62imr04o27rrp');
+UPDATE "LeadSubscription" SET "stornoErsatz" = true WHERE "stornoErsatz" = false;
