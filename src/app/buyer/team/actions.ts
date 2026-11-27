@@ -150,15 +150,25 @@ export async function removeMemberAction(fd: FormData): Promise<void> {
 }
 
 /** Lead einem anderen Team-Mitglied zuteilen (nur Inhaber). */
+/**
+ * Zuständigkeit ändern: Inhaber, und Admins auch in der Vorschau (Ole, 27.11.2026: Leads für Kunden umverteilen;
+ * sonst bleibt die Vorschau nur lesend). Das Protokoll vermerkt den Admin als Handelnden.
+ */
+async function requireOwnerOderAdminVorschau() {
+  const ctx = await getBuyerContext();
+  if (ctx?.preview && !ctx.demo) return { ...ctx, userId: null as string | null, vonAdmin: true };
+  return { ...(await requireOwner()), vonAdmin: false };
+}
+
 export async function reassignLeadAction(leadId: string, userId: string | null): Promise<{ ok: boolean; error?: string }> {
   try {
-    const ctx = await requireOwner();
+    const ctx = await requireOwnerOderAdminVorschau();
     const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId: ctx.customerId }, select: { id: true, name: true } });
     if (!lead) return { ok: false, error: "Lead nicht gefunden." };
     const target = userId ? await memberOf(ctx.customerId, userId) : null;
     if (userId && !target) return { ok: false, error: "Team-Mitglied nicht gefunden." };
     await prisma.lead.update({ where: { id: lead.id }, data: { assignedUserId: target?.id ?? null } });
-    await audit("lead.reassign", { entity: "Lead", entityId: lead.id, customerId: ctx.customerId, details: { to: target?.email ?? null } });
+    await audit("lead.reassign", { entity: "Lead", entityId: lead.id, customerId: ctx.customerId, details: { to: target?.email ?? null, ...(ctx.vonAdmin ? { vonAdmin: true } : {}) } });
     if (target) {
       // Zuteilen von Hand macht das Mitglied heute zum aktiven Verkäufer, auch mit „bekommt Leads“ aus
       await markLeadReceived(target.id);
@@ -168,7 +178,7 @@ export async function reassignLeadAction(leadId: string, userId: string | null):
       const { sendToUser } = await import("@/lib/push");
       await sendToUser(target.id, {
         title: `Lead an Sie übergeben: ${lead.name ?? "ohne Name"}`,
-        body: "Ihr Inhaber hat Ihnen diesen Lead zugeteilt.",
+        body: ctx.vonAdmin ? "Dieser Lead wurde Ihnen zugeteilt." : "Ihr Inhaber hat Ihnen diesen Lead zugeteilt.",
         tag: `lead-assign:${lead.id}`,
         url: `/buyer/leads/${lead.id}`,
       }).catch(() => {});
