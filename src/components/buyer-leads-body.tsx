@@ -5,7 +5,7 @@ import Link from "next/link";
 import { BuyerLeadsTable, type BuyerLeadRow } from "@/components/buyer-leads-table";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { getStornogruendePerLead } from "@/app/buyer/actions";
-import { isAdvisor, leadScope, type TeamCtx } from "@/lib/team";
+import { isAdvisor, ladeZustaendigFilter, leadScope, type TeamCtx } from "@/lib/team";
 import { loadRetainerConfig } from "@/lib/customer-spend";
 import { prisma } from "@/lib/prisma";
 import { findPhaseIn, pipelinePhasesFor, WHATSAPP_STATUS_LABELS } from "@/lib/products";
@@ -70,11 +70,12 @@ export async function BuyerLeadsBody({
   endOfToday.setHours(23, 59, 59, 999);
   // Produktfilter (Ole, 26.11.2026): erst ab zwei Produkten; wirkt auf Liste und alle Zähler der Ansichten
   const produktFilter = await ladeProduktFilter(leadScope(team), params.produkt);
-  const nachProdukt = produktFilter.aktiv
-    ? produktWhere(produktFilter.aktiv)
-    : verlust && params.produkt
-    ? { source: params.produkt }
-    : {};
+  // Zuständig (Ole, 27.11.2026): nur Inhaber mit Team; wirkt wie der Produktfilter auf Liste und Zähler
+  const zustaendig = await ladeZustaendigFilter(team, params.zustaendig);
+  const nachProdukt = {
+    ...(produktFilter.aktiv ? produktWhere(produktFilter.aktiv) : verlust && params.produkt ? { source: params.produkt } : {}),
+    ...zustaendig.where,
+  };
   const leadRowsAll = await prisma.lead.findMany({
     where: {
       ...leadScope(team),
@@ -274,6 +275,7 @@ export async function BuyerLeadsBody({
           ...(produktFilter.optionen.length > 1
             ? [{ kind: "select" as const, key: "produkt", label: "Produkt", options: produktFilter.optionen.map((p) => ({ value: p.value, label: p.label })) }]
             : []),
+          ...(zustaendig.optionen.length ? [{ kind: "select" as const, key: "zustaendig", label: "Zuständig", options: zustaendig.optionen }] : []),
         ]}
       />
       <nav className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1" aria-label="Ansichten">
@@ -306,7 +308,7 @@ export async function BuyerLeadsBody({
       </nav>
       <BuyerLeadsTable
         leads={shown}
-        title={[crossSell ? CROSS_SELL_LABEL : activeView.key === "alle" ? "Alle Kontakte" : activeView.label, phase?.label, produktFilter.aktiv?.label].filter(Boolean).join(" · ")}
+        title={[crossSell ? CROSS_SELL_LABEL : activeView.key === "alle" ? "Alle Kontakte" : activeView.label, phase?.label, produktFilter.aktiv?.label, zustaendig.aktivLabel].filter(Boolean).join(" · ")}
         statusLabels={WHATSAPP_STATUS_LABELS}
         showLeadCost={!(await loadRetainerConfig(customerId))}
         detailBase={detailBase}
