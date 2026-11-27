@@ -530,9 +530,12 @@ describe("Fragen-Engine (Allianz-Sparten, Privatschutz als Bündel)", () => {
     await knopf(x.phone, "Ja, gern", "vorbereitung:ja");
     expect(textVon(letzte(x.phone))).toBe("Super, danke! Wann sind Sie geboren? Zum Beispiel 15.03.1985.");
     sent.length = 0;
+    // erstes Mal: einmal nachhaken (Ole, 27.11.2026; tests/integration/rest-nachhaken.test.ts), zweites Mal gilt
     await knopf(x.phone, "Rest im Termin", "vf:rest", "interactive");
-    expect(an(x.phone)).toHaveLength(1);
-    expect(textVon(an(x.phone)[0])).toBe("Alles klar, den Rest klärt Herr Testkopf mit Ihnen im Termin. Bis Montag!");
+    expect(textVon(an(x.phone)[0])).toMatch(/^Verstehe! Nur kurz: Ohne Angaben wie Geburtsdatum und Postleitzahl/);
+    await knopf(x.phone, "Lieber im Termin", "vf:rest", "interactive");
+    expect(an(x.phone)).toHaveLength(2);
+    expect(textVon(an(x.phone)[1])).toBe("Alles klar, den Rest klärt Herr Testkopf mit Ihnen im Termin. Bis Montag!");
     const l = await prisma.lead.findUniqueOrThrow({ where: { id: x.lead.id } });
     expect(l.vorbereitungsAngaben as { offen: string[]; rest: boolean }).toMatchObject({ rest: true, offen: expect.arrayContaining(["Geburtsdatum", "Wohnfläche"]) });
     expect((l.vorbereitungsAngaben as { buendel?: unknown }).buendel).toBeUndefined();
