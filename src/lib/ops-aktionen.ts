@@ -3,6 +3,7 @@
 // Upload-Schlüssel, lib/ops-auth.ts). Jede Aktion steht im Audit-Log mit „ops-aktion (Claude)“. Nicht erlaubt: Löschen,
 // Zahlungen/Stripe direkt, Angebotspreise, Lead-Daten. Neue Aktionen nur hier in AKTIONEN eintragen.
 
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
 import { opsTokenOk } from "@/lib/ops-auth";
@@ -70,6 +71,39 @@ export const AKTIONEN: Record<string, Aktion> = {
       await prisma.salesContact.update({ where: { id }, data: { salutation: anrede } });
       await audit("vertrieb.anrede", { entity: "SalesContact", entityId: id, details: { anrede }, actor: OPS_ACTOR });
       return { ok: true, info: `Anrede gesetzt: ${anrede} ${c.lastName ?? ""}`.trim() };
+    },
+  },
+  vertrieb_abmahnung_reduzieren: {
+    beschreibung:
+      "Abmahnung (Ole, 27.11.2026): Vertriebskontakt auf Name und E-Mail reduzieren (Telefon, Anschrift, Webseite, Öffnungszeiten, Profile, Firma, Anreicherung löschen), nie kontaktieren mit Instantly-Sperre. Mails und Verlauf bleiben als Beleg (Rechtsverteidigung).",
+    felder: { salesContactId: "ID des Vertriebskontakts" },
+    run: async (p) => {
+      const id = text(p.salesContactId);
+      const c = await prisma.salesContact.findUnique({ where: { id }, select: { id: true, firstName: true, lastName: true, email: true, customerId: true } });
+      if (!c) return { ok: false, error: "Kontakt nicht gefunden." };
+      if (c.customerId) return { ok: false, error: "Kontakt gehört zu einem Kunden, nicht reduzieren." };
+      const name = [c.firstName, c.lastName].filter(Boolean).join(" ") || c.email;
+      await prisma.$transaction([
+        prisma.salesContact.update({
+          where: { id },
+          data: {
+            name, detectedData: Prisma.DbNull, enrichment: Prisma.DbNull,
+            phone: null, phoneDigits: null, phoneDigitsRev: null, street: null, zip: null, city: null,
+            ratingValue: null, ratingCount: null, openingHours: null, url: null, description: null,
+            googlePlaceId: null, googleMapsUrl: null, businessStatus: null, insurer: null,
+            leaderNames: null, agencyType: null, teamSize: null, facebookUrl: null, instagramUrl: null, xingUrl: null, linkedinUrl: null,
+          },
+        }),
+        prisma.salesContactPhone.deleteMany({ where: { contactId: id } }),
+        prisma.salesActivity.deleteMany({
+          where: { contactId: id, OR: [{ note: { startsWith: "Automatisch ergänzt" } }, { note: { startsWith: "Adresse von der Website ergänzt" } }, { outcome: { in: ["Neue Telefonnummer erkannt"] } }] },
+        }),
+        prisma.salesActivity.create({ data: { contactId: id, type: "NOTIZ", outcome: "Daten reduziert", note: "Abmahnung: nur Name, E-Mail, Mails und Verlauf bleiben (Sperrliste, Rechtsverteidigung). Übrige Angaben gelöscht.", occurredAt: new Date() } }),
+      ]);
+      const { nieKontaktierenSetzen } = await import("@/lib/vertrieb/nie-kontaktieren-server");
+      const r = await nieKontaktierenSetzen(id, "manuell", { quelle: "Abmahnung" });
+      await audit("vertrieb.daten_reduziert", { entity: "SalesContact", entityId: id, details: { grund: "abmahnung" }, actor: OPS_ACTOR });
+      return { ok: true, info: `${name}: reduziert, nie kontaktieren (${r.neu ? "neu" : "war schon"}), Instantly: ${r.instantly}.` };
     },
   },
   produkt_starten: {
