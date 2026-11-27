@@ -101,6 +101,8 @@ type CallItem = {
   urgent?: boolean;
   /** Was der Assistent schon weiß (Chat-Zusammenfassung) */
   known?: string | null;
+  /** Status des Kontakts (Wiedervorlage): bestimmt das Ziel im Anrufmodus (lib/anruf-ziel.ts) */
+  status?: string | null;
   /** Wiedervorlage: „Erledigt, kein weiterer Anruf nötig“ erlaubt (lib/inbox.ts InboxFollowUp.erledigtOk) */
   erledigtOk?: boolean;
   /** Wiedervorlage: fällig seit (ISO), für „Überfällig seit gestern“ */
@@ -254,6 +256,7 @@ export function TodayInbox({
       source: f.source,
       phone: f.phone,
       reason: f.note ?? "Nachfassen",
+      status: f.status,
       overdue: f.overdue,
       conversationId: f.conversationId,
       known: f.known ?? null,

@@ -92,9 +92,9 @@ describe("Nachrichtenplan: Aktionen je Eintrag", () => {
 
   it("Verschieben über neustartAt: die folgenden Schritte rücken mit", () => {
     const a = { id: "o1", kind: "offer", step: 0, startedAt: now, nextAt: new Date(now.getTime() + 2 * DAY), stoppedAt: null };
-    const vorher = planeNachrichten(basis({ abfolgen: [a] })).find((e) => e.key === "abfolge:o1:1")!;
-    const nachher = planeNachrichten(basis({ abfolgen: [{ ...a, nextAt: new Date(now.getTime() + 4 * DAY), neustartAt: new Date(now.getTime() + 2 * DAY) }] })).find((e) => e.key === "abfolge:o1:1")!;
-    // Tag 3 (Anruf-Aufgabe, ohne Versandfenster) liegt jetzt zwei Tage später
+    const vorher = planeNachrichten(basis({ abfolgen: [a] })).find((e) => e.key === "abfolge:o1:4")!;
+    const nachher = planeNachrichten(basis({ abfolgen: [{ ...a, nextAt: new Date(now.getTime() + 4 * DAY), neustartAt: new Date(now.getTime() + 2 * DAY) }] })).find((e) => e.key === "abfolge:o1:4")!;
+    // Tag 12 (Anruf-Aufgabe ohne Push, ohne Versandfenster) liegt jetzt zwei Tage später; Tag 3 mit Push wartet aufs Fenster
     expect(new Date(nachher.at).getTime() - new Date(vorher.at).getTime()).toBe(2 * DAY);
   });
 

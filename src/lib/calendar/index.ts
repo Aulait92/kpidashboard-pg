@@ -531,6 +531,9 @@ export async function bookAppointment(opts: {
     // Splittests der Lead-Reise (lib/experimente.ts): Ziel „termin_gebucht“ für alle Tests dieses Leads bzw. Chats
     await import("@/lib/experimente").then((m) => m.zielErreicht([opts.leadId, opts.conversationId], "termin_gebucht")).catch(() => null);
   }
+  // Termin steht an (Ole, 27.11.2026, lib/lead-phase.ts): Nachfassen und Anrufplan der Phase davor enden sofort, nicht erst
+  // beim nächsten Schritt
+  if (opts.leadId) await import("@/lib/lead-phase-server").then((m) => m.phasenWechsel(opts.leadId!)).catch((e) => console.error("[phase]", e));
   // Lead-Mail (Bestätigung/Verschiebung) — darf die Buchung nie scheitern lassen.
   const notify = opts.notifyLead === undefined ? "booked" : opts.notifyLead;
   if (notify) {

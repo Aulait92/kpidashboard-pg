@@ -155,6 +155,7 @@ export async function cancelLeadAction(
   ]);
 
   await audit("lead.storno", { entity: "Lead", entityId: lead.id, customerId: writeCustomerId, details: { grund: stornogrundRecordId } });
+  await syncFollowUpWithStatus(lead.id, "Storno");
 
   // Push-Notification an Admins. Fehler hier dürfen den Storno nicht
   // scheitern lassen — nur warnen. Stornogrund-Label aus der vorab
@@ -492,6 +493,7 @@ export async function callbackOutcomeAction(formData: FormData): Promise<void> {
       where: { id: lead.id },
       data: { status: "Kein Interesse", reached: true },
     });
+    await syncFollowUpWithStatus(lead.id, "Kein Interesse");
   }
   revalidatePath("/buyer/leads");
   revalidatePath("/buyer/kanban");
@@ -552,6 +554,7 @@ export async function appointmentOutcomeAction(formData: FormData): Promise<void
       ...(outcome === "no_show" ? { callbackSnoozedUntil: null } : {}),
     },
   });
+  await syncFollowUpWithStatus(appt.leadId, nextStatus);
   if (outcome === "closed") await syncPrimaryContract(appt.leadId, { reopen: true }).catch((e) => console.error("[vertraege]", e));
   revalidatePath("/buyer");
   revalidatePath("/buyer/leads");

@@ -181,7 +181,7 @@ describe("Nächste Nachrichten: Aktionen ändern die echten Abläufe", () => {
 
   it("Vorab-Check zum Angebot: nicht für übersprungene Schritte und nicht während der Pause", async () => {
     const push = vi.fn(async () => undefined);
-    const lead = await neuerLead();
+    const lead = await neuerLead({ status: "Angebot gesendet" });
     const s = (await startSequence(lead.id, "offer", T0))!;
     // Mi 18.11., 18:30 Uhr: Vorab-Check für Tag 2 (Do 10 Uhr) wäre fällig
     const abend = new Date("2026-11-18T17:30:00Z");

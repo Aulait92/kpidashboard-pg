@@ -47,10 +47,11 @@ export function workdaysFromNow(n: number): Date {
   return d;
 }
 
-export async function syncFollowUpWithStatus(leadId: string, status: string | null | undefined) {
+export async function syncFollowUpWithStatus(leadId: string, status: string | null | undefined, now = new Date()) {
   const s = (status ?? "").trim().toLowerCase();
-  // Nachfass-Abfolgen (falls beim Kunden an): Angebot → Abfolge starten, Ende → stoppen.
-  const seq = await onLeadStatus(leadId, status).catch((e) => {
+  // Nachfass-Abfolgen (falls beim Kunden an): Phase prüfen (lib/lead-phase-server.ts phasenWechsel), Angebot → Abfolge
+  // starten, Ende → stoppen.
+  const seq = await onLeadStatus(leadId, status, now).catch((e) => {
     console.error("[lead-sequences]", e);
     return { started: false };
   });

@@ -260,7 +260,7 @@ export async function sendeGlueckwunsch(leadId: string, customerId: string, opts
 export type VorabendKandidat = { leadId: string; customerId: string; grund: VorabendGrund; userId: string | null };
 
 /** Abfolgen des Nachfassens zum Angebot (P3, lib/lead-sequences.ts): über die App bzw. selbst gesendet. */
-const ANGEBOT_ABFOLGEN = ["offer", "offer_selbst"];
+const ANGEBOT_ABFOLGEN = ["offer", "offer_selbst", "offer_status"];
 
 /**
  * Leads für den Vorabend-Push „Hat Frau Becker abgeschlossen?“ am Abend eines stattgefundenen Termins ohne Ergebnis (kein

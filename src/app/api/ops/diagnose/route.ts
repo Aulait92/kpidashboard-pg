@@ -804,7 +804,11 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 //   q=lead-zeitleiste&kunde=<id>[&tage=14]  Je Lead (L1, L2 …) Eingang, Produkt, erster Kontakt, Zustellfehler, erste Antwort,
 //                                          erste menschliche Reaktion, Anrufe, Status, Termin, Ergebnis, Angebot, nächste Aufgabe,
 //                                          Berater (B1 …); Summen je Berater. Anonym, ohne Namen, Nummern, Inhalte (lib/ops/lead-zeitleiste.ts)
+//   q=nachfassen-phase[&kunde=<id>]       Kontakte, deren Nachfassen bzw. Anrufplan nicht mehr zum Stand passt (lib/lead-phase.ts),
+//                                          je Kunde: Leads, Abfolgen, offene Schritte, Anrufpläne; nur Zahlen (Trockenlauf
+//                                          der Ops-Aktion nachfassen_bereinigen, schreibt nichts)
 const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
+  "nachfassen-phase": async (p) => (await import("@/lib/lead-phase-server")).bereinigeNachfassen({ echt: false, kunde: p.get("kunde")?.trim() || null }),
   "lead-zeitleiste": async (p) => (await import("@/lib/ops/lead-zeitleiste")).leadZeitleisteDiagnose(p),
   "bot-stumm": async (p) => {
     const tage = Math.min(30, Math.max(1, Math.round(Number(p.get("tage") ?? 7)) || 7));

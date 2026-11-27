@@ -19,12 +19,13 @@
 import type { Ansprache } from "@/lib/ansprache";
 import type { VermittlerName } from "@/lib/whatsapp/gespraech";
 import { CALL_ATTEMPTS_TARGET, callPlanNote, isCallPlanNote, nextCallAttemptAt } from "@/lib/call-plan";
-import { CHAT_RUHT_ABSTAND_MS, CHAT_RUHT_STUNDEN, SEQUENCES, SONNTAG_NACHFASS_STUNDEN, TERMIN_NACHFASS_STUNDEN, istAbsageAbfolge, istAngebotsAbfolge, istBedenkzeitAbfolge, naechstesSendefenster, type SequenceCtx, type SequenceKind } from "@/lib/lead-sequences";
+import { CHAT_RUHT_ABSTAND_MS, CHAT_RUHT_STUNDEN, SEQUENCES, TERMIN_NACHFASS_STUNDEN, istAbsageAbfolge, istAngebotsAbfolge, istBedenkzeitAbfolge, naechstesSendefenster, type SequenceCtx, type SequenceKind } from "@/lib/lead-sequences";
 import { istRueckrufNotiz } from "@/lib/rueckruf";
 import { erinnerungsPlan, gleichText, startPush, stundeText, vortagText } from "@/lib/showup";
 import { anrufPush } from "@/lib/anruf-ausloeser";
 import { angebotAnrufPush, mailWerte, naechsterVersand, vorabCheckPush, vorabCheckZeit, vorlagenMail, type MailVorlageText } from "@/lib/angebot-senden";
 import { STANDARD_VORLAGEN_JE, type VorlageKey } from "@/lib/mail/vorlagen";
+import { ANRUFPLAN, passtZurPhase, type LeadPhase } from "@/lib/lead-phase";
 
 const DAY = 24 * 60 * 60 * 1000;
 const HOUR = 60 * 60 * 1000;
@@ -136,6 +137,11 @@ export type PlanEingabe = {
   vorschlaege?: { kind: string; note: string; dueAt: Date }[];
   /** Mail-Vorlagen mit Stufe „aus“ (Einstellungen → Assistent): kein Mail-Vorschlag */
   mailAus?: readonly string[];
+  /**
+   * Phase des Kontakts (lib/lead-phase.ts): Abfolgen und Anrufplan, die nicht mehr passen, erscheinen nicht (der Cron
+   * überspringt sie ohnehin, Ole 27.11.2026). Ohne Angabe: alles wie geplant.
+   */
+  phase?: LeadPhase;
 };
 
 const iso = (d: Date) => d.toISOString();
@@ -228,13 +234,13 @@ function abfolgeEintraege(p: PlanEingabe, a: PlanEingabe["abfolgen"][number]): P
     const roh = i === a.step ? fruehestens(nextAt, p.now) : new Date(Math.max(base.getTime() + step.day * DAY, prev.getTime() + abstand));
     // Angebot (P3): WhatsApp und E-Mail gehen erst im Versandfenster (Mo bis Sa 9 bis 19 Uhr) raus
     const angebot = istAngebotsAbfolge(a.kind);
-    // „Chat ruht“: wie runSequences Mo bis Sa 8 bis 19 Uhr (Termin-Nachfassen 8 bis 20 Uhr), sonntags 10 bis 18 Uhr
+    // „Chat ruht“: wie runSequences Mo bis Sa 8 bis 19 Uhr (Termin-Nachfassen 8 bis 20 Uhr), nie an Sonn- und Feiertagen
     const terminSchritt = a.kind === "silent" && i === 0 && !!p.terminNachfass;
     const at =
-      angebot && step.action !== "call"
+      angebot && (step.action !== "call" || step.push)
         ? naechsterVersand(roh)
         : a.kind === "silent" && step.action !== "call"
-          ? naechstesSendefenster(roh, terminSchritt ? TERMIN_NACHFASS_STUNDEN : CHAT_RUHT_STUNDEN, SONNTAG_NACHFASS_STUNDEN)
+          ? naechstesSendefenster(roh, terminSchritt ? TERMIN_NACHFASS_STUNDEN : CHAT_RUHT_STUNDEN)
           : istAbsageAbfolge(a.kind) && step.action !== "call"
             ? // Nachfassen nach einer Absage: wie runSequences erst im Versandfenster (Mo bis Sa 9 bis 19 Uhr)
               naechstesSendefenster(roh)
@@ -378,12 +384,13 @@ function vorschlagEintraege(p: PlanEingabe): PlanEintrag[] {
 export function planeNachrichten(p: PlanEingabe): PlanEintrag[] {
   const termine = p.termine.filter((t) => t.status === "booked");
   const kommend = termine.some((t) => t.startsAt.getTime() > p.now.getTime());
+  const passt = (art: string) => !p.phase || passtZurPhase(art, p.phase);
   return [
     ...termine.flatMap((t) => terminEintraege(p, t)),
-    // Ein anstehender Termin beendet laufende Abfolgen (lib/lead-sequences.ts stopReasonFor)
-    ...(kommend ? [] : p.abfolgen.flatMap((a) => abfolgeEintraege(p, a))),
-    // Der Anrufplan steht unabhängig davon auf „Heute“
-    ...anrufplanEintraege(p),
+    // Ein anstehender Termin beendet laufende Abfolgen (lib/lead-sequences.ts stopReasonFor), ebenso eine andere Phase
+    ...(kommend ? [] : p.abfolgen.filter((a) => passt(a.kind)).flatMap((a) => abfolgeEintraege(p, a))),
+    // Der Anrufplan steht unabhängig davon auf „Heute“, aber nur ohne Termin und ohne Angebot
+    ...(passt(ANRUFPLAN) ? anrufplanEintraege(p) : []),
     ...rueckrufEintraege(p),
     ...vorschlagEintraege(p),
   ].sort((x, y) => x.at.localeCompare(y.at));

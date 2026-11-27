@@ -126,6 +126,8 @@ async function approveErsatz(leadId: string, now: Date) {
     where: { id: leadId },
     data: { stornoState: "approved", stornoDecidedAt: now, status: "Storno", ersatzGeschuldet: true, creditAmount: null },
   });
+  // Statuswechsel zentral (lib/lead-followup.ts): Nachfassen und Anrufplan enden
+  await import("@/lib/lead-followup").then((m) => m.syncFollowUpWithStatus(leadId, "Storno")).catch((e) => console.error("[status sync]", e));
 }
 
 /** Geparkte Leads des Produkts sofort verteilen, damit der Ersatzlead schnell kommt (wirft nie). */
@@ -163,6 +165,7 @@ async function approve(leadId: string, now: Date, anteil = 1) {
       ? [prisma.revenue.update({ where: { id: rev.id }, data: anteil >= 1 ? { cancelled: true } : { amount: Math.round((betrag - gutschrift) * 100) / 100 } })]
       : []),
   ]);
+  await import("@/lib/lead-followup").then((m) => m.syncFollowUpWithStatus(leadId, "Storno")).catch((e) => console.error("[status sync]", e));
 }
 
 /** Admin entscheidet über einen Storno in Prüfung (Altfälle vor der 50:50-Regel). "half" = Grenzfall 50:50. */
@@ -223,6 +226,7 @@ export async function adminRecordStorno(
       },
     });
     if (!r.count) return { ok: true, already: true, outsideWindow };
+    await import("@/lib/lead-followup").then((m) => m.syncFollowUpWithStatus(lead.id, "Storno")).catch((e) => console.error("[status sync]", e));
     await audit("storno.admin", {
       entity: "Lead",
       entityId: lead.id,
@@ -266,6 +270,7 @@ export async function adminRecordStorno(
     return r.count > 0;
   });
   if (!claimed) return { ok: true, already: true, outsideWindow };
+  await import("@/lib/lead-followup").then((m) => m.syncFollowUpWithStatus(lead.id, "Storno")).catch((e) => console.error("[status sync]", e));
   await audit("storno.admin", {
     entity: "Lead",
     entityId: lead.id,

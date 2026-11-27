@@ -9,6 +9,8 @@ import { leadLabel } from "@/lib/showup";
 import { ANTWORT_WARTEZEIT_MS, anrufPush, anrufStartZeitpunkt } from "@/lib/anruf-ausloeser";
 import type { LeadTimes } from "@/lib/calendar/lead-times";
 import { standardPush, type PushFn } from "@/lib/showup-server";
+import { ANRUFPLAN } from "@/lib/lead-phase";
+import { passtNochZurPhase } from "@/lib/lead-phase-server";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -50,6 +52,11 @@ export async function runAntwortAusloeser(now = new Date(), deps: { push?: PushF
     const lt = await verfuegbarkeit(l.customerId, l.id);
     const faellig = anrufStartZeitpunkt(new Date(l.outreachAt!.getTime() + ANTWORT_WARTEZEIT_MS), lt);
     if (faellig.getTime() > now.getTime()) continue;
+    // Zentrale Phasenprüfung direkt vor dem Anlegen (Ole, 27.11.2026): kein Anrufplan bei Termin, Angebot, Abschluss
+    if (await passtNochZurPhase(l.id, ANRUFPLAN, now)) {
+      await prisma.lead.updateMany({ where: { id: l.id, autoCallAt: null }, data: { autoCallAt: now } });
+      continue;
+    }
     // Eigene, spätere Wiedervorlage des Vermittlers bleibt; dann kein Anrufplan von selbst
     const eigene = !!l.followUpAt && l.followUpAt.getTime() > now.getTime() && !isReplaceableCallTask(l.followUpNote);
     const claimed = await prisma.lead.updateMany({

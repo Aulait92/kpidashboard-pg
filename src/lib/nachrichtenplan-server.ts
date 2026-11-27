@@ -152,8 +152,11 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
   }
   const { arbeitstageFuer } = await import("@/lib/call-attempts");
   const sms = await smsStreckeEintraege(leadId, lead.customerId, now).catch(() => [] as PlanEintrag[]);
+  const { ladePhase } = await import("@/lib/lead-phase-server");
+  const phase = (await ladePhase(leadId, now)) ?? undefined;
   const plan = planeNachrichten({
     now,
+    phase,
     arbeitstage: await arbeitstageFuer(lead.customerId),
     an,
     hi: anredeZeile(an, who.kontakt),
@@ -278,7 +281,7 @@ export async function ladeAutomatischeNachrichten(scope: Prisma.LeadWhereInput, 
   const ids = [...new Set([...termine.map((t) => t.leadId!), ...abfolgen.map((a) => a.leadId)])];
   if (!ids.length) return { anzahl: 0, leads: [] };
   const [leads, convs, kommend] = await Promise.all([
-    prisma.lead.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, phone: true, email: true, waConsent: true, waUnavailableAt: true } }),
+    prisma.lead.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, phone: true, email: true, waConsent: true, waUnavailableAt: true, status: true, stornoState: true, erasedAt: true } }),
     prisma.conversation.findMany({
       where: { leadId: { in: ids } },
       orderBy: { lastMessageAt: "desc" },
@@ -290,6 +293,8 @@ export async function ladeAutomatischeNachrichten(scope: Prisma.LeadWhereInput, 
   const convByLead = new Map<string, (typeof convs)[number]>();
   for (const c of convs) if (c.leadId && !convByLead.has(c.leadId)) convByLead.set(c.leadId, c);
   const mitTermin = new Set(kommend.map((k) => k.leadId));
+  // Phase je Kontakt (lib/lead-phase.ts): was nicht mehr passt, geht nicht raus und zählt nicht
+  const phasen = await import("@/lib/lead-phase-server").then((m) => m.phasenFuer(leads, now));
   const person = { nom: "", dat: "" };
   const out: AutomatischeNachrichten["leads"] = [];
   for (const lead of leads) {
@@ -297,6 +302,7 @@ export async function ladeAutomatischeNachrichten(scope: Prisma.LeadWhereInput, 
     const eigene = termine.filter((t) => t.leadId === lead.id);
     const eingabe: PlanEingabe = {
       now,
+      phase: phasen.get(lead.id),
       an: "sie",
       hi: "",
       person,

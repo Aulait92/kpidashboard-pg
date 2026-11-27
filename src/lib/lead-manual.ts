@@ -71,6 +71,8 @@ export async function createManualAppointment(opts: {
     }
     await prisma.lead.update({ where: { id: lead.id }, data: { status: "In Beratung", reached: true } });
   }
+  // Termin steht an (lib/lead-phase.ts): Nachfassen und Anrufplan der Phase davor enden, auch ohne Statuswechsel
+  await import("@/lib/lead-phase-server").then((m) => m.phasenWechsel(lead.id)).catch((e) => console.error("[phase]", e));
   const note = (opts.note ?? "").trim().slice(0, 500);
   await logLeadHistory(lead.id, "status", `Termin von Hand eingetragen: ${fmt(startsAt)} Uhr, ${terminArtLabel(mode)}${note ? `. Notiz: ${note}` : ""}`, {
     customerId: opts.customerId,

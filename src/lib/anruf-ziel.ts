@@ -1,6 +1,8 @@
 // Anrufliste: auf einen Blick, was im Gespräch zu tun ist (Ole, 16.11.2026: „Hier muss ich noch auf einen Blick sehen,
 // was ich im Gespräch tun soll. Bedarf abfragen, Termin ausmachen etc.“). Rein, ohne Datenbank, getestet.
 
+import { isCallPlanNote } from "@/lib/call-plan";
+
 export type AnrufZiel = { ziel: string; schritte: string[] };
 
 /** Kurze Bedarfsfragen je Produkt (Lead-Quelle bzw. Produktname). */
@@ -17,6 +19,9 @@ const tag = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Be
 /** Eigene Notiz statt Standardtext der App (z. B. „Nochmal anrufen“) */
 const GENERISCH = /^(nochmal (anrufen|melden)|wiedervorlage|nächsten schritt festlegen|rückruf)\.?$/i;
 
+/** Angebot liegt beim Kontakt: Entscheidung herbeiführen. */
+export const ANGEBOT_ZIEL: AnrufZiel = { ziel: "Entscheidung zum Angebot", schritte: ["Offene Fragen zum Angebot klären", "Abschluss machen oder nächsten Schritt festlegen"] };
+
 export function anrufZiel(c: {
   kind: "callback" | "followup";
   reason: string;
@@ -26,7 +31,12 @@ export function anrufZiel(c: {
   letzterTermin?: Date | null;
   /** Woher `reason` stammt: „chat“ = Anliegen des Kunden aus dem Chat (nie als „Ihre Notiz“, Ole 19.11.2026). Standard: eigene Notiz. */
   herkunft?: "notiz" | "chat";
+  /** Status des Kontakts: „Angebot gesendet“ geht vor jeder Notiz (Ole, 27.11.2026: Ziel stand noch auf „Termin vereinbaren“) */
+  status?: string | null;
 }): AnrufZiel {
+  if ((c.status ?? "").trim().toLowerCase() === "angebot gesendet") return ANGEBOT_ZIEL;
+  // Plan-Notiz „Anrufversuch 2 von 6“ ist kein Anliegen (nie „Ihre Notiz dazu: Anrufversuch …“)
+  if (isCallPlanNote(c.reason)) c = { ...c, reason: "" };
   const r = c.reason.toLowerCase();
   // Weiß der Assistent schon etwas (steht im Anrufmodus darüber), nur bestätigen statt neu abfragen (16.11.2026)
   const bedarf = (verb: string) => (c.known ? "Bekanntes kurz bestätigen, nur Fehlendes fragen" : `${verb}: ${bedarfsfragen(c.source)}`);
@@ -34,7 +44,7 @@ export function anrufZiel(c: {
     return { ziel: "Neuen Termin vereinbaren", schritte: ["Kurz nachfragen, was dazwischenkam", "Zwei Termine zur Wahl anbieten", "Termin direkt eintragen"] };
   }
   if (c.kind === "followup") {
-    if (/angebot/.test(r)) return { ziel: "Entscheidung zum Angebot", schritte: ["Offene Fragen zum Angebot klären", "Abschluss machen oder nächsten Schritt festlegen"] };
+    if (/angebot/.test(r)) return ANGEBOT_ZIEL;
     // Konkret statt „An das letzte Gespräch anknüpfen / Nächsten Schritt festlegen“ (Ole, 17.11.2026)
     const thema = c.source ? ` zu ${c.source}` : "";
     // Eigene Notiz klar benennen (Ole, 18.11.2026: „Ihre Notiz aufgreifen“ war unglücklich): als Frage gestellt, ist sie

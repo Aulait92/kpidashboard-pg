@@ -3,6 +3,7 @@
 // und daraus den Zeitpunkt für das Follow-up ableiten (Werktag vormittags,
 // deutsche Zeit). Bewusst ohne Laufzeit-Imports (Tests, Skripte).
 import { dayKey, fromDayKey } from "@/lib/vertrieb/dates";
+import { bundesweiteFeiertage } from "@/lib/versandruhe";
 
 // Klare Absagen: nie als Später-Interesse werten, auch wenn ein Zeitpunkt vorkommt.
 const HARD_NO = [
@@ -251,23 +252,12 @@ export function laterTiming(text: string | null | undefined, ref: Date, seed = "
 }
 
 // ─── Werktage (Mo–Fr ohne bundesweite Feiertage) ────────────────────────
-function easter(y: number): Ymd {
-  const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4;
-  const f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
-  const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
-  const month = Math.floor((h + l - 7 * m + 114) / 31), day = ((h + l - 7 * m + 114) % 31) + 1;
-  return { y, m: month, d: day };
-}
-
+// Feiertage aus lib/versandruhe.ts (eine Quelle für alle Versandfenster), dazu Heiligabend und Silvester
 const holidayCache = new Map<number, Set<string>>();
 function holidays(y: number): Set<string> {
   let s = holidayCache.get(y);
   if (!s) {
-    const e = easter(y);
-    s = new Set([
-      ...["01-01", "05-01", "10-03", "12-24", "12-25", "12-26", "12-31"].map((x) => `${y}-${x}`),
-      ...[-2, 1, 39, 50].map((n) => key(addDaysYmd(e, n))),
-    ]);
+    s = new Set([...bundesweiteFeiertage(y), `${y}-12-24`, `${y}-12-31`]);
     holidayCache.set(y, s);
   }
   return s;

@@ -405,6 +405,8 @@ export async function LeadDetailBody({
           herkunft: !lead.followUpNote && lead.status !== "Angebot gesendet" && conv?.attentionReason ? "chat" : "notiz",
           source: lead.source,
           known: conv?.qualificationSummary ?? null,
+          // Status geht vor (Ole, 27.11.2026): „Angebot gesendet“ → „Entscheidung zum Angebot“
+          status: lead.status,
         })
       : null;
   const [history, rates, files, postfachRaw, me, mailOff, unterlagen, angebotStaende] = await Promise.all([

@@ -858,6 +858,25 @@ export const AKTIONEN: Record<string, Aktion> = {
       };
     },
   },
+  nachfassen_bereinigen: {
+    beschreibung:
+      "Nachfassen bestehender Kontakte an den Stand anpassen (Ole, 27.11.2026, lib/lead-phase-server.ts): Abfolgen und Anrufplan, die nicht mehr passen (z. B. „Chat ruht“ oder „Anrufversuch X von 6“ bei Termin, Angebot, Abschluss), beenden; bei „Angebot gesendet“ ohne Nachfassen das Nachfassen zum Angebot starten. Sendet nichts. Idempotent. Ohne speichern=true nur Probelauf mit Zahlen je Kunde.",
+    felder: { speichern: "true = anpassen, sonst nur Probelauf", customerId: "optional: nur dieser Kunde" },
+    run: async (p) => {
+      const speichern = text(p.speichern) === "true";
+      const id = text(p.customerId, 40);
+      if (id && !(await kunde(id))) return { ok: false, error: "Kunde nicht gefunden." };
+      const { bereinigeNachfassen } = await import("@/lib/lead-phase-server");
+      const r = await bereinigeNachfassen({ echt: speichern, kunde: id || null });
+      const summe = r.jeKunde.reduce((n, k) => ({ abfolgen: n.abfolgen + k.abfolgen, schritte: n.schritte + k.schritte, anrufplan: n.anrufplan + k.anrufplan, angebot: n.angebot + k.angebotGestartet }), { abfolgen: 0, schritte: 0, anrufplan: 0, angebot: 0 });
+      if (speichern) await audit("leads.nachfassen_bereinigt", { details: { betroffen: r.betroffen, ...summe, kunden: r.jeKunde.length }, actor: OPS_ACTOR });
+      return {
+        ok: true,
+        info: `${speichern ? "Angepasst" : "Probelauf"}: ${r.betroffen} von ${r.geprueft} Kontakten betroffen, ${summe.abfolgen} Abfolgen mit ${summe.schritte} offenen Schritten, ${summe.anrufplan} Anrufpläne, ${summe.angebot} Mal Nachfassen zum Angebot${speichern ? " gestartet" : " zu starten"}${speichern ? "" : " (nichts gespeichert)"}.`,
+        daten: r.jeKunde,
+      };
+    },
+  },
   produkte_auflisten: {
     beschreibung: "Produktbuchungen eines Kunden auflisten (nur lesen, für IDs)",
     felder: { customerId: "Kunden-ID" },

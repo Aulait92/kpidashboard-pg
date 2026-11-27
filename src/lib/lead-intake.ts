@@ -395,6 +395,7 @@ export async function alsFalscheDatenVerloren(leadId: string, customerId: string
     where: { id: leadId },
     data: { status: reason.status, reached: false, closedAt: null, lostReason: reason.key, lostNote: note, lostAt: new Date(), lostEarly: false, disqualifyReason: reason.key },
   });
+  await import("@/lib/lead-followup").then((m) => m.syncFollowUpWithStatus(leadId, reason.status)).catch((e) => console.error("[status sync]", e));
   await (await import("@/lib/lead-history")).logLeadHistory(leadId, "status", `Verloren: ${reason.label} · ${note}`, { customerId });
 }
 

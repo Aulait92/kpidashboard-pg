@@ -7,6 +7,7 @@
 // Erstinformation als PDF im Anhang, Impressum, Datenschutz und Abmeldelink. Jeder Knopf ist ein Link auf die
 // Antwortseite /t/<token>; gespeichert wird dort erst mit einem Klick im Browser (Link-Scanner rufen Links nur ab).
 
+import { istRuhetag } from "@/lib/versandruhe";
 import { vermittlerBeruf } from "@/lib/vermittler-nennung";
 import { a, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
 import { erstanschreibenZweck, frageplan, outreachProdukt, v8Thema, type ErstanschreibenZweck, type FormAntwort } from "@/lib/whatsapp/erstanschreiben";
@@ -307,7 +308,8 @@ export function tagNach(d: Date, tage: number): string {
  */
 export function faelligerSchritt(o: { start: Date; stufe: number; now: Date }): (typeof TAKT)[number] | null {
   const s = TAKT[o.stufe];
-  if (!s || !sendeFenster(o.now)) return null;
+  // Nachfassen (Tag 2 bis 10) nie an Sonn- und bundesweiten Feiertagen (Ole, 27.11.2026, lib/versandruhe.ts): am nächsten Werktag
+  if (!s || !sendeFenster(o.now) || istRuhetag(o.now)) return null;
   const ziel = tagNach(o.start, s.tag - 1);
   const heute = berlinYmd(o.now);
   if (heute < ziel) return null;

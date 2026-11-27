@@ -371,6 +371,8 @@ export async function undoInboxAction(undo: UndoSnapshot): Promise<InboxResult> 
   });
   // Gerade gestartete Nachfass-Abfolge mit zurücknehmen.
   await stopSequences(lead.id, "Rückgängig gemacht", { since: new Date(Date.now() - 15 * 60 * 1000) }).catch((e) => console.error("[lead-sequences]", e));
+  // Rückgängig: Nachfassen und Anrufplan passend zum wiederhergestellten Stand (ohne neue Wiedervorlage)
+  await import("@/lib/lead-phase-server").then((m) => m.phasenWechsel(lead.id)).catch((e) => console.error("[phase]", e));
   await recordUsage("action", `undo.${undo.kind}`);
   refresh();
   return { ok: true };

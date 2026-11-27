@@ -13,6 +13,7 @@
 // Texte an Leads in beiden Fassungen (a(an, du, sie)), ohne Gedankenstriche; Vermittler-Oberfläche in Sie-Form.
 
 import { mitThema } from "@/lib/thema-artikel";
+import { naechsterVersandzeitpunkt } from "@/lib/versandruhe";
 import { blattUrl } from "@/lib/abschluss";
 import { a, anredeName, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
 import { ohneGedankenstriche } from "@/lib/gedankenstriche";
@@ -251,18 +252,11 @@ function berlinUm(tag: string, h: number): Date {
 const HOUR_MS = 60 * 60 * 1000;
 
 /**
- * Wann ein automatischer Schritt (WhatsApp oder E-Mail) frühestens rausgeht: wie runSequences nur Mo bis Sa 9 bis 19 Uhr
- * (lib/lead-sequences.ts inSendWindow). Ab `at` die nächste volle Stunde im Fenster, sonst `at` selbst.
+ * Wann ein automatischer Schritt (WhatsApp oder E-Mail) frühestens rausgeht: wie runSequences nur Mo bis Sa 9 bis 19 Uhr,
+ * nie an Sonn- und bundesweiten Feiertagen (lib/versandruhe.ts). Ab `at` die nächste volle Stunde im Fenster, sonst `at`.
  */
 export function naechsterVersand(at: Date): Date {
-  const imFenster = (d: Date) => {
-    const t = berlinTeile(d);
-    return !t.sonntag && t.stunde >= 9 && t.stunde < 19;
-  };
-  if (imFenster(at)) return at;
-  let d = new Date(Math.ceil(at.getTime() / HOUR_MS) * HOUR_MS);
-  for (let i = 0; i < 72 && !imFenster(d); i++) d = new Date(d.getTime() + HOUR_MS);
-  return d;
+  return naechsterVersandzeitpunkt(at);
 }
 
 /** Vorab-Check (Ole, 17.11.2026): Push an den Vermittler um 18 Uhr am Vorabend des Versands. */

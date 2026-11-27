@@ -64,6 +64,7 @@ export async function recordLeadProgress(
         where: { id: leadId },
         data: { status: RESET_STATUS, reached: true },
       });
+      await import("@/lib/lead-followup").then((m) => m.syncFollowUpWithStatus(leadId, RESET_STATUS)).catch((e) => console.error("[status sync]", e));
       return;
     }
 
@@ -106,6 +107,8 @@ export async function recordLeadProgress(
         ...(upgradeTo ? { status: upgradeTo } : {}),
       },
     });
+    // Statuswechsel zentral (lib/lead-followup.ts): Nachfassen und Anrufplan nach dem neuen Stand
+    if (upgradeTo) await import("@/lib/lead-followup").then((m) => m.syncFollowUpWithStatus(leadId, upgradeTo)).catch((e) => console.error("[status sync]", e));
   } catch (err) {
     console.error("[lead progress]", event, leadId, err instanceof Error ? err.message : err);
   }

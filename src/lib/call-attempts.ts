@@ -12,7 +12,9 @@
 
 import { anrufErledigt } from "@/lib/telefonat-server";
 import { updateLeadEditableFields } from "@/lib/airtable-write";
-import { CALL_ATTEMPT_LOCK_MS, CALL_ATTEMPTS_TARGET, STANDARD_ARBEITSTAGE, callPlanNote, fmtAttemptAt, isReplaceableCallTask, nextCallAttemptAt } from "@/lib/call-plan";
+import { CALL_ATTEMPT_LOCK_MS, CALL_ATTEMPTS_TARGET, STANDARD_ARBEITSTAGE, callPlanNote, fmtAttemptAt, isCallPlanNote, isReplaceableCallTask, nextCallAttemptAt } from "@/lib/call-plan";
+import { ANRUFPLAN } from "@/lib/lead-phase";
+import { passtNochZurPhase } from "@/lib/lead-phase-server";
 import { logLeadHistory } from "@/lib/lead-history";
 import { startSequence } from "@/lib/lead-sequences";
 import { prisma } from "@/lib/prisma";
@@ -76,6 +78,11 @@ export async function planNextCallAttempt(leadId: string, now = new Date()): Pro
     select: { customerId: true, callAttempts: true, lastCallAttemptAt: true, callPlanStartedAt: true, followUpAt: true, followUpNote: true },
   });
   if (!lead) return { nextAt: null, kept: false };
+  // Anrufplan nur ohne Termin und ohne Angebot (Ole, 27.11.2026, lib/lead-phase.ts): sonst keine „Anrufversuch X von 6“
+  if (await passtNochZurPhase(leadId, ANRUFPLAN, now)) {
+    if (isCallPlanNote(lead.followUpNote)) await prisma.lead.update({ where: { id: leadId }, data: { followUpAt: null, followUpNote: null } });
+    return { nextAt: null, kept: false };
+  }
   const arbeitstage = await arbeitstageFuer(lead.customerId);
   const own = lead.followUpAt && lead.followUpAt.getTime() > now.getTime() && !isReplaceableCallTask(lead.followUpNote);
   if (own) return { nextAt: null, kept: true };

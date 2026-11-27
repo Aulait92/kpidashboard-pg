@@ -46,10 +46,9 @@ describe("Nachfass-Abfolgen", () => {
   it("Versandfenster: Mo–Sa 9–19 Uhr Berlin", () => {
     expect(inSendWindow(T0)).toBe(true);
     expect(inSendWindow(SUNDAY)).toBe(false);
-    // „Chat ruht“ auch sonntags 10 bis 18 Uhr (Ole, 22.11.2026)
-    expect(inSendWindow(new Date("2026-11-22T10:00:00.000Z"), undefined, { von: 10, bis: 18 })).toBe(true); // So 11:00 Berlin
-    expect(inSendWindow(new Date("2026-11-22T08:00:00.000Z"), undefined, { von: 10, bis: 18 })).toBe(false); // So 9:00 Berlin
-    expect(inSendWindow(new Date("2026-11-22T17:30:00.000Z"), undefined, { von: 10, bis: 18 })).toBe(false); // So 18:30 Berlin
+    // Nie an Sonn- und Feiertagen, auch nicht „Chat ruht“ (Ole, 27.11.2026; vorher sonntags 10 bis 18 Uhr)
+    expect(inSendWindow(new Date("2026-11-22T10:00:00.000Z"), { von: 8, bis: 19 })).toBe(false); // So 11:00 Berlin
+    expect(inSendWindow(new Date("2026-12-25T10:00:00.000Z"))).toBe(false); // 1. Weihnachtstag (Freitag)
     expect(inSendWindow(new Date("2026-11-17T18:30:00.000Z"))).toBe(false); // 19:30 Berlin
   });
 
@@ -152,18 +151,21 @@ describe("Nachfass-Abfolgen", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
-  it("„Angebot gesendet“ allein startet kein Nachfassen mehr (P3), sondern die 3-Tage-Wiedervorlage; ohne Schalter bleibt alles wie bisher", async () => {
-    const lead = await newLead();
-    await syncFollowUpWithStatus(lead.id, "Angebot gesendet");
-    expect(await prisma.leadSequence.count({ where: { leadId: lead.id } })).toBe(0);
-    expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).followUpNote).toBe("Angebot nachfassen");
-    // Gestartet wird es erst mit dem Versand (lib/angebot-senden-server.ts)
+  it("„Angebot gesendet“ allein startet das Nachfassen zum Angebot (Ole, 27.11.2026), der Versand über die App ersetzt es; ohne Schalter die 3-Tage-Wiedervorlage", async () => {
+    const lead = await newLead({ status: "Angebot gesendet" });
+    await syncFollowUpWithStatus(lead.id, "Angebot gesendet", T0);
+    const status = await prisma.leadSequence.findFirstOrThrow({ where: { leadId: lead.id, stoppedAt: null } });
+    expect(status.kind).toBe("offer_status");
+    // Das Nachfassen plant den Anruf selbst (Tag 7): keine klassische Wiedervorlage zusätzlich
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).followUpNote).toBeNull();
+    // Versand über die App (lib/angebot-senden-server.ts): eigenes Nachfassen ersetzt es
     const seq = (await startSequence(lead.id, "offer", T0))!;
     expect(seq.kind).toBe("offer");
+    expect((await prisma.leadSequence.findUniqueOrThrow({ where: { id: status.id } })).stoppedAt).not.toBeNull();
 
     await prisma.agentConfig.update({ where: { customerId }, data: { followUpSequencesEnabled: false } });
-    const lead2 = await newLead();
-    await syncFollowUpWithStatus(lead2.id, "Angebot gesendet");
+    const lead2 = await newLead({ status: "Angebot gesendet" });
+    await syncFollowUpWithStatus(lead2.id, "Angebot gesendet", T0);
     expect(await prisma.leadSequence.count({ where: { leadId: lead2.id } })).toBe(0);
     expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead2.id } })).followUpNote).toBe("Angebot nachfassen");
     // ausgeschaltet → laufende Abfolge endet beim nächsten Schritt
@@ -193,7 +195,7 @@ describe("Nachfass-Abfolgen", () => {
 
   it("eine eigene, spätere Wiedervorlage wird nicht überschrieben; manuell stoppen geht", async () => {
     const later = new Date(T0.getTime() + 10 * DAY);
-    const lead = await newLead({ followUpAt: later, followUpNote: "Eigene Notiz" });
+    const lead = await newLead({ followUpAt: later, followUpNote: "Eigene Notiz", status: "Angebot gesendet" });
     const seq = await startSequence(lead.id, "offer", T0);
     await prisma.leadSequence.update({ where: { id: seq!.id }, data: { step: 1, nextAt: T0 } }); // direkt zum Anruf-Schritt
     await runSequences(T0);

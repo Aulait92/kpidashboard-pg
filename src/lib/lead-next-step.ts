@@ -111,6 +111,12 @@ export function activeBotChatWhere(now: Date): Prisma.ConversationWhereInput {
   return { botActive: true, lastMessageAt: { gte: new Date(now.getTime() - BOT_CHAT_ACTIVE_MS) } };
 }
 
+/**
+ * Abfolgen, die als nächster Schritt zählen: Wiedervorlage des Assistenten, Bedenkzeit (P5) und das laufende Nachfassen
+ * zum Angebot (27.11.2026: sonst stand bei „Angebot gesendet“ mit geplantem Nachfassen „Kein nächster Schritt“).
+ */
+export const NAECHSTER_SCHRITT_ABFOLGEN = ["recall", "offer_bedenkzeit", "offer_selbst_bedenkzeit", "offer", "offer_selbst", "offer_status"];
+
 /** Prisma-Bedingung: offener Lead OHNE nächsten Schritt (inklusive „Ergebnis fehlt“). Gleiche Regel wie nextStepState. */
 export function withoutNextStepWhere(now: Date): Prisma.LeadWhereInput {
   return {
@@ -120,7 +126,7 @@ export function withoutNextStepWhere(now: Date): Prisma.LeadWhereInput {
       { appointments: { none: upcomingAppointmentWhere(now) } },
       { conversations: { none: activeBotChatWhere(now) } },
       // Wiedervorlage des Assistenten (schedule_followup) bzw. Bedenkzeit zum Angebot (P5) ist ein nächster Schritt
-      { sequences: { none: { kind: { in: ["recall", "offer_bedenkzeit", "offer_selbst_bedenkzeit"] }, stoppedAt: null } } },
+      { sequences: { none: { kind: { in: NAECHSTER_SCHRITT_ABFOLGEN }, stoppedAt: null } } },
     ],
   };
 }
