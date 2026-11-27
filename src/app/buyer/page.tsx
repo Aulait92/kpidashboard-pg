@@ -41,6 +41,16 @@ export const metadata = { title: "Heute | performancegrowth" };
 
 type SearchParams = Promise<{ range?: string; from?: string; to?: string; lead?: string; anrufen?: string }>;
 
+/** Für den leeren Zustand: bekommt dieser Login Mitteilungen, und wie schnell schreibt der Assistent neue Leads an? */
+async function ladeHeuteLeer(customerId: string, userId: string | null, whatsapp: boolean): Promise<{ push: boolean; assistentMinuten: number | null }> {
+  const [web, app, agent] = await Promise.all([
+    userId ? prisma.pushSubscription.count({ where: { userId } }) : 0,
+    userId ? prisma.deviceToken.count({ where: { userId } }) : 0,
+    prisma.agentConfig.findUnique({ where: { customerId }, select: { active: true, outreachEnabled: true, outreachDelayMin: true } }),
+  ]);
+  return { push: web + app > 0, assistentMinuten: whatsapp && agent?.active && agent.outreachEnabled ? agent.outreachDelayMin : null };
+}
+
 export default async function BuyerHomePage({ searchParams }: { searchParams: SearchParams }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
@@ -75,7 +85,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
   }
   const morgen = morgenBerlin(new Date());
   const ua = (await headers()).get("user-agent");
-  const [data, customer, me, nudge, vorb, automatisch, appHinweis] = await Promise.all([
+  const [data, customer, me, nudge, vorb, automatisch, appHinweis, leer] = await Promise.all([
     loadInbox(ctx),
     prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, vermittlerDu: true, erstinformation: { select: { name: true, anrede: true } }, onboarding: { select: { offerId: true } } } }),
     ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true } }) : null,
@@ -86,6 +96,8 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     ladeAutomatischeNachrichten(leadScope(ctx), morgen.von, morgen.bis).catch(() => null),
     // iPhone-App (lib/app-store-server.ts): Hinweiskarte nur ohne App-Anmeldung, nie in der App, nicht in Vorschau/Demo
     ctx.userId && !ctx.preview && !ctx.demo ? ladeAppHinweis(ctx.userId, ua).catch(() => null) : null,
+    // Leerer Zustand mit Leo (lib/leo.ts): nur sagen, was stimmt (Mitteilungen an, Assistent schreibt selbst an)
+    ladeHeuteLeer(ctx.customerId, ctx.userId ?? null, whatsapp).catch(() => null),
   ]);
   // Wiedervorlage „Weiteres Produkt anbieten?“ fällig: kleiner Zusatz-Knopf zum Bestandskunden-Modul (lib/cross-sell-verkauf.ts),
   // nur mit Modul für alle und solange es nicht gebucht ist
@@ -170,7 +182,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
             <DatennutzungHeute ctx={ctx} />
             {erstinfoHint}
             {teamKarte}
-            <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={rechts} zuVorbereiten={zuVorbereiten} anrufen={anrufen} automatisch={automatisch} weiteresProdukt={weiteresProdukt} />
+            <TodayInbox data={data} leer={leer} newUi leadHref="/buyer?lead={id}" selectedLeadId={rechts} zuVorbereiten={zuVorbereiten} anrufen={anrufen} automatisch={automatisch} weiteresProdukt={weiteresProdukt} />
             {hinweise}
           </section>
           {breit ? null : (
@@ -214,7 +226,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
       <DatennutzungHeute ctx={ctx} />
       {erstinfoHint}
       {teamKarte}
-      <TodayInbox data={data} zuVorbereiten={zuVorbereiten} anrufen={anrufen} automatisch={automatisch} weiteresProdukt={weiteresProdukt} />
+      <TodayInbox data={data} leer={leer} zuVorbereiten={zuVorbereiten} anrufen={anrufen} automatisch={automatisch} weiteresProdukt={weiteresProdukt} />
       {hinweise}
     </main>
   );

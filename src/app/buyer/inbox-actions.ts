@@ -59,6 +59,8 @@ export type InboxResult =
       attempt?: CallAttemptResult & { nextLabel: string | null };
       /** Einmal fragen: Beratungsdokumentation vorbereiten? (nach dem ersten Termin-Ergebnis, BeratungsdokuFrageHost) */
       bdFrage?: boolean;
+      /** Lead steht mit dieser Aktion neu auf „Abschluss“ (Lead-ID): Konfetti im Toast (lib/konfetti.ts), sonst fehlt es. */
+      gewonnen?: string;
     }
   | { ok: false; error: string };
 
@@ -175,7 +177,7 @@ export async function callbackOutcomeResult(
   }
   await recordUsage("action", `callback.${outcome}`);
   refresh();
-  return { ok: true, undo: { kind: "lead", leadId, prev } };
+  return { ok: true, undo: { kind: "lead", leadId, prev }, ...(outcome === "won" && lead.status !== "Abschluss" ? { gewonnen: lead.id } : {}) };
 }
 
 const OUTCOME_STATUS: Record<string, string> = {
@@ -266,6 +268,7 @@ export async function appointmentOutcomeResult(
     ok: true,
     undo: { kind: "lead", leadId: lead.id, prev, appointment: { id: appt.id, status: appt.status, attendance: appt.attendance } },
     ...(bdFrage ? { bdFrage } : {}),
+    ...(outcome === "closed" && lead.status !== "Abschluss" ? { gewonnen: lead.id } : {}),
   };
 }
 

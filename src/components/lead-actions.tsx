@@ -143,7 +143,7 @@ export function LeadHeaderActions(p: Props) {
         ...(sparte ? { sparte } : {}),
       });
       if (!res.ok) return toast.show({ message: res.error, tone: "error" });
-      toast.show({ message: `Status: ${label}` });
+      toast.show({ message: `Status: ${label}`, feiern: res.gewonnen ? p.leadId : null });
       router.refresh();
       emitLeadAction(p.leadId);
     });

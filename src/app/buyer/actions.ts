@@ -200,7 +200,7 @@ export async function setLeadStatusAction(
   leadId: string,
   status: LeadStatus,
   opts?: { closeValue?: number | null; disqualifyReason?: string | null; sparte?: string | null },
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<{ ok: true; gewonnen?: boolean } | { ok: false; error: string }> {
   const writeCustomerId = await writableCustomerId(leadId);
   if (!writeCustomerId) {
     return { ok: false, error: previewError(await getCurrentSession()) };
@@ -293,7 +293,8 @@ export async function setLeadStatusAction(
   revalidatePath("/buyer/kanban");
   revalidatePath("/buyer/leads");
   revalidatePath(`/buyer/leads/${lead.id}`);
-  return { ok: true };
+  // Neu auf „Abschluss“: Konfetti im Toast (lib/konfetti.ts)
+  return isClosed && lead.status !== status ? { ok: true, gewonnen: true } : { ok: true };
 }
 
 // Speichert die in der Lead-Detail-Ansicht editierbaren Felder zurück

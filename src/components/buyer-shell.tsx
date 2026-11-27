@@ -157,7 +157,7 @@ export function BuyerShell({
   }
 
   return (
-    <ToastProvider>
+    <ToastProvider maskottchen>
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-white/90 backdrop-blur">
         <div className="mx-auto flex h-14 w-full max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
@@ -542,7 +542,7 @@ function BuyerShellA({
   ];
 
   return (
-    <ToastProvider>
+    <ToastProvider maskottchen>
       <div className="min-h-dvh md:pl-60">
         {/* Rechner: Seitenleiste */}
         <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-[color:var(--border)] bg-white px-3 pb-3 pt-5 md:flex">

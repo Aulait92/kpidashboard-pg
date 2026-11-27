@@ -126,7 +126,7 @@ export default async function PipelinePage() {
         })}
       </div>
       <div className="hidden lg:block" data-funktion="actions-dragstage--akquise-pipeline-per-drag-drop kanban--beim-verschieben-auf-verloren-grund-abfragen">
-        <Kanban columns={columns} cards={cards} move={dragStage} reasonColumn="VERLOREN" reasons={LOSS_REASONS} topOffset={230} />
+        <Kanban columns={columns} cards={cards} move={dragStage} reasonColumn="VERLOREN" reasons={LOSS_REASONS} feierSpalte="GEWONNEN" topOffset={230} />
       </div>
     </Seite>
   );

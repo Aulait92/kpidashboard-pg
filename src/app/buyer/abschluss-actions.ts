@@ -34,7 +34,7 @@ export async function abschlussStandAction(leadId: string): Promise<AbschlussSta
 }
 
 /** „Ja, abgeschlossen“ im Blatt: Termin ohne Ergebnis → Ergebnis am Termin, sonst wie „Abschluss“ auf Heute. */
-export async function abschlussEintragenAction(leadId: string): Promise<Ok<{ undo?: UndoSnapshot }>> {
+export async function abschlussEintragenAction(leadId: string): Promise<Ok<{ undo?: UndoSnapshot; gewonnen?: string }>> {
   const customerId = await writableCustomerId(leadId);
   if (!customerId) return { ok: false, error: VORSCHAU };
   const termin = await prisma.appointment.findFirst({
@@ -45,7 +45,7 @@ export async function abschlussEintragenAction(leadId: string): Promise<Ok<{ und
   const r = termin ? await appointmentOutcomeResult(termin.id, "closed", null) : await callbackOutcomeResult(leadId, "won", null);
   await recordUsage("action", "abschluss.blatt");
   refresh(leadId);
-  return r.ok ? { ok: true, undo: r.undo } : r;
+  return r.ok ? { ok: true, undo: r.undo, ...(r.gewonnen ? { gewonnen: r.gewonnen } : {}) } : r;
 }
 
 /** „Stimmt“ (eingabe null), Chip oder anderer Betrag (Eingabe-Einheit). */

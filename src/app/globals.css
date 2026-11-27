@@ -80,6 +80,16 @@ body {
 /* backwards statt both: nach der Animation keine eigene Ebene mehr (sonst
    würden Aufklapp-Menüs von der nächsten Zeile überdeckt). */
 .ui-fade-in { animation: ui-fade-in 180ms ease-out backwards; }
+/* Maskottchen Leo (components/leo.tsx): einmal dezent wippen beim Erscheinen, ohne Bewegung bei reduzierter Bewegung. */
+@keyframes leo-wippen {
+  0% { transform: translateY(6px) rotate(-3deg); opacity: 0; }
+  45% { transform: translateY(-3px) rotate(2deg); opacity: 1; }
+  75% { transform: translateY(1px) rotate(-1deg); }
+  100% { transform: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .leo-wippen { animation: leo-wippen 700ms ease-out backwards; transform-origin: 50% 90%; }
+}
 @keyframes ui-shimmer {
   from { background-position: -200% 0; }
   to { background-position: 200% 0; }

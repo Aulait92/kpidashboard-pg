@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition, type ReactNode } from "react";
 import clsx from "clsx";
+import { useToast } from "@/components/ui/toast";
 
 export type KanbanColumn = {
   id: string;
@@ -23,13 +24,16 @@ type Props = {
   reasonColumn?: string;
   reasons?: { id: string; label: string }[];
   showValue?: boolean;
+  /** Spalte, deren Erreichen gefeiert wird (Konfetti und Glückwunsch, lib/konfetti.ts), z. B. Gewonnen */
+  feierSpalte?: string;
   /** Platz über dem Board (Navigation, Überschrift …) in px, damit es genau bis zum Bildschirmrand reicht */
   topOffset?: number;
 };
 
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 
-export function Kanban({ columns, cards, move, reasonColumn, reasons, showValue, topOffset = 150 }: Props) {
+export function Kanban({ columns, cards, move, reasonColumn, reasons, showValue, feierSpalte, topOffset = 150 }: Props) {
+  const toast = useToast();
   const [moved, setMoved] = useState<Record<string, string>>({});
   const [order, setOrder] = useState<string[]>([]); // zuletzt verschobene Karten zuerst
   const [dragId, setDragId] = useState<string | null>(null);
@@ -74,6 +78,7 @@ export function Kanban({ columns, cards, move, reasonColumn, reasons, showValue,
     startTransition(async () => {
       try {
         await move(id, to, reason);
+        if (feierSpalte && to === feierSpalte) toast.show({ message: "Als gewonnen gespeichert", feiern: `vertrieb:${id}` });
       } catch {
         setMoved((m) => {
           const next = { ...m };

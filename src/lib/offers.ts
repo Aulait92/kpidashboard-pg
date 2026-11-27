@@ -701,9 +701,11 @@ export async function acceptOffer(
     await sendAcceptanceMail({ ...offerEff, company: offer.company?.trim() || business.company }, summary).catch((err) => reportError(err, "offer-accept-mail", { offer: offer.number }));
   }
 
+  // „Neuer Kunde: {Name}, {Paket}“ (Ole, 27.11.2026); Testangebote bleiben als solche erkennbar
+  const kundeName = offer.company?.trim() || business.company?.trim() || offer.contactName;
   await sendToAdmins({
-    title: `✅ Angebot angenommen: ${offer.company ?? offer.contactName}`,
-    body: `${offer.number} · ${name}`,
+    title: offer.isTest ? `✅ Testangebot angenommen: ${kundeName}` : `🎉 Neuer Kunde: ${kundeName}, ${PACKAGE_LABEL[normalizePackage(offer.package)]}`,
+    body: `${offer.number} · angenommen von ${name}`,
     url: offerAdminHref(offer),
     tag: `offer:${offer.id}`,
   }).catch((err) => reportError(err, "offer-accept-push"));

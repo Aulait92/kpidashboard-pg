@@ -115,6 +115,8 @@ export function useStepDone(): { done: StepDone } {
       const undo = res.undo;
       toast.show({
         message: res.attempt ? attemptMessage(message, res.attempt) : message,
+        // Abschluss: Konfetti und Glückwunsch, je Deal einmal (lib/konfetti.ts)
+        feiern: res.gewonnen,
         ...(undo ? { actionLabel: "Rückgängig", onAction: () => start(async () => { await undoInboxAction(undo); router.refresh(); }) } : {}),
       });
       router.refresh();

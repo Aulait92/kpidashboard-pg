@@ -31,6 +31,7 @@ export function AbschlussBlattKarte({ eintrag, mehrere = false }: { eintrag: Bla
       const undo = r.undo;
       toast.show({
         message: `${eintrag.label}: Abschluss gespeichert`,
+        feiern: r.gewonnen,
         ...(undo
           ? {
               actionLabel: "Rückgängig",

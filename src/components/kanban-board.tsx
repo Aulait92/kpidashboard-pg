@@ -8,6 +8,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowRightLeft, Clock, X } from "lucide-react";
 import { ActionSheet } from "@/components/ui/sheet";
+import { useToast } from "@/components/ui/toast";
 import { setLeadStatusAction } from "@/app/buyer/actions";
 import {
   CLOSED_STATUS,
@@ -148,6 +149,7 @@ export function KanbanBoard({
 }) {
   const COLUMNS = toColumns(phases);
   const router = useRouter();
+  const toast = useToast();
   const [leads, setLeads] = useState<KanbanLead[]>(initialLeads);
   const [dragLeadId, setDragLeadId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
@@ -200,6 +202,8 @@ export function KanbanBoard({
         setLeads(before);
         alert(`Status konnte nicht gesetzt werden: ${res.error}`);
       } else {
+        // Neu auf „Abschluss“ gezogen: Konfetti und Glückwunsch, je Deal einmal (lib/konfetti.ts)
+        if (res.gewonnen) toast.show({ message: `${lead.name ?? "Kontakt"}: Abschluss`, feiern: leadId });
         router.refresh();
       }
     });
