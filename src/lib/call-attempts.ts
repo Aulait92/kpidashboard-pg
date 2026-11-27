@@ -167,3 +167,14 @@ export async function registerCallAttempt(leadId: string, opts: { customerId: st
   });
   return { counted: true, attempts, nextAt: plan.nextAt?.toISOString() ?? null, keptFollowUp: plan.kept, auto: !!seq, mail };
 }
+
+/**
+ * Anrufplan stoppen (Ole, 27.11.2026: falsche Nummer): die Plan-Wiedervorlage bzw. ersetzbare Anruf-Aufgabe entfällt,
+ * eine eigene Wiedervorlage des Beraters bleibt. true, wenn etwas entfernt wurde.
+ */
+export async function stoppeAnrufplan(leadId: string): Promise<boolean> {
+  const l = await prisma.lead.findUnique({ where: { id: leadId }, select: { followUpNote: true } });
+  if (!l || !isReplaceableCallTask(l.followUpNote)) return false;
+  const r = await prisma.lead.updateMany({ where: { id: leadId, followUpNote: l.followUpNote }, data: { followUpAt: null, followUpNote: null, callbackSnoozedUntil: null } });
+  return r.count > 0;
+}

@@ -6,7 +6,7 @@ import { BuyerLeadsTable, type BuyerLeadRow } from "@/components/buyer-leads-tab
 import { ButtonLink, EmptyState } from "@/components/ui";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { getStornogruendePerLead } from "@/app/buyer/actions";
-import { isAdvisor, leadScope, type TeamCtx } from "@/lib/team";
+import { isAdvisor, ladeZustaendigFilter, leadScope, type TeamCtx } from "@/lib/team";
 import { loadRetainerConfig } from "@/lib/customer-spend";
 import { prisma } from "@/lib/prisma";
 import { findPhaseIn, pipelinePhasesFor, WHATSAPP_STATUS_LABELS } from "@/lib/products";
@@ -16,7 +16,7 @@ import { countWithoutNextStep, loadNextStepFlags, stateFor } from "@/lib/lead-ne
 import { getCallbackLeads } from "@/lib/whatsapp/outreach";
 import { nowMs } from "@/lib/now";
 import { keinWhatsAppIds } from "@/lib/kein-whatsapp-kennzeichen-server";
-import { X } from "lucide-react";
+import { PlayCircle, X } from "lucide-react";
 import { VERLUST_LABEL, verlustKey, type VerlustKey } from "@/lib/verlustgruende";
 import { verlorenImZeitraum } from "@/lib/verlustgruende-server";
 import { weitereEmailsSuche } from "@/lib/lead-emails";
@@ -71,11 +71,12 @@ export async function BuyerLeadsBody({
   endOfToday.setHours(23, 59, 59, 999);
   // Produktfilter (Ole, 26.11.2026): erst ab zwei Produkten; wirkt auf Liste und alle Zähler der Ansichten
   const produktFilter = await ladeProduktFilter(leadScope(team), params.produkt);
-  const nachProdukt = produktFilter.aktiv
-    ? produktWhere(produktFilter.aktiv)
-    : verlust && params.produkt
-    ? { source: params.produkt }
-    : {};
+  // Zuständig (Ole, 27.11.2026): nur Inhaber mit Team; wirkt wie der Produktfilter auf Liste und Zähler
+  const zustaendig = await ladeZustaendigFilter(team, params.zustaendig);
+  const nachProdukt = {
+    ...(produktFilter.aktiv ? produktWhere(produktFilter.aktiv) : verlust && params.produkt ? { source: params.produkt } : {}),
+    ...zustaendig.where,
+  };
   const leadRowsAll = await prisma.lead.findMany({
     where: {
       ...leadScope(team),
@@ -231,6 +232,8 @@ export async function BuyerLeadsBody({
   const byPhase = phase ? leads.filter((l) => findPhaseIn(phases, l.status)?.key === phase.key) : leads;
   const shown = byPhase.filter(activeView.match);
   if (activeView.key === "zu-tun") shown.sort((a, b) => zuTunRang(a, now) - zuTunRang(b, now));
+  // Fällige Anrufe: offene Kontakte mit Nummer und Wiedervorlage bis heute (Einstieg Anrufliste)
+  const faelligeAnrufe = shown.filter((l) => l.phone && !l.closedAt && l.followUpAt && Date.parse(String(l.followUpAt)) <= endOfToday.getTime()).length;
   const hrefFor = (key: string) => {
     const next = new URLSearchParams(Object.entries(params).filter(([k, v]) => v && k !== "ansicht") as [string, string][]);
     // „Zu erledigen“ ist der Standard und braucht keinen Parameter
@@ -280,6 +283,7 @@ export async function BuyerLeadsBody({
           ...(produktFilter.optionen.length > 1
             ? [{ kind: "select" as const, key: "produkt", label: "Produkt", options: produktFilter.optionen.map((p) => ({ value: p.value, label: p.label })) }]
             : []),
+          ...(zustaendig.optionen.length ? [{ kind: "select" as const, key: "zustaendig", label: "Zuständig", options: zustaendig.optionen }] : []),
         ]}
       />
       <nav className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1" aria-label="Ansichten">
@@ -310,9 +314,21 @@ export async function BuyerLeadsBody({
           );
         })}
       </nav>
+      {/* Anrufliste (Ole, 27.11.2026): bei „Zu erledigen“ mit fälligen Anrufen direkt in die Anrufliste auf „Heute“,
+          dort ein Kontakt nach dem anderen mit Ergebnis per Tipp */}
+      {activeView.key === "zu-tun" && basePath === "/buyer/kontakte" && faelligeAnrufe > 0 ? (
+        <div className="flex flex-wrap items-center gap-2 text-sm" data-anrufliste-einstieg>
+          <ButtonLink href="/buyer?anrufliste=1" icon={PlayCircle} size="md">
+            Anrufliste starten
+          </ButtonLink>
+          <span className="text-[color:var(--muted)]">
+            {faelligeAnrufe} {faelligeAnrufe === 1 ? "Anruf ist" : "Anrufe sind"} heute dran
+          </span>
+        </div>
+      ) : null}
       <BuyerLeadsTable
         leads={shown}
-        title={[crossSell ? CROSS_SELL_LABEL : activeView.key === "alle" ? "Alle Kontakte" : activeView.label, phase?.label, produktFilter.aktiv?.label].filter(Boolean).join(" · ")}
+        title={[crossSell ? CROSS_SELL_LABEL : activeView.key === "alle" ? "Alle Kontakte" : activeView.label, phase?.label, produktFilter.aktiv?.label, zustaendig.aktivLabel].filter(Boolean).join(" · ")}
         statusLabels={WHATSAPP_STATUS_LABELS}
         showLeadCost={!(await loadRetainerConfig(customerId))}
         detailBase={detailBase}

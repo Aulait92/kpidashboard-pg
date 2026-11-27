@@ -12,7 +12,7 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { parseRangeFromSearchParams } from "@/lib/date-ranges";
 import { produktWhere } from "@/lib/produkt-filter";
 import { ladeProduktFilter } from "@/lib/produkt-filter-server";
-import { leadScope } from "@/lib/team";
+import { ladeZustaendigFilter, leadScope } from "@/lib/team";
 import { cn } from "@/lib/utils";
 
 // Neue Oberfläche: „Kontakte“ = Leads-Liste und Pipeline auf einer Seite.
@@ -28,6 +28,7 @@ type SearchParams = Promise<{
   phase?: string;
   modus?: string;
   produkt?: string;
+  zustaendig?: string;
 }>;
 
 export const dynamic = "force-dynamic";
@@ -43,10 +44,12 @@ export default async function KontaktePage({ searchParams }: { searchParams: Sea
 
   // Produktfilter (Ole, 26.11.2026) in der Pipeline; die Liste lädt ihn selbst (components/buyer-leads-body.tsx)
   const produktFilter = pipeline ? await ladeProduktFilter(leadScope(session), sp.produkt) : null;
+  const team = { customerId: session.customerId, userId: session.userId, teamRole: session.teamRole };
+  const zustaendig = pipeline ? await ladeZustaendigFilter(team, sp.zustaendig) : null;
 
   // Umschalter behält Zeitraum und Produkt; Suche/Ansicht gelten nur für die Liste.
   const keep = new URLSearchParams();
-  for (const k of ["range", "from", "to", "produkt"] as const) if (sp[k]) keep.set(k, sp[k]!);
+  for (const k of ["range", "from", "to", "produkt", "zustaendig"] as const) if (sp[k]) keep.set(k, sp[k]!);
   const hrefFor = (mode: "liste" | "pipeline") => {
     const p = new URLSearchParams(keep);
     if (mode === "pipeline") p.set("modus", "pipeline");
@@ -88,20 +91,25 @@ export default async function KontaktePage({ searchParams }: { searchParams: Sea
         <Suspense fallback={<div className="mt-6 text-base text-[color:var(--muted)]">Lade Kontakte …</div>}>
           {pipeline ? (
             <>
-              {produktFilter && produktFilter.optionen.length > 1 ? (
+              {(produktFilter && produktFilter.optionen.length > 1) || zustaendig?.optionen.length ? (
                 <div className="mb-4">
                   <FilterChips
                     noSearch
-                    fields={[{ kind: "select", key: "produkt", label: "Produkt", options: produktFilter.optionen.map((p) => ({ value: p.value, label: p.label })) }]}
+                    fields={[
+                      ...(produktFilter && produktFilter.optionen.length > 1
+                        ? [{ kind: "select" as const, key: "produkt", label: "Produkt", options: produktFilter.optionen.map((p) => ({ value: p.value, label: p.label })) }]
+                        : []),
+                      ...(zustaendig?.optionen.length ? [{ kind: "select" as const, key: "zustaendig", label: "Zuständig", options: zustaendig.optionen }] : []),
+                    ]}
                   />
                 </div>
               ) : null}
               <BuyerKanbanBody
                 customerId={session.customerId}
-                scope={{ ...leadScope(session), ...produktWhere(produktFilter?.aktiv ?? null) }}
+                scope={{ ...leadScope(session), ...produktWhere(produktFilter?.aktiv ?? null), ...(zustaendig?.where ?? {}) }}
                 range={range}
                 // Produkt im Schlüssel: Wechsel des Filters lädt das Board neu (wie beim Zeitraum)
-                rangeKey={`${range.from.toISOString()}-${range.to.toISOString()}-${produktFilter?.aktiv?.value ?? ""}`}
+                rangeKey={`${range.from.toISOString()}-${range.to.toISOString()}-${produktFilter?.aktiv?.value ?? ""}-${zustaendig?.aktivLabel ?? ""}`}
                 detailBase="/buyer/kontakte/"
                 detailSuffix="?von=pipeline"
                 minBoardWidth={960}

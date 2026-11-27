@@ -8,6 +8,8 @@ import { BellRing, CheckCircle2, UserPen, FileCheck2, FileText, Loader2, Mail, P
 import { Button, Card } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { addLeadNoteAction, deleteLeadNoteAction, setPolicyDoneAction } from "@/app/buyer/lead-history-actions";
+import { falscheNummerResult } from "@/app/buyer/next-step-actions";
+import { useRouter } from "next/navigation";
 import type { LeadHistoryEntry, LeadHistoryKind } from "@/lib/lead-history";
 import { cn } from "@/lib/utils";
 import { oeffneLeadMail } from "@/components/lead-mail";
@@ -45,6 +47,7 @@ export function LeadHistory({
   readOnly?: boolean;
 }) {
   const toast = useToast();
+  const router = useRouter();
   const [history, setHistory] = useState(initial);
   const [text, setText] = useState("");
   const [pending, start] = useTransition();
@@ -61,7 +64,24 @@ export function LeadHistory({
       if (!res.ok) return toast.show({ message: res.error, tone: "error" });
       setHistory(res.history);
       setText("");
-      toast.show({ message: "Notiz gespeichert" });
+      // Notiz als Anruf-Ergebnis erkannt (Ole, 27.11.2026): Versuch gezählt bzw. bei falscher Nummer der nächste Schritt
+      const h = res.hinweis;
+      if (h?.art === "falsche_nummer") {
+        toast.show({
+          message: `Notiz gespeichert. ${h.text}`,
+          durationMs: 10000,
+          actionLabel: h.mail ? "Richtige Nummer per E-Mail erfragen" : "Als falsche Daten abschließen",
+          onAction: () =>
+            start(async () => {
+              const r = await falscheNummerResult(leadId);
+              if (!r.ok) return toast.show({ message: r.error, tone: "error" });
+              toast.show({ message: r.weg === "mail" ? "E-Mail mit der Bitte um die richtige Nummer gesendet" : "Verloren: falsche Daten" });
+              router.refresh();
+              emitLeadAction(leadId);
+            }),
+        });
+      } else toast.show({ message: h ? `Notiz gespeichert. ${h.text}` : "Notiz gespeichert" });
+      if (h) router.refresh();
       emitLeadAction(leadId);
     });
   const remove = (id: string) =>
