@@ -516,6 +516,8 @@ async function handle(req: Request): Promise<Response> {
       after(() => import("@/lib/monatsbericht/server").then((m) => m.runMonthlyReports(now, { limit: 3 })).catch((e: unknown) => reportError(e, "cron-monatsbericht")));
     }
   }
+  // Wochen-Mail „Ihr Team diese Woche“ an Inhaber mit Team (lib/team-woche.ts): montags ab 7 Uhr, je Kunde einmal
+  after(() => import("@/lib/team-woche").then((m) => m.runTeamWochenMail(now)).catch((e: unknown) => reportError(e, "cron-team-woche")));
   // Meta-Kosten je Anzeige und Tag (lib/anzeige-kosten.ts): einmal täglich gegen 5/6 Uhr Berlin die letzten 7 Tage,
   // beim ersten Lauf je Werbekonto bis 90 Tage zurück, nie vor dem Startdatum des Kunden (nach der Antwort)
   if (now.getUTCHours() === 4 && now.getUTCMinutes() < 5) {

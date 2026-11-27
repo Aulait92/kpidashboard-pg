@@ -4,12 +4,15 @@
 
 import { prisma } from "@/lib/prisma";
 import { onLeadStatus } from "@/lib/lead-sequences";
+import { isCallPlanNote } from "@/lib/call-plan";
 import { NACH_ABSCHLUSS_TODOS } from "@/lib/vertraege-shared";
 
 /** Wiedervorlage nach dem Abschluss (gleicher Text wie lib/lead-history POLICY_TODO). */
 export const POLICY_TODO = "Police fertig machen";
 
 const DONE_STATUSES = new Set(["abschluss", "kein interesse", "disqualifiziert"]);
+/** Status, mit denen der Lead erreicht ist (Anrufplan endet). */
+const FORTSCHRITT = new Set(["im gespräch", "termin vereinbart", "in beratung", "angebot gesendet", "abschluss"]);
 
 /** Aufgaben nach dem Abschluss: unabhängig von Terminen, bleiben immer stehen. */
 const istNachAbschlussAufgabe = (note: string | null | undefined) => !!note && (note === POLICY_TODO || NACH_ABSCHLUSS_TODOS.some((t) => note.startsWith(t)));
@@ -51,6 +54,14 @@ export async function syncFollowUpWithStatus(leadId: string, status: string | nu
     console.error("[lead-sequences]", e);
     return { started: false };
   });
+  // Erreicht (Ole, 27.11.2026): geht der Lead nach vorn, endet der Anrufplan; die Plan-Wiedervorlage „Anrufversuch X von 6“
+  // bleibt sonst als veraltete Aufgabe liegen
+  if (FORTSCHRITT.has(s)) {
+    const l = await prisma.lead.findUnique({ where: { id: leadId }, select: { followUpNote: true } });
+    if (isCallPlanNote(l?.followUpNote)) {
+      await prisma.lead.updateMany({ where: { id: leadId, followUpNote: l!.followUpNote }, data: { followUpAt: null, followUpNote: null, callbackSnoozedUntil: null } });
+    }
+  }
   if (s === "abschluss") {
     // Nach dem Abschluss kommt noch die Police (Ole, 13.11.2026): Wiedervorlage für heute,
     // „Erledigt“ hakt sie ab. Ist die Police schon fertig, entfällt die Wiedervorlage.

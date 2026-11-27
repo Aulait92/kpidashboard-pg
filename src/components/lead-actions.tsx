@@ -16,6 +16,9 @@ import {
   MessageCircle,
   MoreHorizontal,
   Phone,
+  PhoneCall,
+  PhoneMissed,
+  PhoneOff,
   Pencil,
   ShieldX,
   Trash2,
@@ -28,7 +31,8 @@ import { UebertragungKnoepfe } from "@/components/uebertragung-knoepfe";
 import { eraseLeadAction, setLeadStatusAction, updateLeadDetailsAction } from "@/app/buyer/actions";
 import { startLeadChatAction } from "@/app/buyer/lead-manual-actions";
 import { ManualTerminForm, SlotPicker } from "@/components/lead-booking";
-import { clearFollowUpResult, setFollowUpResult } from "@/app/buyer/inbox-actions";
+import { callbackOutcomeResult, clearFollowUpResult, followUpNotReachedResult, setFollowUpResult } from "@/app/buyer/inbox-actions";
+import { falscheNummerResult } from "@/app/buyer/next-step-actions";
 import { Button, Card } from "@/components/ui";
 import { ActionSheet, Sheet, type SheetAction } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
@@ -360,6 +364,34 @@ export function LeadHeaderActions(p: Props) {
           />
           <ActionTile icon={MoreHorizontal} label="Mehr" onClick={() => setOpen("more")} />
         </div>
+        {/* Anruf-Ergebnis mit einem Tipp (Ole, 27.11.2026: Lohmanns Team ruft vom Bürotelefon an und schrieb das Ergebnis
+            als Notiz). Sekundär, damit „Anrufen“ die Hauptaktion bleibt; „Erreicht“ öffnet die Auswahl Termin, Angebot … */}
+        {p.phone && p.askAfterCall && !won && !lost && !p.storniert ? (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5" data-anruf-ergebnis>
+            <span className="w-full text-xs text-[color:var(--muted)] sm:w-auto sm:pr-1">Angerufen?</span>
+            <div className="grid flex-1 grid-cols-3 gap-1.5 sm:flex sm:flex-none">
+              <Button variant="secondary" icon={PhoneCall} onClick={() => setAfterCall(true)} className="h-10 px-2 text-sm sm:h-8 sm:px-3">
+                Erreicht
+              </Button>
+              <Button
+                variant="secondary"
+                icon={PhoneMissed}
+                onClick={() => followUp(() => (p.followUpAt ? followUpNotReachedResult(p.leadId) : callbackOutcomeResult(p.leadId, "not_reached")), `${p.name ?? "Lead"}: nicht erreicht`)}
+                className="h-10 px-2 text-sm sm:h-8 sm:px-3"
+              >
+                Nicht erreicht
+              </Button>
+              <Button
+                variant="secondary"
+                icon={PhoneOff}
+                onClick={() => followUp(() => falscheNummerResult(p.leadId), `${p.name ?? "Lead"}: falsche Nummer eingetragen`)}
+                className="h-10 px-2 text-sm sm:h-8 sm:px-3"
+              >
+                Falsche Nummer
+              </Button>
+            </div>
+          </div>
+        ) : null}
         {/* Handy (Ole, 16.11.2026: „Wo kann ich auf gewonnen/verloren setzen?“): oben rechts ist dafür kein Platz.
             UX-Runde 19.11.2026: unter den Aktionen, damit „Anrufen“ als Erstes kommt; ruhiger und flacher */}
         {!p.storniert ? (

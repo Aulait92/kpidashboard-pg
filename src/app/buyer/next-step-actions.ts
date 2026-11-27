@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
 import { updateLeadEditableFields } from "@/lib/airtable-write";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { writableCustomerId } from "@/lib/buyer-write";
-import { ladeNichtErreichtHinweis, planNextCallAttempt, registerCallAttempt, type CallAttemptResult } from "@/lib/call-attempts";
+import { ladeNichtErreichtHinweis, planNextCallAttempt, registerCallAttempt, stoppeAnrufplan, type CallAttemptResult } from "@/lib/call-attempts";
 import { fmtAttemptAt } from "@/lib/call-plan";
 import { formWithOverrides } from "@/lib/lead-stammdaten";
 import { a, anredeRohAusForm, anredeZeile, asAnsprache, namePartsFromForm, type Ansprache } from "@/lib/ansprache";
@@ -519,4 +519,22 @@ export async function nummerPerMailResult(leadId: string): Promise<InboxResult> 
   await recordUsage("action", "lost.falsche_daten.nummer_mail");
   refresh(lead.id);
   return { ok: true, undo };
+}
+
+/**
+ * „Falsche Nummer“ nach einem Anruf oder aus einer Notiz (Ole, 27.11.2026): Anrufplan stoppen; mit E-Mail-Adresse die
+ * richtige Nummer per E-Mail erfragen (Kontakt bleibt offen), sonst „Verloren: falsche Daten“.
+ */
+export async function falscheNummerResult(leadId: string): Promise<LostResult & { weg?: "mail" | "verloren" }> {
+  const customerId = await writableCustomerId(leadId);
+  if (!customerId) return { ok: false, error: PREVIEW };
+  const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId }, select: { id: true, email: true } });
+  if (!lead) return { ok: false, error: "Lead nicht gefunden." };
+  await stoppeAnrufplan(lead.id);
+  if (lead.email?.trim() && !(await mailFeaturesOffFor(customerId))) {
+    const r = await nummerPerMailResult(lead.id);
+    if (r.ok) return { ...r, weg: "mail" };
+  }
+  const r = await markLeadLostResult(lead.id, { reason: "falsche_daten" });
+  return r.ok ? { ...r, weg: "verloren" } : r;
 }

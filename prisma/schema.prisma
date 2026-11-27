@@ -402,6 +402,8 @@ model Customer {
   campaignRuns                   CampaignRun[]
   // Monatsberichte (lib/monatsbericht): je Kunde abschaltbar
   monthlyReportsOff              Boolean                   @default(false)
+  // Wochen-Mail „Ihr Team diese Woche“ (lib/team-woche.ts): zuletzt gesendete Woche (Montag YYYY-MM-DD), gegen Doppelversand
+  teamWocheGesendet              String?
   monthlyReports                 MonthlyReport[]
   campaignWishes                 CampaignWish[]
   campaignHealth                 CampaignHealth[]
@@ -1190,6 +1192,8 @@ model User {
   // am Konto aus ist). Gilt nur in Teams (mehr als ein Login).
   leadMailScope              String?
   leadPushScope              String?
+  // Wochen-Mail „Ihr Team diese Woche“ an Inhaber mit Team (Ole, 27.11.2026, lib/team-woche.ts): abbestellt
+  teamWocheMailOff           Boolean             @default(false)
   linkedInConnection         LinkedInConnection?
 
   customer       Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
