@@ -22,3 +22,18 @@ describe("Datumseingabe am Handy", () => {
     expect(datumGueltig("01.01.1890", { min: 1900 })).toBeNull();
   });
 });
+
+describe("Weitertippen nach dem automatischen Punkt (Ole, 28.11.2026: nur 4 Zahlen möglich)", () => {
+  const tippe = (ziffern: string) => [...ziffern].reduce((feld, z) => datumBeimTippen(feld + z), "");
+  it("Ziffer für Ziffer bis zum vollen Datum", () => {
+    expect(tippe("12031985")).toBe("12.03.1985");
+    expect(tippe("01011950")).toBe("01.01.1950");
+    expect(tippe("120319851")).toBe("12.03.1985");
+  });
+  it("Überzählige Ziffern wandern weiter, Punkte am Ende bleiben", () => {
+    expect(datumBeimTippen("12.031")).toBe("12.03.1");
+    expect(datumBeimTippen("12.03.19")).toBe("12.03.19");
+    expect(datumBeimTippen("12.")).toBe("12.");
+    expect(datumBeimTippen("12.03.")).toBe("12.03.");
+  });
+});

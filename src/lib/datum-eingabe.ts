@@ -7,9 +7,15 @@ export function datumBeimTippen(roh: string): string {
   const s = roh.replace(/[^\d.]/g, "");
   if (s.includes(".")) {
     // Mit Punkten getippt bzw. eingefügt: Teile auf 2/2/4 Ziffern begrenzen, nicht umformen
-    const [t = "", m = "", j = ""] = s.split(".");
+    const parts = s.split(".");
+    let [t = "", m = "", j = ""] = parts;
+    // Weitergetippt nach dem automatisch gesetzten Punkt (Ole, 28.11.2026: „nur 4 Zahlen“): überzählige Ziffern
+    // wandern in den nächsten Teil statt abgeschnitten zu werden („12.031“ → „12.03.1“)
+    if (parts.length === 1 && t.length > 2) [t, m] = [t.slice(0, 2), t.slice(2)];
+    if (parts.length <= 2 && m.length > 2) [m, j] = [m.slice(0, 2), m.slice(2) + j];
     const teile = [t.slice(0, 2), m.slice(0, 2), j.slice(0, 4)];
-    return s.split(".").length > 2 ? teile.join(".") : s.split(".").length > 1 ? `${teile[0]}.${teile[1]}` : teile[0];
+    const n = parts.length > 2 || j ? 3 : parts.length > 1 || m ? 2 : 1;
+    return teile.slice(0, n).join(".");
   }
   const z = s.slice(0, 8);
   if (z.length <= 2) return z;
