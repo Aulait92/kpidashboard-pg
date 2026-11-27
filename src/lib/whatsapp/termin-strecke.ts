@@ -263,6 +263,10 @@ export function policenVortagSatz(an: Ansprache, person?: { nom: string } | null
  * interaktive Nachricht („Einverstanden“ / „Lieber nicht“, Rechtsprüfung A1), die das Policen-Modul beantwortet.
  * null = schon gebeten, Funktion aus (Notschalter, Ablage nicht eingerichtet), Minderjährige, Lead sagt „keine
  * Versicherungen“ bzw. gelöschter Lead.
+ * Ersatzweg bei null (Ole, 27.11.2026: keine Funktion fällt stillschweigend weg): Der Schluss nennt in „Legen Sie zum
+ * Termin gern bereit“ die Unterlagen (Kfz: Fahrzeugschein und letzte Rechnung, PKV: Police mit Beitragsschreiben, bei
+ * Komplettcheck die Verträge), Test tests/integration/kfz-bitte-reihenfolge.test.ts. Noch ohne Ersatz: Sachsparten ohne
+ * Komplettcheck (keine Policen in der Liste) und das Nachhaken bei Kfz (kfzUnterlagenOffen false = kein Nachhaken).
  */
 async function policenBitteSchritt(k: StreckenKontext, einleitung: string | null, ohneFlow = false): Promise<Schritt | null> {
   if (!k.leadId) return null;

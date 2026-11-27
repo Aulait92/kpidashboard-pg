@@ -70,7 +70,7 @@ import {
 } from "@/lib/whatsapp/gespraech";
 import { fernerTerminwunsch, mehrAls7Tage, wiedervorlageAm } from "@/lib/whatsapp/termin-vorschlaege";
 import { lehntZeitenAb } from "@/lib/whatsapp/buchungslink";
-import { folgefragen, spartenDesLeads } from "@/lib/preise/rechner-angaben";
+import { folgefragen, spartenDesLeads, teilangabenErhalten } from "@/lib/preise/rechner-angaben";
 import { istTierStrecke } from "@/lib/whatsapp/tier-fragen";
 import { alsTkvUmfang, TKV_WUNSCH_TEXT, tkvAngabenNormal, tkvUmfangAusVerlauf, tkvUmfangVon } from "@/lib/tkv-umfang";
 import { tkvUmfangMerken } from "@/lib/tkv-umfang-server";
@@ -359,7 +359,9 @@ export function buildSystemPrompt(
   const formate = state.formate ?? TERMIN_FORMATE_STANDARD;
   const booked = state.upcoming
     ? [
-        `BEREITS GEBUCHTER TERMIN: ${formatSlotDE(state.upcoming.startsAt.toISOString())} Uhr (${terminArtLabel(state.upcoming.mode)})${state.upcoming.meetUrl ? `, Video-Link: ${state.upcoming.meetUrl}` : ""}.`,
+        `BEREITS GEBUCHTER TERMIN: ${formatSlotDE(state.upcoming.startsAt.toISOString())} Uhr (${terminArtLabel(state.upcoming.mode)}).`,
+        // Fall Lohmann (Ole, 27.11.2026): Link kam ohne Kontext mitten in der Vorbereitung
+        "Den Video-Link schickt die App selbst (Buchungsnachricht, Erinnerungen und auf Nachfrage mit Termin und Uhrzeit): schreib nie selbst einen Link.",
         "Dieser Lead hat schon einen Termin (ggf. selbst über die Buchungsseite gebucht). Buche keinen zusätzlichen Termin (kein book_appointment) und qualifiziere nicht mehr. Hast du den Termin in diesem Chat noch nicht bestätigt, bestätige ihn in deiner nächsten Nachricht kurz mit Datum und Uhrzeit.",
         state.nachBuchung ?? "Beantworte Fragen freundlich und kurz.",
         "Möchte der Lead VERSCHIEBEN: hole mit get_available_slots freie Zeiten, biete 2-3 an und nutze nach seiner Wahl reschedule_appointment. Bestätige danach die neue Zeit.",
@@ -1051,7 +1053,9 @@ export async function runBotTurn(
     recall: { am: Date } | null;
     /** Keine zwei freien Zeiten: Aufgabe für den Vermittler, der Lead hört „meldet sich persönlich“ (Ole, 22.11.2026) */
     kalenderVoll: { einleitung: string | null } | null;
-  } = { gebucht: null, vorschlag: null, komplett: null, emailOk: false, email: null, zusage: false, partnerVor: null, recall: null, kalenderVoll: null };
+    /** Termin in diesem Zug verschoben (der Assistent bestätigt die neue Zeit samt Link) */
+    verschoben: boolean;
+  } = { gebucht: null, vorschlag: null, komplett: null, emailOk: false, email: null, zusage: false, partnerVor: null, recall: null, kalenderVoll: null, verschoben: false };
   /** Wiedervorlage zum Wunschtag (scheduleBotRecall, Abfolge „recall“); false = nicht möglich (kein Lead, Assistent aus). */
   const legeWiedervorlage = async (tag: Date, anlass: string | null): Promise<boolean> => {
     if (!conversation.leadId) return false;
@@ -1374,7 +1378,9 @@ export async function runBotTurn(
         }
         await persistInternal(conversation.id, "qualification", { ...input, angaben }); // Audit-Log
         // Strukturierte Punkte zusätzlich zum Fließtext; neue Angaben ergänzen die bisherigen.
-        const data = angaben !== undefined ? mergeQualificationData(prevData, angaben) : undefined;
+        // Mehrteilige Angaben (Kfz-Fahrer, Fahrzeugdaten, Gebäude): ein schon bekannter Teil geht nicht verloren (Fall Lohmann)
+        const ganz = angaben && typeof angaben === "object" && !Array.isArray(angaben) ? teilangabenErhalten(cleanQualificationData(prevData), angaben as Record<string, unknown>) : angaben;
+        const data = ganz !== undefined ? mergeQualificationData(prevData, ganz) : undefined;
         await prisma.conversation.update({
           where: { id: conversation.id },
           data: {
@@ -1509,6 +1515,7 @@ export async function runBotTurn(
               von: upcoming.startsAt.toISOString(),
               auf: res.start,
             });
+            zug.verschoben = true;
             content =
               `Termin verschoben auf ${formatSlotDE(res.start)}` +
               (res.meetUrl ? `. Video-Link: ${res.meetUrl}` : "") +
@@ -1625,6 +1632,21 @@ export async function runBotTurn(
     return;
   }
 
+  // Video-Link nur mit Kontext (Fall Lohmann, Ole 27.11.2026: „Vielen Dank! Den Link finden Sie hier: …“ kam mitten in der
+  // Vorbereitung statt der Bitte um die Unterlagen): Den Link schickt nur die App, mit Termin und Uhrzeit, und nur auf
+  // ausdrückliche Frage; sonst steht er in der Buchungsnachricht und in den Erinnerungen (Vortag, 15 Min. vorher).
+  let linkText: string | null = null;
+  if (upcoming?.mode === "video" && upcoming.meetUrl && !zug.gebucht && !zug.verschoben) {
+    const { fragtNachVideoLink, ohneTerminLink, videoLinkText } = await import("@/lib/whatsapp/gespraech");
+    if (latest?.direction === "inbound" && !opts.anstoss && fragtNachVideoLink(latest.body)) linkText = videoLinkText(ansprache, person, upcoming.startsAt, upcoming.meetUrl);
+    if (finalText && (linkText || finalText.includes(upcoming.meetUrl))) {
+      const ohne = ohneTerminLink(finalText, upcoming.meetUrl);
+      if (ohne !== finalText) await persistInternal(conversation.id, "link_entfernt", { original: finalText.slice(0, 300) });
+      finalText = ohne;
+    }
+    if (linkText) finalText = [finalText, linkText].filter(Boolean).join("\n\n");
+  }
+
   // Gebucht: kurze Buchungsnachricht (Termin fett, Link), danach als eigene Nachricht der Komplettcheck (Reihenfolge P2,
   // Ole 17.11.2026; die Adresse für die Einladung kommt erst am Schluss)
   let zweite: { text: string; buttons: Knopf[] | null; merker?: string; daten?: Record<string, unknown>; liste?: { knopf: string; zeilen: Knopf[] } | null } | null = null;
@@ -1690,12 +1712,17 @@ export async function runBotTurn(
     if (k && offen && !offen.length) {
       schritt = await strecke.naechsterSchritt(k, { einleitung: "Danke!" });
       if (schritt) {
+        // Frage nach dem Link (Fall Lohmann): mit Kontext vor dem nächsten Schritt, nicht stattdessen
+        if (linkText) prefix.push(linkText);
         finalText = schritt.text;
         knoepfe = schritt.buttons;
       }
-    } else if (!finalText && offen?.length) {
-      finalText = ansprache === "du" ? offen[0].du : offen[0].sie;
-      knoepfe = knoepfeFuerText(finalText, offen);
+    } else if (offen?.length && !finalText.includes("?")) {
+      // Angebotsfrage offen, der Assistent fragt nichts (schweigt bzw. schließt ab): die App stellt sie selbst, damit die
+      // Strecke nicht stehen bleibt (Fall Lohmann, 27.11.2026)
+      const frage = ansprache === "du" ? offen[0].du : offen[0].sie;
+      finalText = [finalText, frage].filter(Boolean).join("\n\n");
+      knoepfe = knoepfeFuerText(frage, offen);
     } else if (finalText) {
       knoepfe = knoepfeFuerText(finalText, folgeVorher);
     }

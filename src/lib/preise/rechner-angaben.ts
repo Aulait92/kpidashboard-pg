@@ -310,6 +310,26 @@ export function spartenDesLeads(source: string | null | undefined, src: AngabenQ
 }
 
 /**
+ * Mehrteilige Angaben (Kfz-Fahrer, Kfz-Fahrzeugdaten, Kfz-Vertrag, Gebäude) zusammenhalten (Fall Lohmann, Ole 27.11.2026):
+ * Speichert der Assistent für die zweite Teilfrage nur den neuen Teil („bezahlt“ statt „12.000 km, bezahlt“), ginge der
+ * erste Teil verloren, die App hielte die schon beantwortete Frage für offen und die Bitte um die Unterlagen käme zu spät.
+ * Ein Teil, den der bisherige Wert enthielt und der neue nicht, bleibt vorne stehen. Rein.
+ */
+export function teilangabenErhalten(prev: Record<string, unknown> | null | undefined, next: Record<string, unknown>): Record<string, unknown> {
+  const out = { ...next };
+  for (const def of Object.values(ANGABEN) as AngabeDef[]) {
+    const teile = (def.fragen ?? []).filter((x) => x.bekannt);
+    if (teile.length < 2) continue;
+    const feld = teile[0].feld;
+    const alt = typeof prev?.[feld] === "string" ? (prev[feld] as string).trim() : "";
+    const neu = typeof out[feld] === "string" ? (out[feld] as string).trim() : "";
+    if (!alt || !neu || alt === neu || neu.includes(alt)) continue;
+    if (teile.some((x) => x.bekannt!.test(alt) && !x.bekannt!.test(neu))) out[feld] = `${alt}, ${neu}`;
+  }
+  return out;
+}
+
+/**
  * Folgefragen nach der Zusage (Ole, 17.11.2026): je gewählter Sparte genau die Rechner-Angaben, die noch unbekannt sind
  * und die der Lead beantworten kann. Doppelte (Geburtsdatum, PLZ) nur einmal, Reihenfolge nach Rang. Leer = keine Frage.
  */

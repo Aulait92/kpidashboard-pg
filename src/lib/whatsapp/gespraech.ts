@@ -327,6 +327,42 @@ export function komplettcheckMailSatz(an: Ansprache, person: { nom: string }, fa
   return `Wie gewünscht schaut ${person.nom} im Termin auch kurz, ${wer}.`;
 }
 
+/**
+ * Video-Link mit Kontext (Fall Lohmann, Ole 27.11.2026: der Link kam „unvermittelt“ mitten in der Vorbereitung): „Ihr
+ * Videotermin mit Herrn Lohmann ist am Montag, 30.11. um 14 Uhr. Hier ist der Link: …“. Nur auf ausdrückliche Frage des
+ * Leads; sonst steht der Link in der Buchungsnachricht und den Erinnerungen (Vortag, 15 Min. vorher).
+ */
+export function videoLinkText(an: Ansprache, person: { dat: string }, start: Date, url: string): string {
+  return a(an, `Dein Videotermin mit ${person.dat} ist am ${zeitLang(start)}. Hier ist der Link: ${url}`, `Ihr Videotermin mit ${person.dat} ist am ${zeitLang(start)}. Hier ist der Link: ${url}`);
+}
+
+/** Fragt der Lead nach dem Link zum Videotermin („Wo finde ich den Link?“, „Schicken Sie mir die Zugangsdaten?“)? */
+export function fragtNachVideoLink(text: string | null | undefined): boolean {
+  const t = (text ?? "").trim();
+  if (!t || t.length > 300 || /https?:\/\//i.test(t)) return false;
+  if (!/\b(video-?|meeting-?|webex-?|zoom-?|teams-?)?link\b|\bzugangsdaten\b|\beinwahl\w*|\bvideoraum\b/i.test(t)) return false;
+  // Frage bzw. Bitte, nicht nur ein Dank („Danke für den Link“)
+  return t.includes("?") || /\b(schick|send|wo\b|find|bekomm|brauch|fehlt|nicht|kein|noch mal|nochmal|bitte)/i.test(t);
+}
+
+/**
+ * Sätze mit dem Termin-Link (bzw. dem Wort „Link“) aus einer Antwort des Assistenten entfernen: Den Link schickt nur die
+ * App, immer mit Termin und Uhrzeit (videoLinkText). Rein.
+ */
+export function ohneTerminLink(text: string, url: string): string {
+  return text
+    .split(/\n+/)
+    .map((zeile) =>
+      zeile
+        .split(/(?<=[.!?])\s+/)
+        .filter((satz) => !satz.includes(url) && !/\blink\b/i.test(satz))
+        .join(" ")
+        .trim(),
+    )
+    .filter(Boolean)
+    .join("\n");
+}
+
 /** Frühere Kalenderfrage (bis 17.11.2026; Knöpfe in alten Nachrichten werden weiter verarbeitet, kalenderAntwort). */
 export function kalenderFrage(an: Ansprache): string {
   return a(an, "*Hast du dir den Termin schon im Kalender eingetragen?*", "*Haben Sie sich den Termin schon im Kalender eingetragen?*");
