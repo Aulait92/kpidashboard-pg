@@ -323,7 +323,8 @@ async function d360kunde(params: URLSearchParams) {
   const mask = (e: string | null | undefined) => (e ? e.replace(/^(.{2}).*(@.*)$/, "$1…$2") : null);
   const acc = await prisma.whatsAppAccount.findUnique({
     where: { customerId },
-    select: { status: true, provider: true, dialog360ClientId: true, dialog360InviteEmail: true, updatedAt: true },
+    // metaBusiness*: Unternehmensverifizierung bei Meta (fb_account_status, Cache aus dem Cron, lib/whatsapp/meta-verifizierung.ts)
+    select: { status: true, provider: true, dialog360ClientId: true, dialog360InviteEmail: true, updatedAt: true, metaBusinessStatus: true, metaBusinessName: true, metaBusinessCheckedAt: true },
   });
   const owner = await prisma.user.findFirst({ where: { customerId, teamRole: "owner" }, select: { email: true, lastLoginAt: true } }).catch(() => null);
   const versuche = await prisma.auditLog.findMany({
@@ -795,7 +796,8 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 //                                          dieser lesenden Route: &aufgaben=1 legt für echte, bis heute unbeantwortete Fälle je eine Aufgabe
 //                                          beim Vermittler an (idempotent je Nachricht, Audit-Eintrag), sendet nichts
 //   q=policen-flow[&meta=1]                Policen-Strecke v2: Schalter, Flow je Kunde (Status, Hash aktuell?, Einstieg, Fehler, Vorlagen
-//                                          je Status); &meta=1 fragt den Status bei Meta live ab (nur lesend)
+//                                          je Status, nächster Versuch bei Meta-Sperre, fb_account_status aus dem Cache); &meta=1 fragt den
+//                                          Status bei Meta live ab (nur lesend)
 //   q=lead-namen[&tage=7]                  Name am Lead gegen Chatname (WhatsApp-Profilname), Formularname und erneute Eintragungen mit
 //                                          anderem Namen, echte Leads und Testleads getrennt, nur IDs (lib/lead-name-server.ts)
 //   q=cash[&jahr=2026]                      Geld: Bankverbindungen mit Live-Kontostand, Bewegungen 30/90 Tage je Konto und Zweck, Kosten je Monat, Stripe-Guthaben und offene Rechnungen, USt-Schätzung aus den Kontoauszügen; nur Summen (lib/ops/cash.ts)

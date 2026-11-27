@@ -1338,6 +1338,12 @@ model WhatsAppAccount {
   // Vorlagen automatisch einreichen/nachziehen (lib/whatsapp/template-submit.ts):
   // letzter Abgleich mit 360dialog (gedrosselt im WhatsApp-Cron).
   templatesCheckedAt DateTime?
+  /// Unternehmensverifizierung bei Meta (360dialog waba_account.fb_account_status, z. B. verified | not_verified),
+  /// zwischengespeichert vom WhatsApp-Cron (lib/whatsapp/meta-verifizierung.ts); Flows brauchen „verified“.
+  metaBusinessStatus    String?
+  /// Name des Business-Portfolios bei Meta (on_behalf_of_business_info.name)
+  metaBusinessName      String?
+  metaBusinessCheckedAt DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
@@ -4589,9 +4595,11 @@ model PolicenFlow {
   // Name bei Meta (policen_senden_<hash>) und SHA-256 des veröffentlichten Flow JSON (Änderung = neuer Flow)
   name        String?
   jsonHash    String?
-  // entwurf | veroeffentlicht | fehler
+  // entwurf | veroeffentlicht | fehler | gestoert | meta_gesperrt (Integritätssperre, lib/policen/flow/meta-sperre.ts)
   status      String    @default("entwurf")
   fehler      String?
+  // Meta-Sperre: frühestens dann wieder anlegen (einmal täglich, sofort nach bestätigter Unternehmensverifizierung)
+  naechsterVersuchAt DateTime?
   // Vorlagen mit Flow-Knopf: { [name]: { status, category, grund } }
   vorlagen    Json?
   publishedAt DateTime?

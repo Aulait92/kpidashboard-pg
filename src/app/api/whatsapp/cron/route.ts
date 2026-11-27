@@ -617,6 +617,14 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-templates");
     return null;
   });
+  // Unternehmensverifizierung bei Meta je Nummer nachziehen (lib/whatsapp/meta-verifizierung.ts, gedrosselt), vor dem
+  // Flow-Abgleich: neu verifiziert hebt die Sperre des Policen-Flows sofort auf
+  const metaVerifizierung = await import("@/lib/whatsapp/meta-verifizierung")
+    .then((m) => m.syncMetaVerifizierung(now))
+    .catch((e: unknown) => {
+      reportError(e, "cron-meta-verifizierung");
+      return null;
+    });
   // Policen-Strecke v2 (nur mit POLICEN_FLOW=1): Flow „Policen senden“ je Kunde anlegen/veröffentlichen, Vorlagen mit
   // Flow-Knopf einreichen und Status nachziehen (lib/policen/flow/server.ts, gedrosselt; ohne Schalter nichts)
   const policenFlows = await import("@/lib/policen/flow/server")
@@ -640,7 +648,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, consentAsks, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, partnerVorTermin, buchungsseite, vorbereitungNachfrage, einladungen, kalenderFrage, policenErinnerung, abTests, funnelReife, vertriebAbZiele, experimente, naechsterSchritt, terminErgebnisPush, antwortEskalation, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, policenFlows, botStumm, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, consentAsks, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, partnerVorTermin, buchungsseite, vorbereitungNachfrage, einladungen, kalenderFrage, policenErinnerung, abTests, funnelReife, vertriebAbZiele, experimente, naechsterSchritt, terminErgebnisPush, antwortEskalation, abschlussFrage, vollmachtErinnerung, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, bonusErinnerung, mahnwesen, whatsappConnect, templates, metaVerifizierung, policenFlows, botStumm, supportTemplates, status });
 }
 
 export const GET = handle;

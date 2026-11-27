@@ -32,6 +32,7 @@ import { grussName } from "@/lib/vermittler-nennung";
 import { vermittlerDuAus } from "@/lib/vermittler-ansprache";
 import { TeamHeuteKarte } from "@/components/team-heute";
 import { DatennutzungHeute } from "@/components/datennutzung-heute";
+import { MetaVerifizierungHinweis } from "@/components/meta-verifizierung";
 
 // Startseite des Kundenbereichs für alle Kunden: „Heute" – eine
 // Aufgabenliste (Termine, Ergebnisse, Chats, Rückrufe), die man leer
@@ -119,6 +120,8 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
       <PolicenFreischaltungKarte ctx={ctx} ort="karte" />
       {/* Makler: „Maklervollmacht: Wer schickt sie?“ bis entschieden (Customer.vollmachtVersand) */}
       <VollmachtVersandHinweis ctx={ctx} />
+      {/* Unternehmensverifizierung bei Meta fehlt (lib/whatsapp/meta-verifizierung.ts): bis Meta „verifiziert“ meldet */}
+      <MetaVerifizierungHinweis ctx={ctx} />
       {nudge ? <ReferralNudgeCard nudgeKey={nudge.key} title={nudge.title} text={nudge.text} /> : null}
       <FreePeriodNotices customerId={ctx.customerId} readOnly={ctx.preview} />
       <EmpfehlungHeuteHint ctx={ctx} />

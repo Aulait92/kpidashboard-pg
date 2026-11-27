@@ -55,6 +55,8 @@ import { ERROR_HELP, FIRMENGERAET, parseConnectPath } from "@/lib/whatsapp/conne
 import { WhatsAppGuide } from "@/components/whatsapp-guide";
 import { WaCheckButton, WaPendingRefresh, WaResetButton } from "./wa-check";
 import { WaInvited } from "./wa-invited";
+import { MetaVerifizierungSchritt } from "@/components/meta-verifizierung";
+import { ladeMetaVerifizierung } from "@/lib/whatsapp/meta-verifizierung";
 import { AllianzForm, AllianzVerbunden, LeadTimesForm, SourcePicker, VideoRaumForm } from "@/components/calendar-sources";
 import { loadTerminFormate } from "@/lib/termin-formate-server";
 import { loadCalendarSetup } from "@/lib/calendar/setup-view";
@@ -122,6 +124,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const waAccount = waEnabled
     ? await prisma.whatsAppAccount.findUnique({ where: { customerId: ctx.customerId }, select: { status: true, phoneNumber: true, dialog360ChannelId: true, dialog360InviteEmail: true } })
     : null;
+  // Unternehmensverifizierung bei Meta (gespeicherter Stand, kein Live-Abruf): im WhatsApp-Schritt, nicht blockierend
+  const metaStand = waEnabled ? await ladeMetaVerifizierung(ctx.customerId).catch(() => null) : null;
   // Adresse der Einladung: die des Inhabers (in der Vorschau eines Admins nicht dessen eigene, Ole 20.11.2026)
   const waInhaberEmail = !waEnabled
     ? ctx.email
@@ -831,9 +835,10 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         ) : null}
 
         {waEnabled ? (
-          <Step n={nextNo()} title="WhatsApp verbinden" icon={MessageCircle} done={done("whatsapp")} open={isOpen("whatsapp") || !!wa || !!weg} id="whatsapp" current={current === "whatsapp"}>
+          <Step n={nextNo()} title="WhatsApp verbinden" icon={MessageCircle} done={done("whatsapp")} open={isOpen("whatsapp") || !!wa || !!weg || (metaStand === "offen" && current === "start")} id="whatsapp" current={current === "whatsapp"}>
             <VideoHint url={video("whatsapp")} />
             <WhatsAppStep wa={wa} weg={weg} account={waAccount} done={done("whatsapp")} readOnly={readOnly} email={waAccount?.dialog360InviteEmail ?? waInhaberEmail} hilfeSchritt={kampagnen ? "metaAccess" : "whatsapp"} />
+            {done("whatsapp") ? <MetaVerifizierungSchritt stand={metaStand} /> : null}
             {kampagnen ? null : hilfeBox}
             {!done("whatsapp") ? (
               <StepExits

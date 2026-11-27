@@ -8,6 +8,8 @@ import { AvailabilityCard } from "./availability-card";
 import { D360Assign } from "./d360-assign";
 import { freePartnerChannels } from "@/lib/whatsapp/dialog360-match";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
+import { flowStandText, metaVerifiziert } from "@/lib/policen/flow/meta-sperre";
+import { flowSchalterAn } from "@/lib/policen/flow/server";
 
 // Reiter „WhatsApp-Assistent“: die WhatsApp-Einstellungen nur für diesen Kunden
 // und die Meta-Gebühren (im Preis enthalten, intern erfasst).
@@ -16,7 +18,7 @@ export default async function KundenWhatsApp({ params, searchParams }: { params:
   const { wa } = await searchParams;
   // SUS-Prüfung 20.11.2026: Oben das Tägliche (Nummer, Assistent, Kalender, Vorlagen). Verbindung, Verfügbarkeit,
   // Gebühren und Bestandskunden sind seltener und stehen zugeklappt darunter (vorher rund 4.000 px am Handy).
-  const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId: id }, select: { status: true, apiKeyEnc: true } });
+  const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId: id }, select: { status: true, apiKeyEnc: true, metaBusinessStatus: true } });
   return (
     <div className="space-y-5">
       <WhatsAppSettingsPage searchParams={Promise.resolve({ kunde: id, wa })} />
@@ -24,7 +26,7 @@ export default async function KundenWhatsApp({ params, searchParams }: { params:
         <Aufklapp titel="Verfügbarkeit für Termine" zusammenfassung="Termindauer, buchbare Zeiten, blockierte Zeiten">
           <AvailabilityCard customerId={id} />
         </Aufklapp>
-        <Aufklapp titel="Verbindung zu 360dialog" zusammenfassung={verbindungStand(acc)} offen={!!acc && acc.status !== "connected" && acc.status !== "invited" && acc.status !== "pending"}>
+        <Aufklapp titel="Verbindung zu 360dialog" zusammenfassung={`${verbindungStand(acc)}${acc?.metaBusinessStatus && !metaVerifiziert(acc.metaBusinessStatus) ? " · Meta-Unternehmen nicht verifiziert" : ""}`} offen={!!acc && acc.status !== "connected" && acc.status !== "invited" && acc.status !== "pending"}>
           <D360Card customerId={id} />
         </Aufklapp>
         <Aufklapp titel="Meta-Gebühren und Bestandskunden" zusammenfassung="Kosten der Vorlagen-Nachrichten, Zusatzmodul Bestandskunden">
@@ -77,8 +79,12 @@ async function BestandModuleCard({ customerId }: { customerId: string }) {
  * 360dialog-Nummern von Hand zuordnen (lib/whatsapp/dialog360-match.ts).
  */
 async function D360Card({ customerId }: { customerId: string }) {
-  const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true, apiKeyEnc: true, phoneNumber: true } });
+  const acc = await prisma.whatsAppAccount.findUnique({
+    where: { customerId },
+    select: { status: true, apiKeyEnc: true, phoneNumber: true, metaBusinessStatus: true, metaBusinessName: true, metaBusinessCheckedAt: true },
+  });
   if (!selfConnectEnabled() && !acc) return null;
+  const flow = await prisma.policenFlow.findUnique({ where: { customerId }, select: { status: true, fehler: true, naechsterVersuchAt: true, publishedAt: true } });
   const verbunden = acc?.status === "connected" && !!acc.apiKeyEnc;
   const free = verbunden ? [] : await freePartnerChannels().catch(() => []);
   const stand = verbunden
@@ -99,6 +105,18 @@ async function D360Card({ customerId }: { customerId: string }) {
         <p className={`mb-3 text-sm font-medium ${verbunden ? "text-emerald-700" : "text-amber-800"}`} data-verbindung-stand>
           {stand}
         </p>
+        {verbunden ? (
+          <div className="mb-4 space-y-1 text-sm" data-meta-stand>
+            <p className={acc?.metaBusinessStatus ? (metaVerifiziert(acc.metaBusinessStatus) ? "text-emerald-700" : "font-medium text-amber-800") : "text-[color:var(--muted)]"}>
+              Meta-Unternehmen verifiziert: {acc?.metaBusinessStatus ? (metaVerifiziert(acc.metaBusinessStatus) ? "ja" : `nein (${acc.metaBusinessStatus})`) : "noch nicht geprüft"}
+              {acc?.metaBusinessName ? ` · ${acc.metaBusinessName}` : ""}
+              {acc?.metaBusinessCheckedAt ? ` · Stand ${acc.metaBusinessCheckedAt.toLocaleString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}` : ""}
+            </p>
+            <p className="text-[color:var(--muted)]" data-flow-stand>
+              {flowStandText(flow, { schalterAn: flowSchalterAn() })}
+            </p>
+          </div>
+        ) : null}
         <D360Assign
           customerId={customerId}
           verbunden={verbunden}

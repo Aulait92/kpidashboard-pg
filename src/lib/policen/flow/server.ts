@@ -41,6 +41,7 @@ import { mapRemoteStatus, TEMPLATE_LANGUAGE } from "@/lib/whatsapp/template-plan
 import type { Ansprache } from "@/lib/ansprache";
 import { gesundheitInText } from "@/lib/policen/regeln";
 import { createFlow, getFlow, listFlows, publishFlow, uploadFlowJson } from "@/lib/policen/flow/dialog360-flows";
+import { istIntegritaetsSperre, META_SPERRE_ABSTAND_MS, sperreVorbei, sperrGrund, STATUS_META_GESPERRT } from "@/lib/policen/flow/meta-sperre";
 import { einstiegsBildschirme, flowJsonHash, flowJsonText, MAX_DATEIEN_JE_SENDEN, pruefeFlowJson, policenFlowJson, SCREEN_FOTOS } from "@/lib/policen/flow/flow-json";
 import { entschluesseleFlowMedium, FlowMediaFehler, pruefeSha256, type EncryptionMetadata } from "@/lib/policen/flow/krypto";
 import {
@@ -707,7 +708,7 @@ export type FlowSyncErgebnis = { customerId: string; status: string; vorlagen: V
 
 /** Flow anlegen bzw. veröffentlichen und die Vorlagen einreichen bzw. ihren Status holen (ein Kunde). */
 export async function syncPolicenFlowFuerKunde(customerId: string, now = new Date()): Promise<FlowSyncErgebnis> {
-  const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true, apiKeyEnc: true } });
+  const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true, apiKeyEnc: true, metaBusinessStatus: true } });
   if (acc?.status !== "connected" || !acc.apiKeyEnc) return { customerId, status: "nicht_verbunden", vorlagen: {} };
   const apiKey = decryptSecret(acc.apiKeyEnc);
   const json = policenFlowJson();
@@ -721,6 +722,11 @@ export async function syncPolicenFlowFuerKunde(customerId: string, now = new Dat
   if (rec.status === STATUS_GESTOERT && rec.jsonHash === hash) {
     await setze({ checkedAt: now });
     return { customerId, status: STATUS_GESTOERT, vorlagen: {}, fehler: rec.fehler ?? undefined };
+  }
+  // Integritätssperre bei Meta (meta-sperre.ts): erst nach der Wartezeit (einmal täglich) oder sofort nach bestätigter
+  // Unternehmensverifizierung wieder versuchen
+  if (rec.status === STATUS_META_GESPERRT && !sperreVorbei(rec, acc.metaBusinessStatus, now)) {
+    return { customerId, status: STATUS_META_GESPERRT, vorlagen: {}, fehler: rec.fehler ?? undefined };
   }
   // Veröffentlicht geführt: Status bei Meta nachprüfen (DEPRECATED, BLOCKED, THROTTLED … → nicht mehr senden).
   // Netzfehler ändern nichts.
@@ -757,13 +763,21 @@ export async function syncPolicenFlowFuerKunde(customerId: string, now = new Dat
         status: ok ? "veroeffentlicht" : "entwurf",
         fehler: ok ? null : `Status bei Meta: ${remote.status || "unbekannt"}`,
         publishedAt: ok ? now : null,
+        naechsterVersuchAt: null,
         // Neuer Flow: neue Vorlagen (der Name enthält den Hash)
         ...(rec.jsonHash !== hash ? { vorlagen: {} } : {}),
         checkedAt: now,
       });
     } catch (e) {
+      // „Blocked by Integrity“ (Unternehmensverifizierung fehlt): einmal täglich neu, Sentry nur beim ersten Mal
+      if (istIntegritaetsSperre(e)) {
+        const grund = sperrGrund(acc.metaBusinessStatus);
+        if (rec.status !== STATUS_META_GESPERRT) reportError(e, "policen-flow-meta-gesperrt", { customer: customerId, meta: acc.metaBusinessStatus ?? "unbekannt" });
+        await setze({ status: STATUS_META_GESPERRT, fehler: grund, naechsterVersuchAt: new Date(now.getTime() + META_SPERRE_ABSTAND_MS), checkedAt: now });
+        return { customerId, status: STATUS_META_GESPERRT, vorlagen: {}, fehler: grund };
+      }
       const msg = e instanceof Error ? e.message.slice(0, 400) : "Fehler";
-      await setze({ status: "fehler", fehler: msg, checkedAt: now });
+      await setze({ status: "fehler", fehler: msg, checkedAt: now, naechsterVersuchAt: null });
       reportError(e, "policen-flow-anlegen", { customer: customerId });
       return { customerId, status: "fehler", vorlagen: {}, fehler: msg };
     }
@@ -814,14 +828,14 @@ export async function syncPolicenFlows(now = new Date(), opts: { limit?: number 
   if (!flowSchalterAn()) return { geprueft: 0, fehler: 0 };
   const accounts = await prisma.whatsAppAccount.findMany({
     where: { customerId: { not: SUPPORT_CUSTOMER_ID }, status: "connected", apiKeyEnc: { not: null }, customer: { dormantSince: null, NOT: NUR_PPL_WHERE } },
-    select: { customerId: true },
+    select: { customerId: true, metaBusinessStatus: true },
     take: 500,
   });
   const recs = new Map((await prisma.policenFlow.findMany({ where: { customerId: { in: accounts.map((a) => a.customerId) } } })).map((r) => [r.customerId, r]));
   let geprueft = 0;
   let fehler = 0;
   const jsonHash = flowJsonHash();
-  for (const { customerId } of accounts) {
+  for (const { customerId, metaBusinessStatus } of accounts) {
     if (geprueft >= (opts.limit ?? 5)) break;
     if (!flowKundeErlaubt(customerId)) continue;
     const r = recs.get(customerId);
@@ -830,7 +844,10 @@ export async function syncPolicenFlows(now = new Date(), opts: { limit?: number 
     const stand = (r?.vorlagen as VorlagenStand | null) ?? {};
     const fertig = r?.status === "veroeffentlicht" && r.jsonHash === jsonHash && aktuelleVorlagenNamen(jsonHash).every((n) => stand[n]?.status === "approved" || stand[n]?.status === "rejected");
     const abstand = fertig ? CHECK_RUHIG_MS : CHECK_OFFEN_MS;
-    if (r?.checkedAt && now.getTime() - r.checkedAt.getTime() < abstand) continue;
+    // Meta-Sperre: nur nach der Wartezeit bzw. sofort nach bestätigter Verifizierung (nicht alle 30 Min.)
+    if (r?.status === STATUS_META_GESPERRT) {
+      if (!sperreVorbei(r, metaBusinessStatus, now)) continue;
+    } else if (r?.checkedAt && now.getTime() - r.checkedAt.getTime() < abstand) continue;
     geprueft++;
     const e = await syncPolicenFlowFuerKunde(customerId, now).catch((err) => {
       reportError(err, "policen-flow-sync", { customer: customerId });
@@ -861,7 +878,21 @@ export async function policenFlowDiagnose(o: { meta: boolean }) {
               .catch((e: unknown) => ({ fehler: e instanceof Error ? e.message.slice(0, 200) : "Fehler" }))
           : { fehler: "kein Schlüssel" };
       }
-      return { kundeId: r.customerId, status: r.status, flowId: r.flowId, hashAktuell: r.jsonHash === hash, fehler: r.fehler, vorlagen, checkedAt: r.checkedAt, publishedAt: r.publishedAt, ...(o.meta ? { meta } : {}) };
+      const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId: r.customerId }, select: { metaBusinessStatus: true, metaBusinessCheckedAt: true } });
+      return {
+        kundeId: r.customerId,
+        status: r.status,
+        flowId: r.flowId,
+        hashAktuell: r.jsonHash === hash,
+        fehler: r.fehler,
+        naechsterVersuchAt: r.naechsterVersuchAt,
+        fbAccountStatus: acc?.metaBusinessStatus ?? null,
+        fbAccountStatusAm: acc?.metaBusinessCheckedAt ?? null,
+        vorlagen,
+        checkedAt: r.checkedAt,
+        publishedAt: r.publishedAt,
+        ...(o.meta ? { meta } : {}),
+      };
     }),
   );
   return { schalter: flowSchalterAn(), pilotKunden: (process.env.POLICEN_FLOW_KUNDEN ?? "").trim() || null, einstieg: einstiegsBildschirme(), gesendeterScreen: SCREEN_FOTOS, hash: hash.slice(0, 12), kunden };

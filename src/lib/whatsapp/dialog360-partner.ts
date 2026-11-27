@@ -161,6 +161,12 @@ export type PartnerChannel = {
   name: string | null;
   availability: string | null;
   createdAt: string | null;
+  /** Unternehmensverifizierung bei Meta (waba_account.fb_account_status, z. B. verified | not_verified) */
+  fbAccountStatus?: string | null;
+  /** Business-Portfolio bei Meta (waba_account.on_behalf_of_business_info.name) */
+  businessName?: string | null;
+  /** WABA-ID bei Meta (waba_account.external_id) */
+  wabaExternalId?: string | null;
 };
 
 /** Neueste Nummern des Partners (höchstens `limit`), für „Verbindung prüfen“ und die Zuordnung im Admin. */
@@ -182,6 +188,7 @@ export function parsePartnerChannel(raw: unknown): PartnerChannel | null {
     availability_status?: unknown;
     setup_info?: { phone_number?: unknown; phone_name?: unknown };
     client?: { id?: unknown; name?: unknown; partner_payload?: unknown; contact_info?: { email?: unknown } };
+    waba_account?: { external_id?: unknown; fb_account_status?: unknown; on_behalf_of_business_info?: { name?: unknown } };
   };
   const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
   const id = str(c?.id);
@@ -196,6 +203,9 @@ export function parsePartnerChannel(raw: unknown): PartnerChannel | null {
     name: str(c.setup_info?.phone_name),
     availability: str(c.availability_status),
     createdAt: str(c.created_at),
+    fbAccountStatus: str(c.waba_account?.fb_account_status)?.toLowerCase() ?? null,
+    businessName: str(c.waba_account?.on_behalf_of_business_info?.name),
+    wabaExternalId: str(c.waba_account?.external_id),
   };
 }
 
