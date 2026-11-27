@@ -353,3 +353,25 @@ describe("Testphasen nur mit Testphase im Angebot (Ole, 27.11.2026)", () => {
     expect(titel({ ...basis, status: "accepted", introMonthlyFee: null, introMonths: null, billingFreeStart: false })).toContain("Testphasen und kostenlose Zeiträume");
   });
 });
+
+describe("Laufzeit und Gutschriften nur, wo sie gelten (Ole, 27.11.2026)", () => {
+  const abschnitt = (o: Parameters<typeof agbDesAngebots>[0], t: string) => text(agbDesAngebots(o).abschnitte.filter((s) => s.title === t));
+  const basis = { package: "software", createdAt: new Date("2026-11-26T12:00:00Z"), status: "draft" };
+  it("ohne Laufzeit: nur der Satz ohne Laufzeit", () => {
+    const t = abschnitt({ ...basis, term: "none" }, "Laufzeit und Kündigung");
+    expect(t).toContain("Ohne Vertragslaufzeit ist der Vertrag");
+    expect(t).not.toContain("Mit 3, 6 bzw. 12 Monaten Laufzeit");
+  });
+  it("feste Laufzeit: nur der Satz zur Mindestlaufzeit; zur Wahl: beide", () => {
+    const fest = abschnitt({ ...basis, term: "12m" }, "Laufzeit und Kündigung");
+    expect(fest).not.toContain("Ohne Vertragslaufzeit ist der Vertrag");
+    expect(fest).toContain("Mit 3, 6 bzw. 12 Monaten Laufzeit");
+    const wahl = abschnitt({ ...basis, term: "12m", customerChoosesTerm: true }, "Laufzeit und Kündigung");
+    expect(wahl).toContain("Ohne Vertragslaufzeit ist der Vertrag");
+    expect(wahl).toContain("Mit 3, 6 bzw. 12 Monaten Laufzeit");
+  });
+  it("Gutschriften für Leads nur mit Leads per Stück", () => {
+    expect(abschnitt({ ...basis, term: "none" }, "Angebote vor einer Kündigung")).not.toContain("Gutschriften für fehlerhafte Leads");
+    expect(abschnitt({ ...basis, term: "none" }, "Angebote vor einer Kündigung")).toContain("Ein Anspruch auf solche Angebote besteht nicht");
+  });
+});

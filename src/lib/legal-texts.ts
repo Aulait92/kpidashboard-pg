@@ -568,6 +568,8 @@ export type AgbMerkmale = {
    * undefined = nicht bekannt (öffentliche AGB, vor dem 27.11.2026 angenommene Angebote): Abschnitt bleibt.
    */
   testphase?: boolean;
+  /** Laufzeit im Angebot (Ole, 27.11.2026): keine, fest (3/6/12 Monate) oder zur Wahl; undefined = nicht bekannt, beide Sätze bleiben */
+  laufzeit?: "keine" | "fest" | "waehlbar";
 };
 
 export function agbMerkmaleAus(o: {
@@ -579,6 +581,8 @@ export function agbMerkmaleAus(o: {
   introMonthlyFee?: unknown;
   introMonths?: number | null;
   billingFreeStart?: boolean | null;
+  term?: string | null;
+  customerChoosesTerm?: boolean | null;
 }): AgbMerkmale {
   const paketPpl = o.package === "ppl" || o.package === "ppl_software";
   const leadProdukte = !!o.pplProductKey?.trim() || (Array.isArray(o.pplProdukte) && o.pplProdukte.length > 0);
@@ -586,7 +590,15 @@ export function agbMerkmaleAus(o: {
   const vorauszahlung: AgbVorauszahlung = paketPpl ? "nein" : o.annualPrepay ? "ja" : o.annualChoice ? "waehlbar" : "nein";
   const bekannt = o.introMonths !== undefined || o.billingFreeStart !== undefined;
   const testphase = bekannt ? !!o.billingFreeStart || (o.introMonthlyFee != null && !!o.introMonths) : undefined;
-  return { paket: o.package, ppl: paketPpl || leadProdukte, kampagnen: !paketPpl, vorauszahlung, ...(testphase === undefined ? {} : { testphase }) };
+  const laufzeit: AgbMerkmale["laufzeit"] = o.term == null ? undefined : o.customerChoosesTerm ? "waehlbar" : o.term === "none" ? "keine" : "fest";
+  return {
+    paket: o.package,
+    ppl: paketPpl || leadProdukte,
+    kampagnen: !paketPpl,
+    vorauszahlung,
+    ...(testphase === undefined ? {} : { testphase }),
+    ...(laufzeit === undefined ? {} : { laufzeit }),
+  };
 }
 
 /** Gespeicherte Merkmale (Offer.agbMerkmale) lesen; null = nicht gespeichert oder unlesbar. */
@@ -595,7 +607,7 @@ export function agbMerkmaleGespeichert(v: unknown): AgbMerkmale | null {
   const m = v as Record<string, unknown>;
   if (typeof m.paket !== "string" || typeof m.ppl !== "boolean" || typeof m.kampagnen !== "boolean") return null;
   if (m.vorauszahlung !== "ja" && m.vorauszahlung !== "waehlbar" && m.vorauszahlung !== "nein") return null;
-  return { paket: m.paket, ppl: m.ppl, kampagnen: m.kampagnen, vorauszahlung: m.vorauszahlung, ...(typeof m.testphase === "boolean" ? { testphase: m.testphase } : {}) };
+  return { paket: m.paket, ppl: m.ppl, kampagnen: m.kampagnen, vorauszahlung: m.vorauszahlung, ...(typeof m.testphase === "boolean" ? { testphase: m.testphase } : {}), ...(m.laufzeit === "keine" || m.laufzeit === "fest" || m.laufzeit === "waehlbar" ? { laufzeit: m.laufzeit } : {}) };
 }
 
 /**
@@ -632,6 +644,11 @@ export const AGB_REGELN: readonly AgbRegel[] = [
   },
   // Ole, 27.11.2026 (Angebot Haferstroh): ohne Testphase, kostenlosen Zeitraum oder Startpreis entfällt der ganze Abschnitt
   { name: "Testphasen", weg: (m) => m.testphase === false, abschnitt: "Testphasen und kostenlose Zeiträume", absatzBeginn: "Bietet der Anbieter eine Leistung" },
+  // Ole, 27.11.2026 (Angebot Haferstroh): Gutschriften für Leads nur bei Leads per Stück; Laufzeit nur die vereinbarte
+  // Nur bei konkreten Angeboten (Laufzeit bekannt): öffentliche AGB und früher angenommene Angebote behalten den Satz
+  { name: "Gutschriften für Leads", weg: (m) => !m.ppl && m.laufzeit !== undefined, abschnitt: "Angebote vor einer Kündigung", satz: "Gutschriften für fehlerhafte Leads gibt es nur nach Prüfung und in der bestätigten Höhe. " },
+  { name: "Laufzeit: feste Laufzeiten", weg: (m) => m.laufzeit === "keine", abschnitt: "Laufzeit und Kündigung", satz: " Mit 3, 6 bzw. 12 Monaten Laufzeit gilt diese Mindestlaufzeit ab Start; danach läuft er unbefristet und ist zum Ende jedes Abrechnungsmonats kündbar." },
+  { name: "Laufzeit: ohne Laufzeit", weg: (m) => m.laufzeit === "fest", abschnitt: "Laufzeit und Kündigung", satz: "Ohne Vertragslaufzeit ist der Vertrag von beiden Seiten zum Ende jedes Abrechnungsmonats kündbar. " },
   { name: "Testphasen: nach dem Übergang", weg: (m) => m.testphase === false, abschnitt: "Testphasen und kostenlose Zeiträume", absatzBeginn: "Nach dem Übergang in die kostenpflichtige Phase" },
 ];
 
@@ -698,6 +715,8 @@ export function agbFuerAngebot(o: {
   introMonthlyFee?: unknown;
   introMonths?: number | null;
   billingFreeStart?: boolean | null;
+  term?: string | null;
+  customerChoosesTerm?: boolean | null;
   merkmale?: AgbMerkmale | null;
 }): { agb: LegalSection[]; besondere: LegalSection[] | null; lead: boolean; merkmale: AgbMerkmale } {
   const m = o.merkmale ?? agbMerkmaleAus(o);
