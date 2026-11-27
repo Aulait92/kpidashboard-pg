@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Mail } from "lucide-react";
+import { Mail, Sparkles } from "lucide-react";
 import { buttonClass } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
-import { sendKontaktMailAction } from "@/app/admin/neu/vertrieb/crm-mail-actions";
+import { mailVorschlagAction, sendKontaktMailAction } from "@/app/admin/neu/vertrieb/crm-mail-actions";
 import { vorlageFuellen, type CrmVorlage, type CrmWerte } from "@/lib/vertrieb/crm-vorlagen";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 // Aufbau: Vorlage und Sie/Du in einer Zeile, An (Auswahl nur bei mehreren Adressen), Betreff, Text, unten „Senden“.
 // Ohne verbundenes Postfach: leerer Zustand mit „Mit Microsoft verbinden“ (Google, wenn eingerichtet), dazu der alte
 // Weg übers Mailprogramm als Link. Rücksprung nach dem Verbinden öffnet das Fenster wieder (?postfach=verbunden).
+// Vorschlag (Ole, 27.11.2026): Standard ist „Vorschlag aus dem Verlauf“. Beim Öffnen schreibt die KI direkt eine
+// passende Antwort (Sie/Du wie im Verlauf); Vorlagen bleiben wählbar, eigene Änderungen werden nie überschrieben.
 
 export type EmailKnopfDaten = {
   postfach: { provider: string; email: string; status: string } | null;
@@ -26,6 +28,7 @@ export type EmailKnopfDaten = {
 };
 
 const VERBINDEN = "/api/admin/crm-postfach/verbinden";
+const VORSCHLAG = "__vorschlag";
 
 export function EmailKnopf({
   contactId,
@@ -64,7 +67,8 @@ export function EmailKnopf({
 
 function EmailFenster({ contactId, daten, meldung, onClose, mailto }: { contactId: string; daten: EmailKnopfDaten; meldung: { ok: boolean; text: string } | null; onClose: () => void; mailto: string | null }) {
   const toast = useToast();
-  const [vorlageId, setVorlageId] = useState("");
+  const [vorlageId, setVorlageId] = useState(VORSCHLAG);
+  const [schreibt, setSchreibt] = useState(false);
   const [du, setDu] = useState(false);
   const [to, setTo] = useState(daten.empfaenger[0] ?? "");
   const [subject, setSubject] = useState("");
@@ -84,6 +88,33 @@ function EmailFenster({ contactId, daten, meldung, onClose, mailto }: { contactI
     setSubject(f.subject);
     setBody(f.body);
   }
+
+  function vorschlagen(alsDu: boolean | null) {
+    setFehler(null);
+    setSchreibt(true);
+    mailVorschlagAction(contactId, alsDu)
+      .catch(() => ({ ok: false as const, error: "Vorschlag gerade nicht möglich. Bitte eine Vorlage wählen oder selbst schreiben." }))
+      .then((r) => {
+        setSchreibt(false);
+        if (!r.ok) {
+          setFehler(r.error);
+          return;
+        }
+        auto.current = { subject: r.subject, body: r.body };
+        setSubject(r.subject);
+        setBody(r.body);
+        setDu(r.du);
+      });
+  }
+
+  // Beim Öffnen direkt einen Vorschlag schreiben (nur mit Postfach und ohne Sperre)
+  const gestartet = useRef(false);
+  useEffect(() => {
+    if (gestartet.current || !daten.postfach || daten.gesperrt) return;
+    gestartet.current = true;
+    vorschlagen(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function senden() {
     setFehler(null);
@@ -150,7 +181,7 @@ function EmailFenster({ contactId, daten, meldung, onClose, mailto }: { contactI
       <button type="button" onClick={onClose} className={buttonClass("secondary", "md", "flex-1 justify-center")}>
         Abbrechen
       </button>
-      <button type="submit" form="kontakt-mail" disabled={pending || !to} className={buttonClass("primary", "md", "flex-1 justify-center")} data-email-senden>
+      <button type="submit" form="kontakt-mail" disabled={pending || schreibt || !to} className={buttonClass("primary", "md", "flex-1 justify-center")} data-email-senden>
         {pending ? "Wird gesendet …" : "Senden"}
       </button>
     </div>
@@ -175,10 +206,12 @@ function EmailFenster({ contactId, daten, meldung, onClose, mailto }: { contactI
               value={vorlageId}
               onChange={(e) => {
                 setVorlageId(e.target.value);
-                fuellen(e.target.value, du, true);
+                if (e.target.value === VORSCHLAG) vorschlagen(du);
+                else fuellen(e.target.value, du, true);
               }}
               data-email-vorlage
             >
+              <option value={VORSCHLAG}>Vorschlag aus dem Verlauf</option>
               <option value="">Ohne Vorlage</option>
               {daten.vorlagen.map((v) => (
                 <option key={v.id} value={v.id}>
@@ -195,7 +228,9 @@ function EmailFenster({ contactId, daten, meldung, onClose, mailto }: { contactI
                 aria-pressed={du === x}
                 onClick={() => {
                   setDu(x);
-                  fuellen(vorlageId, x, false);
+                  if (vorlageId === VORSCHLAG) {
+                    if (x !== du && subject === auto.current.subject && body === auto.current.body) vorschlagen(x);
+                  } else fuellen(vorlageId, x, false);
                 }}
                 className={cn("rounded-[calc(var(--radius-md)-2px)] px-3 font-medium", du === x ? "bg-[color:var(--brand)] text-white" : "text-[color:var(--muted)]")}
               >
@@ -223,8 +258,24 @@ function EmailFenster({ contactId, daten, meldung, onClose, mailto }: { contactI
           <input className="input w-full" value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={200} required />
         </label>
         <label className="block">
-          <span className="label">Text</span>
-          <textarea className="input w-full" rows={10} value={body} onChange={(e) => setBody(e.target.value)} required />
+          <span className="label flex items-center justify-between gap-2">
+            Text
+            {vorlageId === VORSCHLAG && !schreibt ? (
+              <button type="button" onClick={() => vorschlagen(du)} className="inline-flex min-h-8 items-center gap-1 text-xs font-normal text-[color:var(--brand)] hover:underline" data-email-neu-vorschlagen>
+                <Sparkles className="h-3 w-3" /> Neu vorschlagen
+              </button>
+            ) : null}
+          </span>
+          <textarea
+            className="input w-full"
+            rows={10}
+            value={schreibt ? "" : body}
+            placeholder={schreibt ? "Vorschlag wird aus dem Verlauf geschrieben …" : undefined}
+            disabled={schreibt}
+            onChange={(e) => setBody(e.target.value)}
+            required
+            data-email-text
+          />
         </label>
         {fehler ? (
           <p className="text-sm text-rose-700" role="alert">

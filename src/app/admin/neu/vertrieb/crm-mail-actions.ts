@@ -11,6 +11,22 @@ import { sendeKontaktMail, type CrmMailErgebnis } from "@/lib/vertrieb/crm-mail-
 import { crmPostfachTrennen } from "@/lib/vertrieb/crm-postfach";
 import { pruefeVorlage } from "@/lib/vertrieb/crm-vorlagen";
 
+export type VorschlagErgebnis = { ok: true; subject: string; body: string; du: boolean } | { ok: false; error: string };
+
+/** Antwortmail aus dem Verlauf vorschlagen (Ole, 27.11.2026, lib/vertrieb/mail-vorschlag.ts). du = null: wie im Verlauf. */
+export async function mailVorschlagAction(contactId: string, du: boolean | null): Promise<VorschlagErgebnis> {
+  const session = await requireAuth();
+  if (typeof contactId !== "string" || (du !== null && typeof du !== "boolean")) return { ok: false, error: "Ungültige Eingabe." };
+  try {
+    const { mailVorschlag } = await import("@/lib/vertrieb/mail-vorschlag");
+    const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { displayName: true, email: true } });
+    const v = await mailVorschlag(contactId, { du, absender: { displayName: user?.displayName ?? null, email: user?.email ?? session.email ?? "" } });
+    return v ? { ok: true, ...v } : { ok: false, error: "Für diesen Kontakt gibt es keinen Vorschlag." };
+  } catch {
+    return { ok: false, error: "Vorschlag gerade nicht möglich. Bitte eine Vorlage wählen oder selbst schreiben." };
+  }
+}
+
 const VORLAGEN_PFAD = "/admin/neu/einstellungen/nachrichten";
 
 export async function sendKontaktMailAction(contactId: string, eingabe: { to: string; subject: string; body: string }): Promise<CrmMailErgebnis> {
