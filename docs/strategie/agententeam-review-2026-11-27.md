@@ -126,3 +126,16 @@ Gespräche mit Pools lohnen sich nach Schätzung ab 300.000 bis 500.000 € ARR 
 9. **Zugänge:** Wer hat Admin-Zugang zu GitHub, Railway, Meta und Stripe? Liegen die Schlüssel außerhalb von Railway?
 10. **Ziel 30.000 €:** brutto auf dem Konto oder frei verfügbar nach der USt-Nachzahlung?
 11. **Finanzierung:** Bootstrapping mit Vorkasse, Business Angel oder Pilotgeld eines strategischen Partners?
+
+## Entscheidungen Ole 27.11.
+
+1. **Preisliste:** Die Preise aus dem Cash-Plan gelten: 990, 1.390 und 1.790 €, Einrichtung 1.490 € bei 6 Monaten und 990 € bei 12 Monaten, 3 Monate geschenkt bei 12 Monaten. Der Live-Code (src/lib/offer-pricing.ts) entspricht dem bereits seit 18. und 19.11. Der Vertriebs-Agent hatte einen veralteten Code-Stand gelesen. Es ist keine Änderung nötig.
+2. **Agentur und Software** sind verschmolzen und werden als ein Produkt gesehen. Hebel 1 der Firmenwert-Analyse (Trennung) ist damit verworfen. Software- und Werbeumsatz werden in der Buchhaltung trotzdem getrennt ausgewiesen, damit der Anteil wiederkehrender Software sichtbar bleibt.
+3. **Zielkunde:** zuerst einzelne Vermittler, Organisationen später.
+4. **Organisationslizenz** ab 4 Agenturen. Ein Zugang für Teamleiter existiert bereits.
+5. **Laufzeit:** 3 Monate bleiben Standard.
+6. **Kapazität:** 15 bis 20 Onboardings pro Woche.
+7. **Menschlicher Reviewer:** später.
+8. **Admin-Zugänge** (GitHub, Railway, Meta, Stripe): nur Ole.
+9. **Ziel 30.000 €:** brutto auf dem Konto.
+10. **Finanzierung:** vorerst keine.
