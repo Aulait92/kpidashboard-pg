@@ -136,3 +136,18 @@ export async function notifyLeadPush(leadId: string, payload: PushPayload) {
     reportError(err, "team-push");
   }
 }
+
+/**
+ * Filter „Zuständig“ in Kontakte (Ole, 27.11.2026): nur für Inhaber mit Team (mehr als ein Login). Werte: Login-ID
+ * eines Mitglieds oder „ohne“ (niemand zugeteilt). Unbekannte Werte wirken nicht.
+ */
+export async function ladeZustaendigFilter(team: TeamCtx, wert: string | undefined) {
+  const leer = { optionen: [] as { value: string; label: string }[], where: {} as Prisma.LeadWhereInput, aktivLabel: null as string | null };
+  if (isAdvisor(team)) return leer;
+  const members = await teamMembers(team.customerId);
+  if (members.length < 2) return leer;
+  const optionen = [...members.map((m) => ({ value: m.id, label: m.displayName?.trim() || m.email })), { value: "ohne", label: "Niemand zugeteilt" }];
+  const aktiv = optionen.find((o) => o.value === wert) ?? null;
+  const where: Prisma.LeadWhereInput = !aktiv ? {} : aktiv.value === "ohne" ? { assignedUserId: null } : { assignedUserId: aktiv.value };
+  return { optionen, where, aktivLabel: aktiv?.label ?? null };
+}
