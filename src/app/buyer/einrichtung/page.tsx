@@ -19,6 +19,9 @@ import { DatenschutzUrlForm, HelpCallPicker, ImpressumUrlForm, MetaAccessForm, Q
 import { istAllianzVertreter } from "@/lib/vertreter-seite";
 import { schrittAuswege, zeigePostfachVersichererHinweis } from "@/lib/einrichtung-auswege";
 import { anredeAusVorname } from "@/lib/vorname-anrede";
+import { grussName } from "@/lib/vermittler-nennung";
+import { leoWillkommen } from "@/lib/leo";
+import { Leo } from "@/components/leo";
 import { SoArbeitet } from "@/components/so-arbeitet";
 import { ladeSoArbeitet } from "@/lib/so-arbeitet-server";
 import { ServiceMails } from "@/app/buyer/einstellungen/assistent/service-mails";
@@ -165,6 +168,19 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const vvVersand = asVollmachtVersand(kundeBasis?.vollmachtVersand);
   // Erstinformation (§ 15 VersVermV) und Einwilligungstext fürs Leadformular
   const erstinfo = software ? await loadErstinfo(ctx.customerId) : null;
+  // Leo begrüßt beim ersten Besuch (noch kein eigener Schritt erledigt, nicht live): „Willkommen, Herr Becker!“ (lib/leo.ts).
+  // Keine Zeitangabe zu den Anzeigen: die Einrichtung dauert für den Kunden 20 bis 30 Minuten, die Kampagne danach länger.
+  const leoGruss =
+    !fertig && !ob.liveAt && overall.done === 0
+      ? leoWillkommen(
+          await (async () => {
+            const me = ctx.userId ? await prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true } }).catch(() => null) : null;
+            const name = erstinfo?.daten.name?.trim() || me?.displayName || null;
+            const an = erstinfo?.anrede === "Herr" || erstinfo?.anrede === "Frau" ? erstinfo.anrede : anredeAusVorname(name?.split(/\s+/)[0] ?? null);
+            return grussName({ name, anrede: an });
+          })(),
+        )
+      : null;
   // Impressum-Adresse: Pflichtangabe auf den Seiten für Endkunden, geprüft, aber nicht blockierend (Rechtsvorprüfung 16.11.2026)
   const impressumFehlt = !impressumUrlAus(ob.websiteInfo);
   // P8 „So arbeitet Ihr Assistent“ und M9 „Service-Mails in Ihrem Namen“ (beide nur mit Software)
@@ -297,6 +313,15 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
 
       <Card className="mb-5">
         <div className="p-5">
+          {leoGruss ? (
+            <div className="mb-4 flex items-center gap-4" data-leo-willkommen>
+              <Leo pose="hallo" size={120} wippen className="max-[359px]:h-24 max-[359px]:w-24" />
+              <div className="min-w-0">
+                <p className="text-lg font-semibold leading-snug">{leoGruss.titel}</p>
+                <p className="mt-1 text-[15px] text-[color:var(--muted)]">{leoGruss.text}</p>
+              </div>
+            </div>
+          ) : null}
           <div className="flex items-center justify-between text-sm" data-setup-progress>
             <span className="font-medium">
               {fertig ? "Alles eingerichtet, Sie sind live." : `Einrichtung: ${overall.done} von ${overall.total} erledigt`}

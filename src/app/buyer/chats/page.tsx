@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { NewMessageHint, StickToBottom } from "@/components/live-refresh";
 import { lastInboundAt } from "@/lib/live";
 import { PageHeader } from "@/components/buyer-shell";
-import { buttonClass } from "@/components/ui";
+import { ButtonLink, buttonClass, EmptyState } from "@/components/ui";
 import { chooseFollowup, nachfassOptionen } from "@/lib/whatsapp/followup";
 import { NachfassenWahl } from "./nachfassen-wahl";
 import { SubmitButton } from "@/components/submit-button";
@@ -626,7 +626,12 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                     </Link>
                   </>
                 ) : (
-                  "Noch keine Nachrichten. Sobald der Assistent einen Lead anschreibt, steht das Gespräch hier."
+                  <EmptyState
+                    leo="ruhig"
+                    title="Noch keine Nachrichten"
+                    text="Sobald Ihr Assistent einen Lead anschreibt, steht das Gespräch hier."
+                    action={ctx.teamRole === "owner" ? <ButtonLink href="/buyer/einstellungen/assistent">Assistent ansehen</ButtonLink> : undefined}
+                  />
                 )}
               </div>
             ) : (

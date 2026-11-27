@@ -11,8 +11,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, LifeBuoy, Mail, MessageCircle, SendHorizontal, Sparkles, ThumbsDown, ThumbsUp, UserRound, X } from "lucide-react";
+import { Check, LifeBuoy, Mail, MessageCircle, SendHorizontal, ThumbsDown, ThumbsUp, UserRound, X } from "lucide-react";
 import { haptic } from "@/lib/haptics";
+import { Leo } from "@/components/leo";
 import { cn } from "@/lib/utils";
 
 /** Antwort von /api/hilfe bzw. /api/hilfe/escalate (siehe lib/support-server.ts). */
@@ -178,7 +179,7 @@ export function HilfeChat({
           className="flex h-11 w-full items-center gap-3 rounded-[var(--radius-sm)] px-3 text-[15px] font-medium text-[color:var(--foreground)] transition hover:bg-[color:var(--surface-sunken)]"
           aria-label="KI-Hilfe: Fragen zur App"
         >
-          <Sparkles className="h-5 w-5 text-[color:var(--brand)]" />
+          <Leo pose="hallo" size={22} />
           <span>Hilfe</span>
         </button>
       ) : (
@@ -189,7 +190,7 @@ export function HilfeChat({
           className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 text-sm font-semibold text-[color:var(--brand-dark)] transition hover:brightness-95"
           aria-label="KI-Hilfe: Fragen zur App"
         >
-          <Sparkles className="h-4 w-4" />
+          <Leo pose="hallo" size={22} className="-ml-1" />
           <span>Hilfe</span>
         </button>
       )}
@@ -204,12 +205,11 @@ export function HilfeChat({
             className="flex h-full w-full flex-col bg-[color:var(--background)] shadow-2xl sm:max-w-[420px] sm:border-l sm:border-[color:var(--border)]"
           >
             <header className="flex items-center gap-3 border-b border-[color:var(--border)] bg-white px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-[color:var(--brand)]">
-                <Sparkles className="h-5 w-5" />
-              </span>
+              {/* Leo „denkt“, während die KI-Hilfe antwortet (components/leo.tsx) */}
+              <Leo pose={busy ? "denkt" : "hallo"} size={40} />
               <div className="min-w-0 flex-1">
-                <div className="whitespace-nowrap font-semibold">KI-Hilfe</div>
-                <div className="truncate text-xs text-[color:var(--muted)]">Antwortet sofort</div>
+                <div className="truncate font-semibold">Leo, Ihre Hilfe</div>
+                <div className="truncate text-xs text-[color:var(--muted)]">{busy ? "Denkt nach …" : "KI-Hilfe, antwortet sofort"}</div>
               </div>
               <button
                 type="button"
@@ -228,7 +228,7 @@ export function HilfeChat({
             </header>
 
             <div ref={bodyRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
-              <AiBubble text={`${greeting} Ich bin die KI-Hilfe. Fragen Sie mich alles zur App, zum Beispiel, wie Sie einen Lead reklamieren oder einen Termin verschieben.`} />
+              <AiBubble text={`${greeting} Ich bin Leo, Ihre KI-Hilfe. Fragen Sie mich alles zur App, zum Beispiel, wie Sie einen Lead reklamieren oder einen Termin verschieben.`} />
               {msgs.map((m, i) =>
                 m.who === "me" ? (
                   <div key={i} className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-tr-md bg-[color:var(--brand)] px-3 py-2 text-[14.5px] text-white">
@@ -271,8 +271,8 @@ export function HilfeChat({
               )}
               {busy ? (
                 <div className="flex items-center gap-2 text-sm text-[color:var(--muted)]">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-[color:var(--brand)]"><Sparkles className="h-4 w-4" /></span>
-                  <span className="animate-pulse">schreibt …</span>
+                  <Leo pose="denkt" size={28} />
+                  <span className="animate-pulse">denkt nach …</span>
                 </div>
               ) : null}
               {!busy && chips.length && !offered ? (
@@ -320,9 +320,7 @@ export function HilfeChat({
 function AiBubble({ text, error, children }: { text: string; error?: boolean; children?: React.ReactNode }) {
   return (
     <div className="flex max-w-[94%] items-start gap-2">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-[color:var(--brand)]">
-        <Sparkles className="h-4 w-4" />
-      </span>
+      <Leo pose="hallo" size={28} />
       <div>
         <div className={cn("whitespace-pre-line rounded-2xl rounded-tl-md border px-3 py-2 text-[14.5px] leading-relaxed", error ? "border-rose-200 bg-rose-50 text-rose-800" : "border-[color:var(--border)] bg-white")}>
           {text}
@@ -452,7 +450,7 @@ export function HilfeChatButton({ className, children }: { className?: string; c
     <button type="button" className={className} onClick={() => window.dispatchEvent(new Event("pg-hilfe-open"))} data-hilfe-open>
       {children ?? (
         <>
-          <Sparkles className="h-4 w-4" /> Frage an die KI-Hilfe
+          <Leo pose="hallo" size={20} /> Frage an die KI-Hilfe
         </>
       )}
     </button>
