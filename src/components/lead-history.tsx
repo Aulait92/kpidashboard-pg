@@ -99,7 +99,7 @@ export function LeadHistory({
         {mailReady && !readOnly ? (
           <button
             type="button"
-            onClick={() => window.dispatchEvent(new Event("pg-lead-mail-open"))}
+            onClick={() => oeffneLeadMail(undefined, undefined, leadId)}
             className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[color:var(--border-strong)] px-3 text-sm font-medium hover:border-[color:var(--brand)]"
             data-lead-mail-open
           >
@@ -250,7 +250,7 @@ export function AbschlussCard({
             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
             <span>Police fertig gemacht am {day(doneAt)}</span>
             {vorschlag ? (
-              <Button variant="primary" size="sm" onClick={() => oeffneLeadMail("willkommen")} data-willkommen-mail>
+              <Button variant="primary" size="sm" onClick={() => oeffneLeadMail("willkommen", undefined, leadId)} data-willkommen-mail>
                 <Mail className="h-4 w-4" /> Willkommens-Mail schreiben
               </Button>
             ) : null}
@@ -266,7 +266,7 @@ export function AbschlussCard({
             <span className="font-medium">Nächster Schritt: Police fertig machen</span>
             {!readOnly && unterlagenMail ? (
               // Paket M6: fehlende Angaben per E-Mail anfordern (Ankreuzliste im Dialog, Erinnerung nach 3 Tagen automatisch)
-              <Button variant="ghost" size="sm" className="ml-auto" icon={Mail} onClick={() => oeffneLeadMail("unterlagen_fehlen")} data-unterlagen-mail>
+              <Button variant="ghost" size="sm" className="ml-auto" icon={Mail} onClick={() => oeffneLeadMail("unterlagen_fehlen", undefined, leadId)} data-unterlagen-mail>
                 Unterlagen fehlen?
               </Button>
             ) : null}

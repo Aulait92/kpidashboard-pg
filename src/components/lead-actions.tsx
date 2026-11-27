@@ -2,7 +2,7 @@
 
 import { eingangKurz } from "@/lib/kontakt-liste";
 import { berlinTodayIso } from "@/lib/offer-pricing";
-import { LEAD_MAIL_EVENT, oeffneLeadMail } from "@/components/lead-mail";
+import { oeffneLeadMail } from "@/components/lead-mail";
 import { KUENDIGUNG_TODO, POLICE_TODO, versichererAusKuendigung } from "@/lib/vertraege-shared";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -349,7 +349,7 @@ export function LeadHeaderActions(p: Props) {
           <ActionTile
             icon={Mail}
             label="E-Mail"
-            onClick={p.email ? () => window.dispatchEvent(new Event(LEAD_MAIL_EVENT)) : undefined}
+            onClick={p.email ? () => oeffneLeadMail(undefined, undefined, p.leadId) : undefined}
             explain={{ title: "Keine E-Mail-Adresse hinterlegt", text: "Tragen Sie die Adresse bei den Angaben ein, dann können Sie direkt schreiben.", actions: [{ label: "Angaben ändern", onClick: openStammdaten }] }}
           />
           {/* Steht schon ein Termin an, zeigt die Terminkarte ihn (Verschieben, Vorbereiten); kein zweiter Knopf (16.11.2026) */}
@@ -462,7 +462,7 @@ export function LeadHeaderActions(p: Props) {
                   variant="secondary"
                   size="sm"
                   icon={Mail}
-                  onClick={() => oeffneLeadMail(aufgabeVorschlag.vorlage, aufgabeVorschlag.felder)}
+                  onClick={() => oeffneLeadMail(aufgabeVorschlag.vorlage, aufgabeVorschlag.felder, p.leadId)}
                   data-aufgabe-mail={aufgabeVorschlag.vorlage}
                 >
                   {aufgabeVorschlag.label}

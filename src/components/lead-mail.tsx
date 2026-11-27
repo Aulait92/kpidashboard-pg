@@ -42,10 +42,17 @@ export const LEAD_MAIL_EVENT = "pg-lead-mail-open";
 
 /**
  * Dialog öffnen, optional gleich mit einer Standardvorlage (z. B. „willkommen“ aus der Aufgabe „Police da?“) und
- * vorausgefüllten Feldern (z. B. Versicherer für die Kündigung, Paket M6).
+ * vorausgefüllten Feldern (z. B. Versicherer für die Kündigung, Paket M6). Mit leadId öffnet nur das Fenster dieses
+ * Kontakts (27.11.2026: sind zwei Kontakte gleichzeitig geladen, etwa Heute mit Kontakt rechts und darüber ein zweiter
+ * als Fenster, öffneten sonst beide Mail-Fenster; Gefahr einer Mail an den falschen Empfänger).
  */
-export function oeffneLeadMail(vorlage?: string, felder?: { versicherer?: string }) {
-  window.dispatchEvent(new CustomEvent(LEAD_MAIL_EVENT, { detail: vorlage ? { vorlage, felder } : undefined }));
+export function oeffneLeadMail(vorlage?: string, felder?: { versicherer?: string }, leadId?: string) {
+  window.dispatchEvent(new CustomEvent(LEAD_MAIL_EVENT, { detail: vorlage || leadId ? { vorlage, felder, leadId } : undefined }));
+}
+
+/** Gilt das Öffnen-Ereignis für das Mail-Fenster dieses Kontakts? Ohne leadId im Ereignis: ja (ältere Aufrufer). Rein. */
+export function mailEreignisFuer(detail: { leadId?: string } | null | undefined, leadId: string): boolean {
+  return !detail?.leadId || detail.leadId === leadId;
 }
 
 type Vorlage = { id: string; name: string; subject: string; body: string; standardKey?: string | null };
@@ -237,8 +244,10 @@ export function LeadMailComposer({
 
   // Geöffnet, ggf. mit Wunschvorlage (z. B. Willkommen nach „Police erledigt“)
   const onOpen = useEffectEvent((e: Event) => {
+    const detail = (e as CustomEvent<{ vorlage?: string; felder?: { versicherer?: string }; leadId?: string } | undefined>).detail;
+    // Nur das Fenster des gemeinten Kontakts öffnen (nie das eines anderen, gleichzeitig geladenen Kontakts)
+    if (!mailEreignisFuer(detail, leadId)) return;
     setOpen(true);
-    const detail = (e as CustomEvent<{ vorlage?: string; felder?: { versicherer?: string } } | undefined>).detail;
     const wunsch = detail?.vorlage;
     const v = wunsch ? vorlagen.find((x) => x.standardKey === wunsch) : null;
     if (v) pick(v, detail?.felder ?? {});
