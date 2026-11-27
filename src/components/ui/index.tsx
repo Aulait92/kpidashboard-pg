@@ -5,6 +5,7 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Leo, type LeoPose } from "@/components/leo";
 
 // ─── Button ────────────────────────────────────────────────────────────
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
@@ -187,21 +188,28 @@ export function Badge({
 // ─── EmptyState / Skeleton ─────────────────────────────────────────────
 export function EmptyState({
   icon: Icon,
+  leo,
   title,
   text,
   action,
 }: {
-  icon: LucideIcon;
+  icon?: LucideIcon;
+  /** Maskottchen Leo statt des Symbols (nur Vermittlerbereich, components/leo.tsx), z. B. „ruhig“ */
+  leo?: LeoPose;
   title: string;
   text?: string;
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[color:var(--surface-sunken)] text-[color:var(--muted)]">
-        <Icon className="h-5 w-5" />
-      </span>
-      <div className="text-sm font-semibold">{title}</div>
+    <div className={cn("flex flex-col items-center gap-2 px-6 text-center", leo ? "py-6" : "py-10")} data-leer>
+      {leo ? (
+        <Leo pose={leo} size={110} wippen />
+      ) : Icon ? (
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[color:var(--surface-sunken)] text-[color:var(--muted)]">
+          <Icon className="h-5 w-5" />
+        </span>
+      ) : null}
+      <div className="text-sm font-semibold text-[color:var(--foreground)]">{title}</div>
       {text ? <p className="max-w-sm text-xs text-[color:var(--muted)]">{text}</p> : null}
       {action ? <div className="mt-2">{action}</div> : null}
     </div>

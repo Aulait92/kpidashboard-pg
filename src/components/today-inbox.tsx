@@ -49,6 +49,7 @@ import { ActionSheet, TapRow, type SheetAction } from "@/components/ui/sheet";
 import type { InboxData } from "@/lib/inbox";
 import { CallOutcomeSheet, useCallReturn, type CallOutcomeTarget } from "@/components/call-outcome";
 import { abschlussEinTipp } from "@/components/abschluss-nachher";
+import { heuteLeer } from "@/lib/leo";
 import { BeitragFehltKarte } from "@/components/beitrag-fehlt-karte";
 import { RescheduleDialog } from "@/components/reschedule-dialog";
 import { attemptMessage, emitNotReachedOffer, LostSheet, NextStepSheet } from "@/components/next-step";
@@ -127,7 +128,10 @@ export function TodayInbox({
   anrufen = null,
   automatisch = null,
   weiteresProdukt = null,
+  leer = null,
 }: {
+  /** Leerer Zustand mit Leo (lib/leo.ts heuteLeer): Mitteilungen an und Wartezeit des Erstanschreibens (null = aus) */
+  leer?: { push: boolean; assistentMinuten: number | null } | null;
   /** Wiedervorlage „Weiteres Produkt anbieten?“: Zusatz-Knopf zum Bestandskunden-Modul (nur verfügbar und nicht gebucht) */
   weiteresProdukt?: CrossSellVerkauf | null;
   /** „Morgen: 3 automatische Nachrichten“ (Paket P6) */
@@ -196,6 +200,8 @@ export function TodayInbox({
       const undo = res.undo;
       toast.show({
         message: res.attempt ? attemptMessage(message, res.attempt) : message,
+        // Abschluss: Konfetti und Glückwunsch, je Deal einmal (lib/konfetti.ts)
+        feiern: res.gewonnen,
         ...(undo
           ? {
               actionLabel: "Rückgängig",
@@ -454,7 +460,17 @@ export function TodayInbox({
     <div className="space-y-6">
       {nothing ? (
         <Card>
-          <EmptyState icon={Check} title="Alles erledigt" text="Neue Aufgaben erscheinen hier von selbst." />
+          {(() => {
+            const l = heuteLeer(leer ?? { push: false, assistentMinuten: null });
+            return (
+              <EmptyState
+                leo="ruhig"
+                title={l.titel}
+                text={l.text}
+                action={l.zuKontakten ? <ButtonLink href="/buyer/kontakte">Kontakte ansehen</ButtonLink> : undefined}
+              />
+            );
+          })()}
         </Card>
       ) : null}
       {data.datenschutz?.length ? <DatenschutzKarte items={data.datenschutz} leadUrl={leadUrl} /> : null}

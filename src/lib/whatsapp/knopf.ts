@@ -37,7 +37,7 @@
 import { a, asAnsprache } from "@/lib/ansprache";
 import { prisma } from "@/lib/prisma";
 import { KNOPF, OUTREACH_PURPOSES } from "@/lib/whatsapp/templates";
-import { payloadLesen } from "@/lib/vorbereitung/fragen";
+import { payloadLesen, type EngineKnopf } from "@/lib/vorbereitung/fragen";
 import { erstfrageFreitextWert, erstfrageKnopfWert } from "@/lib/whatsapp/erstanschreiben";
 export { ERSTFRAGE_HINWEIS_RE } from "@/lib/whatsapp/erstanschreiben";
 import { mergeQualificationData } from "@/lib/whatsapp/qualification";
@@ -63,7 +63,7 @@ export type KnopfAktion =
   | { aktion: "tier"; key: string; wert: string; titel: string }
   | { aktion: "bedenkzeit"; wahl: "1w" | "2w" | "monatsende" }
   | { aktion: "vorbereitung"; art: "ja" | "termin" }
-  | { aktion: "angabe"; knopf: { id: string; option: string } | { rest: true } };
+  | { aktion: "angabe"; knopf: EngineKnopf };
 
 const norm = (t: string | null | undefined) => (t ?? "").trim().toLowerCase();
 const is = (t: string, k: string) => t === k.toLowerCase();

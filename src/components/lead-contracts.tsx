@@ -368,7 +368,8 @@ function ContractSheet({ leadId, id, initial, onClose }: { leadId: string; id: s
       };
       const res = id ? await updateContractAction(id, raw) : await addContractAction(leadId, raw);
       if (!res.ok) return toast.show({ message: res.error, tone: "error" });
-      toast.show({ message: id ? "Vertrag gespeichert" : "Abschluss eingetragen" });
+      // Weiterer Abschluss: Konfetti und Glückwunsch (lib/konfetti.ts), Bearbeiten nicht
+      toast.show({ message: id ? "Vertrag gespeichert" : "Abschluss eingetragen", feiern: id ? null : `vertrag:${leadId}:${Date.now()}` });
       onClose();
       router.refresh();
     });

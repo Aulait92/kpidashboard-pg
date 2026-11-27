@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { BuyerLeadsTable, type BuyerLeadRow } from "@/components/buyer-leads-table";
+import { ButtonLink, EmptyState } from "@/components/ui";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { getStornogruendePerLead } from "@/app/buyer/actions";
 import { isAdvisor, ladeZustaendigFilter, leadScope, type TeamCtx } from "@/lib/team";
@@ -242,6 +243,11 @@ export async function BuyerLeadsBody({
   const alleHref = `${basePath}?ansicht=alle`;
   // Gibt es überhaupt Kontakte? (nur für leere Zustände abgefragt)
   const hatKontakte = shown.length === 0 ? (await prisma.lead.count({ where: leadScope(team), take: 1 })) > 0 : true;
+  // Noch gar kein Kontakt und Einrichtung offen: nächster Schritt „Einrichtung fortsetzen“ (nur Inhaber, Berater sehen sie nicht)
+  const einrichtungOffen =
+    !hatKontakte && !isAdvisor(team)
+      ? await prisma.onboarding.findUnique({ where: { customerId }, select: { liveAt: true } }).then((o) => !!o && !o.liveAt).catch(() => false)
+      : false;
 
   return (
     <div className="space-y-4">
@@ -347,7 +353,12 @@ export async function BuyerLeadsBody({
               </Link>
             </>
           ) : (
-            "Noch keine Kontakte. Neue Leads erscheinen hier und auf „Heute“, sobald sie eingehen."
+            <EmptyState
+              leo="ruhig"
+              title="Noch keine Kontakte"
+              text="Neue Leads erscheinen hier und auf „Heute“, sobald sie eingehen."
+              action={einrichtungOffen ? <ButtonLink href="/buyer/einrichtung" variant="primary">Einrichtung fortsetzen</ButtonLink> : undefined}
+            />
           )
         }
       />

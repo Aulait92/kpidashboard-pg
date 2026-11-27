@@ -11,6 +11,13 @@
 // (Ole, 15.11.2026): Haftpflicht, Hausrat, Rechtsschutz, Wohngebäude, Tierkranken/Tierhalterhaftpflicht, Unfall. Tarif, Selbstbehalt und
 // Versicherungssummen wählt der Berater im Termin.
 
+/**
+ * Einmal nachhaken (Ole, 27.11.2026, Fall Kiefer: „zu schnell abwimmeln lassen“): gleiche Regel wie die Fragen-Engine
+ * (lib/vorbereitung/fragen.ts nachhakenText). Steht in jeder Liste der Angaben fürs Angebot.
+ */
+export const NACHHAKEN_REGEL =
+  "- Möchte der Lead die Angaben lieber im Termin klären („das klären wir im Termin“), solange noch Angaben für den Beitrag fehlen (bei Kfz: Fahrzeugschein und letzte Rechnung), hake genau einmal freundlich nach: Nutzen und Aufwand in höchstens zwei Sätzen, ohne Druck und ohne Versprechen, z. B. „Verstehe! Nur kurz: Ohne Wohnfläche und Baujahr kann [Berater] im Termin noch keinen Beitrag für Sie rechnen, dann wird meist ein zweiter Termin nötig. Es sind nur noch zwei kurze Fragen. Wollen wir die noch schnell machen?“ (bei Kfz: „Es sind nur zwei Fotos, das dauert eine Minute.“). Bleibt er dabei oder sagt er nein, akzeptiere es sofort, frag nichts mehr und lass den Rest offen. Fehlt für den Beitrag nichts mehr, akzeptiere es gleich.";
+
 export type ProduktCheckliste = {
   /** Für die Anzeige/Tests: welcher Katalog greift. */
   key: "privatschutz" | "tier" | "kfz";
@@ -52,6 +59,7 @@ function tierCheckliste(): ProduktCheckliste {
       "  • Welcher Schutz gewünscht ist: nur Operationen (OP-Schutz) oder volle Krankenversicherung, also auch Tierarztbehandlungen ohne OP. Neutral fragen, ohne zu empfehlen (angaben.tarifwunsch)",
       "- Gesundheitsangaben zum Tier sachlich und ohne Wertung aufnehmen. Sag nichts dazu, ob oder wie sie den Versicherungsschutz beeinflussen: das klärt der Berater.",
       "- Weiß der Lead etwas nicht oder möchte es nicht sagen: nicht nachbohren, als „offen“ festhalten und weitermachen. Wird es dem Lead zu viel, lass den Rest offen: der Berater klärt ihn im Termin.",
+      NACHHAKEN_REGEL,
       "- Versicherungssumme, Selbstbeteiligung und Preise fragst du nicht ab und nennst du nicht: das macht der Berater im Termin.",
     ].join("\n"),
     unterlagen: [
@@ -105,6 +113,7 @@ function kfzCheckliste(): ProduktCheckliste {
       "  • Erstzulassung, Halter, Kennzeichen und Vertragsbeginn (Ablauf des bisherigen Vertrags) stehen auf den Unterlagen: nur fragen, wenn der Lead ausdrücklich kein Foto schicken möchte.",
       "- Danach (Cross-Selling, Ole 21.11.2026): Welche Versicherungen hat der Lead sonst noch (Haftpflicht, Hausrat, Rechtsschutz, Wohngebäude, Unfall)? Das fragt die App über den Komplettcheck und die Vertragsfrage selbst (lib/whatsapp/vorvertraege.ts); nennt der Lead Verträge von sich aus, halte sie in angaben.vorhanden fest und lade ihn ein, diese Policen gleich mitzuschicken, damit der Berater im Termin alles mit ansehen kann. Kein Versprechen zu Ersparnis oder Preisen; erlaubt ist nur, dass der Berater versucht, Geld zu sparen.",
       "- Weiß der Lead etwas nicht: nicht nachbohren, als „offen“ festhalten und weitermachen. Der Berater klärt es im Termin.",
+      NACHHAKEN_REGEL,
       "- Preise, Tarife, Selbstbeteiligung und Kasko-Umfang fragst du nicht ab und nennst du nicht, und du empfiehlst nichts: das macht der Berater im Termin.",
     ].join("\n"),
     unterlagen: [
@@ -153,6 +162,7 @@ export function produktCheckliste(product: string | null | undefined): ProduktCh
       "- Nur Unfall: ausgeübter Beruf bzw. Tätigkeit und riskante Sportarten (angaben.beruf)",
       "- Haftpflicht: frage zusätzlich, ob ein Hund oder Pferd im Haushalt lebt (Tierhalterhaftpflicht) (angaben.tier)",
       "- Weiß der Lead etwas nicht oder möchte es nicht sagen: nicht nachbohren, als „offen“ festhalten und weitermachen. Wird es dem Lead zu viel (kurze oder genervte Antworten), lass den Rest offen: der Berater klärt ihn im Termin.",
+      NACHHAKEN_REGEL,
       "- Versicherungssumme, Selbstbeteiligung und Preise fragst du nicht ab und nennst du nicht: das macht der Berater im Termin.",
     ].join("\n"),
     unterlagen: [

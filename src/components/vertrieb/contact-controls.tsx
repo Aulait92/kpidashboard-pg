@@ -33,12 +33,15 @@ export function StagePicker({
   offenesAngebot?: { id: string; number: string } | null;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState<"pick" | "lost" | null>(null);
   const current = STAGES.find((s) => s.id === stage);
   const save = (o: Record<string, string>) =>
     start(async () => {
       await setStage(fd({ contactId, ...o }));
+      // Auf „Gewonnen“ gesetzt: Konfetti und Glückwunsch, je Kontakt einmal (lib/konfetti.ts)
+      if (o.stage === "GEWONNEN" && stage !== "GEWONNEN") toast.show({ message: "Als gewonnen gespeichert", feiern: `vertrieb:${contactId}` });
       router.refresh();
     });
   return (
@@ -149,7 +152,7 @@ export function GewonnenVerlorenKnoepfe({
   const save = (s: "GEWONNEN" | "VERLOREN", o: { lossReason?: string; competitor?: string; declineOfferId?: string | null } = {}) =>
     start(async () => {
       await gewonnenVerlorenAction(contactId, s, o);
-      toast.show({ message: s === "GEWONNEN" ? "Als gewonnen gespeichert" : "Als verloren gespeichert" });
+      toast.show({ message: s === "GEWONNEN" ? "Als gewonnen gespeichert" : "Als verloren gespeichert", feiern: s === "GEWONNEN" ? `vertrieb:${contactId}` : null });
       router.refresh();
     });
   return (

@@ -169,10 +169,20 @@ export const frageId = (sparte: string, key: string, i = 1) => (i > 1 ? `${spart
 /** Payload eines Antwortknopfs bzw. einer Listenzeile: vf:<sparte>.<key>:<option>. */
 export const optionPayload = (id: string, option: string) => `vf:${id}:${option}`;
 
-/** Payload lesen: { id, option } bzw. rest; null = kein Knopf der Engine. */
-export function payloadLesen(p: string | null | undefined): { rest: true } | { id: string; option: string } | null {
+/** Knöpfe beim einmaligen Nachhaken nach „Rest im Termin“ (Ole, 27.11.2026): weiter mit der Frage bzw. doch im Termin. */
+export const NACHHAKEN_KNOEPFE = [
+  { id: "vf:weiter", title: "Gut, machen wir" },
+  { id: REST_KNOPF.id, title: "Lieber im Termin" },
+] as const;
+
+/** Knopf der Engine: Antwort { id, option }, „Rest im Termin“ bzw. „Gut, machen wir“ nach dem Nachhaken. */
+export type EngineKnopf = { rest: true } | { weiter: true } | { id: string; option: string };
+
+/** Payload lesen: { id, option }, rest bzw. weiter; null = kein Knopf der Engine. */
+export function payloadLesen(p: string | null | undefined): EngineKnopf | null {
   const t = (p ?? "").trim();
   if (t === REST_KNOPF.id) return { rest: true };
+  if (t === NACHHAKEN_KNOEPFE[0].id) return { weiter: true };
   const m = /^vf:([a-z0-9-]+\.[a-zA-Z0-9~]+):([a-zA-Z0-9_-]+)$/.exec(t);
   return m ? { id: m[1], option: m[2] } : null;
 }
@@ -522,9 +532,95 @@ export function feldWert(f: Pick<GeplanteFrage, "praefix" | "voran">, wert: stri
   return rest ? `${rest}; ${neu}` : neu;
 }
 
-/** Dank bei „Rest im Termin“ (rein): freundlich stoppen. */
-export function restText(an: Ansprache, personNom: string, wochentag: string): string {
-  return a(an, `Alles klar, den Rest klärt ${personNom} mit dir im Termin. Bis ${wochentag}!`, `Alles klar, den Rest klärt ${personNom} mit Ihnen im Termin. Bis ${wochentag}!`);
+/**
+ * Kfz (Ole, 27.11.2026): Bleibt der Lead bei „im Termin“, die zwei Fotos nicht vergessen. Ein Satz, freiwillig, ohne
+ * Versprechen; nur, solange die Bitte um die Unterlagen noch nicht gestellt ist (sonst erinnern die Policen-Erinnerungen).
+ */
+export function kfzFotosSatz(an: Ansprache, personNom: string): string {
+  return a(
+    an,
+    `Wenn du vorher noch kurz Fahrzeugschein und letzte Rechnung als Foto schickst, kann ${personNom} den Beitrag schon vorbereiten.`,
+    `Wenn Sie vorher noch kurz Fahrzeugschein und letzte Rechnung als Foto schicken, kann ${personNom} den Beitrag schon vorbereiten.`,
+  );
+}
+
+/**
+ * Dank bei „Rest im Termin“ (rein): freundlich stoppen. kfz: Satz mit der Bitte um die zwei Fotos; danke: nach den
+ * Angaben für den Beitrag (nach dem Nachhaken), die übrigen Fragen bleiben für den Termin.
+ */
+export function restText(an: Ansprache, personNom: string, wochentag: string, o: { kfz?: boolean; danke?: boolean } = {}): string {
+  const start = o.danke
+    ? a(an, `Danke, das reicht schon! Den Rest klärt ${personNom} mit dir im Termin.`, `Danke, das reicht schon! Den Rest klärt ${personNom} mit Ihnen im Termin.`)
+    : a(an, `Alles klar, den Rest klärt ${personNom} mit dir im Termin.`, `Alles klar, den Rest klärt ${personNom} mit Ihnen im Termin.`);
+  return [start, o.kfz ? kfzFotosSatz(an, personNom) : null, `Bis ${wochentag}!`].filter(Boolean).join(" ");
+}
+
+/** „Lieber im Termin“ auf die Frage nach der Vorbereitung (rein): „Alles klar, bis Montag!“, bei Kfz mit der Foto-Bitte. */
+export function imTerminText(an: Ansprache, personNom: string, wochentag: string, kfz = false): string {
+  return kfz ? `Alles klar! ${kfzFotosSatz(an, personNom)} Bis ${wochentag}!` : `Alles klar, bis ${wochentag}!`;
+}
+
+// ─── Einmal nachhaken bei „Rest im Termin“ (Ole, 27.11.2026, Fall Kiefer) ──────────────────────────────────────────
+// „Hier hat sich der Assistent zu schnell abwimmeln lassen. Ohne die Dokumente kann Lohmann keinen Preis rechnen.“
+// Fehlen noch Angaben für den Beitrag, hakt der Assistent genau einmal je Termin nach (Nutzen und Aufwand, ohne Druck),
+// mit [Gut, machen wir] [Lieber im Termin]. Danach nur noch die Angaben für den Beitrag; ein zweites „im Termin“ gilt.
+
+/**
+ * Für den Beitrag nötig: Pflichtfragen vor den Zusatzbausteinen (Abschnitte 0 bis 3: gemeinsame Angaben, Pflichtfragen
+ * je Sparte, Vorversicherung des Hauses). Vorverträge, Zusatzbausteine und Adresse nicht.
+ */
+export function preisrelevant(f: Pick<GeplanteFrage, "pflicht" | "abschnitt">): boolean {
+  return f.pflicht && (f.abschnitt ?? 2) <= 3;
+}
+
+/** Was für den Beitrag noch fehlt: bei Kfz die zwei Unterlagen, sonst die offenen Fragen für den Beitrag. */
+export type FehltFuerBeitrag = { kfz: true } | { kfz: false; labels: string[]; anzahl: number };
+
+/** Offene Fragen für den Beitrag (rein); null = nichts fehlt. Folgefragen zählen nur, wenn eine gerade offen ist. */
+export function fehltFuerBeitrag(offen: readonly GeplanteFrage[]): FehltFuerBeitrag | null {
+  const p = offen.filter(preisrelevant).filter((f, i) => i === 0 || !f.folge);
+  return p.length ? { kfz: false, labels: p.map((f) => f.label), anzahl: p.length } : null;
+}
+
+/** Bezeichnungen, die im Satz gut lesbar sind („Geburtsdatum und Postleitzahl“); ohne Klammern, Fragen und Zahlen. */
+function wasFehlt(labels: readonly string[]): string | null {
+  const w = [...new Set(labels.map((l) => l.replace(/\s*\([^)]*\)\s*$/, "").trim()).filter((l) => l && !/[?:\d]/.test(l)))];
+  if (!w.length) return null;
+  return w.length === 1 || / und /.test(w[0]) ? w[0] : `${w[0]} und ${w[1]}`;
+}
+
+const ZAHLWORT = ["", "eine", "zwei", "drei"];
+
+/** Text beim einmaligen Nachhaken (rein): Nutzen und Aufwand, ohne Druck und ohne Versprechen. */
+export function nachhakenText(an: Ansprache, personNom: string, fehlt: FehltFuerBeitrag): string {
+  if (fehlt.kfz)
+    return a(
+      an,
+      `Verstehe! Nur kurz: Ohne deinen Fahrzeugschein und die letzte Rechnung deiner Kfz-Versicherung kann ${personNom} im Termin noch keinen Beitrag für dich rechnen, dann wird meist ein zweiter Termin nötig. Es sind nur zwei Fotos, das dauert eine Minute. Wollen wir das noch schnell machen?`,
+      `Verstehe! Nur kurz: Ohne Ihren Fahrzeugschein und die letzte Rechnung Ihrer Kfz-Versicherung kann ${personNom} im Termin noch keinen Beitrag für Sie rechnen, dann wird meist ein zweiter Termin nötig. Es sind nur zwei Fotos, das dauert eine Minute. Wollen wir das noch schnell machen?`,
+    );
+  const was = wasFehlt(fehlt.labels);
+  const ohne = was ? `Ohne Angaben wie ${was}` : "Ohne die letzten Angaben";
+  const aufwand =
+    fehlt.anzahl === 1 ? "Es ist nur noch eine kurze Frage." : fehlt.anzahl <= 3 ? `Es sind nur noch ${ZAHLWORT[fehlt.anzahl]} kurze Fragen.` : "Es sind nur noch ein paar kurze Fragen.";
+  return a(
+    an,
+    `Verstehe! Nur kurz: ${ohne} kann ${personNom} im Termin noch keinen Beitrag für dich rechnen, dann wird meist ein zweiter Termin nötig. ${aufwand} Wollen wir die noch schnell machen?`,
+    `Verstehe! Nur kurz: ${ohne} kann ${personNom} im Termin noch keinen Beitrag für Sie rechnen, dann wird meist ein zweiter Termin nötig. ${aufwand} Wollen wir die noch schnell machen?`,
+  );
+}
+
+/**
+ * Getippte Antwort auf das Nachhaken (rein): „ja“ (weiter mit der Frage), „rest“ (doch im Termin) bzw. null (wohl die
+ * Antwort auf die offene Frage, z. B. „Gut, 120 qm, 1985“).
+ */
+export function nachhakenAusText(text: string | null | undefined): "ja" | "rest" | null {
+  const t = (text ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+  if (!t || t.length > 40) return null;
+  if (REST_RE.test(t) || /^(nein|nee|nö|lieber nicht|lieber im termin|im termin|beim termin|sp(ä|ae)ter|keine zeit|jetzt nicht|gerade nicht)(?![a-zäöüß])/.test(t)) return "rest";
+  if (/\d/.test(t)) return null;
+  if (/^(ja|jap|jo|gut|ok|okay|klar|gern|gerne|passt|los|na gut|na klar|alles klar|machen wir|dann los|sicher)(?![a-zäöüß])/.test(t)) return "ja";
+  return null;
 }
 
 /** Mehrfachauswahl beenden? („Das war alles“, „nein“, „fertig“) */
@@ -537,6 +633,6 @@ export function vorbereitungAusText(text: string | null | undefined): "ja" | "te
   const t = (text ?? "").replace(/\s+/g, " ").trim().toLowerCase();
   if (!t || t.length > 40) return null;
   if (/\b(im termin|beim termin|sp(ä|ae)ter|lieber nicht|nein)\b/.test(t)) return "termin";
-  if (/^(ja|jap|jo|gern|gerne|klar|ok|okay|sicher|na klar|ja,? (gern|gerne|klar|bitte)|ja bitte|legen sie los|leg los|los)\b[\s!.👍🙂]*$/u.test(t)) return "ja";
+  if (/^(ja|jap|jo|gern|gerne|klar|ok|okay|sicher|na klar|ja,? (gern|gerne|klar|bitte)|ja bitte|legen sie los|leg los|los|gut,? machen wir|machen wir)\b[\s!.👍🙂]*$/u.test(t)) return "ja";
   return null;
 }

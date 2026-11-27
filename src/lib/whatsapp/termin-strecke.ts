@@ -84,11 +84,19 @@ import {
   mehrfachRest,
   mehrfachWeiterNachricht,
   mehrfachWert,
+  fehltFuerBeitrag,
+  imTerminText,
   nachfrageText,
+  NACHHAKEN_KNOEPFE,
+  nachhakenAusText,
+  nachhakenText,
   offeneFragen,
+  preisrelevant,
   restText,
   vorbereitungAusText,
   type Antwort,
+  type EngineKnopf,
+  type FehltFuerBeitrag,
   type Auswertung,
   type FrageNachricht,
   type FragenQuelle,
@@ -190,6 +198,12 @@ export const STRECKE = {
   angabeTeil: "angabe_teil",
   /** „Rest im Termin“ (body.offen: Bezeichnungen der offenen Fragen) */
   angabenRest: "angaben_rest",
+  /**
+   * Einmal nachgehakt nach „Rest im Termin“ bzw. „Lieber im Termin“, weil noch Angaben für den Beitrag fehlen (Ole,
+   * 27.11.2026; body.via: angabe, vorbereitung; body.kfz: Fahrzeugschein und Rechnung fehlen). Höchstens einmal je Termin;
+   * danach fragt die Engine nur noch die Angaben für den Beitrag.
+   */
+  restNachhaken: "rest_nachhaken",
 } as const;
 
 const HOUR = 60 * 60 * 1000;
@@ -1831,12 +1845,18 @@ export async function vorbereitungGefragt(
   await merke(conversationId, via === "nachfrage" ? STRECKE.vorbereitungNachfrage : STRECKE.vorbereitungFrage, { appointmentId, via });
 }
 
-export type VorbereitungStand = { frageAt: Date | null; nachfrageAt: Date | null; antwort: { at: Date; art: string } | null };
+export type VorbereitungStand = {
+  frageAt: Date | null;
+  nachfrageAt: Date | null;
+  antwort: { at: Date; art: string } | null;
+  /** Schon einmal nachgehakt (Engine bzw. Frage nach der Vorbereitung), Ole 27.11.2026 */
+  nachhakenAt: Date | null;
+};
 
 /** Stand der Frage nach der Vorbereitung für einen Termin. */
 export async function vorbereitungStand(conversationId: string, appointmentId: string): Promise<VorbereitungStand> {
   const rows = await prisma.message.findMany({
-    where: { conversationId, direction: "internal", kind: { in: [STRECKE.vorbereitungFrage, STRECKE.vorbereitungNachfrage, STRECKE.vorbereitungAntwort] }, body: { contains: appointmentId } },
+    where: { conversationId, direction: "internal", kind: { in: [STRECKE.vorbereitungFrage, STRECKE.vorbereitungNachfrage, STRECKE.vorbereitungAntwort, STRECKE.restNachhaken] }, body: { contains: appointmentId } },
     orderBy: { createdAt: "asc" },
     select: { kind: true, createdAt: true, body: true },
   });
@@ -1847,12 +1867,16 @@ export async function vorbereitungStand(conversationId: string, appointmentId: s
     frageAt: erste(STRECKE.vorbereitungFrage)?.createdAt ?? null,
     nachfrageAt: erste(STRECKE.vorbereitungNachfrage)?.createdAt ?? null,
     antwort: antwort ? { at: antwort.createdAt, art: String(daten(antwort.body).art ?? "") } : null,
+    nachhakenAt: erste(STRECKE.restNachhaken)?.createdAt ?? null,
   };
 }
 
 /**
  * Antwort auf die Frage nach der Vorbereitung (Knopf vorbereitung:ja|termin, knopf.ts, bzw. getippt): „Ja, gern“ startet
  * die Strecke, „Lieber im Termin“ antwortet „Alles klar, bis Montag!“. Doppelter bzw. alter Klick: nichts tun.
+ * Fehlen noch Angaben für den Beitrag (Ole, 27.11.2026), hakt „Lieber im Termin“ beim ersten Mal einmal nach
+ * [Gut, machen wir] [Lieber im Termin] (gleiche Payloads); „Gut, machen wir“ fragt dann nur die Angaben für den Beitrag
+ * (Kfz: gleich die Bitte um die zwei Fotos), ein zweites „Lieber im Termin“ gilt.
  * false = kein kommender Termin (der Assistent antwortet).
  */
 export async function vorbereitungAntwort(conversationId: string, art: "ja" | "termin", now = new Date()): Promise<boolean> {
@@ -1860,19 +1884,38 @@ export async function vorbereitungAntwort(conversationId: string, art: "ja" | "t
   if (!k?.termin) return false;
   const v = await vorbereitungStand(conversationId, k.termin.id);
   if (v.antwort) return true;
+  if (art === "termin" && !v.nachhakenAt) {
+    const fehlt = await fehltFuerBeitragVon(k);
+    if (fehlt) {
+      if (await nachhakenMerken(k, { via: "vorbereitung", kfz: fehlt.kfz })) await sende(k, nachhakenText(k.an, k.person.nom, fehlt), VORBEREITUNG_NACHHAKEN_KNOEPFE);
+      return true;
+    }
+  }
   if (!(await ersteAntwortMerken(conversationId, k.termin.id, { art }))) return true;
   if (k.leadId) {
     const { logLeadHistory } = await import("@/lib/lead-history");
     await logLeadHistory(k.leadId, "notiz", art === "ja" ? "Vorbereitung per WhatsApp: Fragen vorab gern" : "Vorbereitung per WhatsApp: lieber im Termin", { customerId: k.customerId, userId: null }).catch(() => null);
   }
   if (art === "termin") {
-    await sende(k, `Alles klar, bis ${bisWann(k.termin.startsAt, now)}!`);
+    await sende(k, imTerminText(k.an, k.person.nom, bisWann(k.termin.startsAt, now), await kfzUnterlagenOffen(k)));
+    return true;
+  }
+  if (v.nachhakenAt) {
+    // nach dem Nachhaken: nur noch die Angaben für den Beitrag (Kfz: die zwei Fotos), danach Schluss
+    if (!(await kfzBitteSenden(k, "Super, danke!")) && !(await sendeAngabeFrage(k, "Super, danke!"))) await restImTermin(k, await offeneAngaben(k), now, { danke: true });
+    await einladungPruefen(k, now);
     return true;
   }
   await starteVorbereitung(k, "Super, danke!");
   await einladungPruefen(k, now);
   return true;
 }
+
+/** Knöpfe beim Nachhaken auf die Frage nach der Vorbereitung (gleiche Payloads wie die Frage). */
+const VORBEREITUNG_NACHHAKEN_KNOEPFE: Knopf[] = [
+  { id: "vorbereitung:ja", title: NACHHAKEN_KNOEPFE[0].title },
+  { id: "vorbereitung:termin", title: NACHHAKEN_KNOEPFE[1].title },
+];
 
 export { vorbereitungAusText };
 
@@ -1930,6 +1973,8 @@ export async function vorbereitungFreitext(conversationId: string, text: string 
   const v = await vorbereitungStand(conversationId, k.termin.id);
   if (!v.frageAt && !v.nachfrageAt) return false;
   if (v.antwort) return false;
+  // nach dem Nachhaken (Ole, 27.11.2026): „Gut, machen wir“ bzw. „nein“ getippt
+  if (v.nachhakenAt) return vorbereitungAntwort(conversationId, art, now);
   const letzte = await prisma.message.findFirst({ where: { conversationId, direction: "outbound" }, orderBy: { createdAt: "desc" }, select: { purpose: true } });
   if (letzte?.purpose !== "booking_confirmation" && letzte?.purpose !== "booking_prep_nudge") return false;
   return vorbereitungAntwort(conversationId, art, now);
@@ -2037,12 +2082,19 @@ export type AngabenStand = {
   antworten: Record<string, Antwort>;
   /** Mehrfachauswahl: schon gewählte Zeilen der offenen Frage */
   teil: string[];
+  /** Einmal nachgehakt (je Termin, Ole 27.11.2026): danach nur noch die Angaben für den Beitrag */
+  nachhaken: { at: Date } | null;
 };
 
 /** Stand der Fragen-Engine für einen Termin (aus den Merkern). */
 export async function angabenStand(conversationId: string, appointmentId: string): Promise<AngabenStand> {
   const rows = await prisma.message.findMany({
-    where: { conversationId, direction: "internal", kind: { in: [STRECKE.angabeFrage, STRECKE.angabeAntwort, STRECKE.angabeNachfrage, STRECKE.angabenRest, STRECKE.angabeTeil] }, body: { contains: appointmentId } },
+    where: {
+      conversationId,
+      direction: "internal",
+      kind: { in: [STRECKE.angabeFrage, STRECKE.angabeAntwort, STRECKE.angabeNachfrage, STRECKE.angabenRest, STRECKE.angabeTeil, STRECKE.restNachhaken] },
+      body: { contains: appointmentId },
+    },
     orderBy: { createdAt: "asc" },
     select: { kind: true, createdAt: true, body: true },
   });
@@ -2064,7 +2116,16 @@ export async function angabenStand(conversationId: string, appointmentId: string
         .filter((r) => r.kind === STRECKE.angabeTeil && r.createdAt >= letzteFrage.at && daten(r.body).id === letzteFrage.id)
         .flatMap((r) => (Array.isArray(daten(r.body).opt) ? (daten(r.body).opt as unknown[]).map(String) : []))
     : [];
-  return { letzteFrage, erledigt: ids(STRECKE.angabeAntwort), nachgefragt: ids(STRECKE.angabeNachfrage), rest: rows.some((r) => r.kind === STRECKE.angabenRest), antworten, teil: [...new Set(teil)] };
+  const nh = rows.find((r) => r.kind === STRECKE.restNachhaken);
+  return {
+    letzteFrage,
+    erledigt: ids(STRECKE.angabeAntwort),
+    nachgefragt: ids(STRECKE.angabeNachfrage),
+    rest: rows.some((r) => r.kind === STRECKE.angabenRest),
+    antworten,
+    teil: [...new Set(teil)],
+    nachhaken: nh ? { at: nh.createdAt } : null,
+  };
 }
 
 /** Wartet die Engine auf eine Antwort? */
@@ -2092,7 +2153,8 @@ async function angabeFrageNachricht(
   const st = await angabenStand(k.conversationId, k.termin.id);
   if (st.rest) return null;
   const { plan, quelle } = angabenPlan(k, st);
-  const offen = offeneFragen(plan, quelle);
+  // nach dem Nachhaken nur noch die Angaben für den Beitrag (die übrigen bleiben für den Termin)
+  const offen = offeneFragen(plan, quelle).filter((f) => !st.nachhaken || preisrelevant(f));
   if (!offen[0]) return null;
   // Privatschutz als Bündel (Ole, 26.11.2026): keine eigene Strecke, aber am Lead vermerken
   if (!st.letzteFrage) {
@@ -2181,13 +2243,21 @@ async function abgeleiteteSpeichern(k: StreckenKontext): Promise<void> {
  * Nachfrage, z. B. Vorverträge), danach mit Vermerk weiter. „Rest im Termin“: freundlich stoppen, offene Punkte vermerken.
  * false = keine Frage offen bzw. keine Antwort darauf (der Assistent antwortet).
  */
-export async function angabeAntwort(conversationId: string, text: string | null | undefined, knopf: { id: string; option: string } | { rest: true } | null = null, now = new Date()): Promise<boolean> {
+export async function angabeAntwort(conversationId: string, text: string | null | undefined, knopf: EngineKnopf | null = null, now = new Date()): Promise<boolean> {
   const k = await streckenKontext(conversationId, now);
   if (!k?.termin) return false;
   const st = await angabenStand(conversationId, k.termin.id);
   if (!angabeFrageOffen(st)) return !!knopf; // doppelter bzw. alter Klick
   const { plan, quelle } = angabenPlan(k, st);
-  if (knopf && "rest" in knopf) return restImTermin(k, offeneFragen(plan, quelle), now);
+  if (knopf && "rest" in knopf) return restOderNachhaken(k, st, offeneFragen(plan, quelle), now);
+  // Antwort auf das Nachhaken (seit der letzten Frage): Knopf bzw. getippt; sonst gilt der Text als Antwort auf die Frage
+  const wartet = !!st.nachhaken && st.nachhaken.at > st.letzteFrage!.at;
+  if (knopf && "weiter" in knopf) return wartet ? weiterNachNachhaken(k, offeneFragen(plan, quelle), now) : true;
+  if (!knopf && wartet) {
+    const n = nachhakenAusText(text);
+    if (n === "rest") return restImTermin(k, offeneFragen(plan, quelle), now);
+    if (n === "ja") return weiterNachNachhaken(k, offeneFragen(plan, quelle), now);
+  }
   const f = plan.find((x) => x.id === (knopf?.id ?? st.letzteFrage!.id));
   if (!f || f.id !== st.letzteFrage!.id) return !!knopf;
   let r: Auswertung;
@@ -2211,7 +2281,7 @@ export async function angabeAntwort(conversationId: string, text: string | null 
       else r = e;
     }
   } else r = antwortAuswerten(f, text, knopf?.option ?? null, now);
-  if (r.art === "rest") return restImTermin(k, offeneFragen(plan, quelle), now);
+  if (r.art === "rest") return restOderNachhaken(k, st, offeneFragen(plan, quelle), now);
   let vermerk = false;
   if (r.art === "unklar") {
     if (!f.ohneNachfrage && !st.nachgefragt.includes(f.id)) {
@@ -2231,13 +2301,107 @@ export async function angabeAntwort(conversationId: string, text: string | null 
     await merke(conversationId, STRECKE.angabeAntwort, { appointmentId: k.termin.id, id: f.id, art: r.art });
   }
   await abgeleiteteSpeichern(k);
-  if (!(await sendeAngabeFrage(k, "Danke!"))) await weiterNachAngaben(k, "Danke!");
+  if (await sendeAngabeFrage(k, "Danke!")) return true;
+  // nach dem Nachhaken: Angaben für den Beitrag da, die übrigen Fragen bleiben für den Termin
+  if (st.nachhaken) return restImTermin(k, await offeneAngaben(k), now, { danke: true });
+  await weiterNachAngaben(k, "Danke!");
   return true;
 }
 
-/** „Rest im Termin“: freundlich stoppen, offene Punkte am Lead und im Verlauf vermerken (keine weiteren Fragen). */
-async function restImTermin(k: StreckenKontext, offen: GeplanteFrage[], now: Date): Promise<boolean> {
+/** Offene Fragen der Engine (aktueller Stand). */
+async function offeneAngaben(k: StreckenKontext): Promise<GeplanteFrage[]> {
+  if (!k.termin) return [];
+  const st = await angabenStand(k.conversationId, k.termin.id);
+  const { plan, quelle } = angabenPlan(k, st);
+  return offeneFragen(plan, quelle);
+}
+
+/**
+ * Kfz (Ole, 27.11.2026): Fahrzeugschein und letzte Rechnung fehlen, die Bitte darum ist noch nicht gestellt und möglich
+ * (Policen-Modul an, nicht minderjährig, nicht „habe keine“). Ist die Bitte schon raus, erinnern die
+ * Policen-Erinnerungen (24 Std. danach, Vortag).
+ */
+async function kfzUnterlagenOffen(k: StreckenKontext): Promise<boolean> {
+  if (!k.termin || !k.leadId || !istKfzProdukt(k.source)) return false;
+  if ((await streckenStand(k.conversationId, k.termin.id)).policenBitteAt) return false;
+  const docs = await prisma.leadDocument.findMany({ where: { leadId: k.leadId }, select: { dokumentArt: true }, take: 10 });
+  if (docs.length >= 2 || (docs.some((d) => d.dokumentArt === "fahrzeugschein") && docs.some((d) => d.dokumentArt === "kfz_police"))) return false;
+  return !!(await policenBitteSchritt(k, null).catch(() => null));
+}
+
+/** Was fehlt für den Beitrag (Kfz: die zwei Unterlagen, sonst offene Fragen der Engine)? null = nichts. */
+async function fehltFuerBeitragVon(k: StreckenKontext, st?: AngabenStand): Promise<FehltFuerBeitrag | null> {
+  if (!k.termin) return null;
+  if (await kfzUnterlagenOffen(k)) return { kfz: true };
+  const s = st ?? (await angabenStand(k.conversationId, k.termin.id));
+  if (s.rest) return null;
+  const { plan, quelle } = angabenPlan(k, s);
+  return fehltFuerBeitrag(offeneFragen(plan, quelle));
+}
+
+/** Nachhaken merken; true nur für das erste je Termin (zwei Klicks fast gleichzeitig: nur einmal nachhaken). */
+async function nachhakenMerken(k: StreckenKontext, payload: Record<string, unknown>): Promise<boolean> {
   if (!k.termin) return false;
+  const m = await prisma.message.create({
+    data: { conversationId: k.conversationId, direction: "internal", kind: STRECKE.restNachhaken, body: JSON.stringify({ appointmentId: k.termin.id, ...payload }), sentBy: "bot" },
+    select: { id: true },
+  });
+  const erste = await prisma.message.findFirst({
+    where: { conversationId: k.conversationId, direction: "internal", kind: STRECKE.restNachhaken, body: { contains: k.termin.id } },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    select: { id: true },
+  });
+  return erste?.id === m.id;
+}
+
+/**
+ * „Rest im Termin“ in der Engine: fehlen noch Angaben für den Beitrag und wurde für diesen Termin noch nicht
+ * nachgehakt, genau einmal nachhaken [Gut, machen wir] [Lieber im Termin]; sonst stoppen wie bisher.
+ */
+async function restOderNachhaken(k: StreckenKontext, st: AngabenStand, offen: GeplanteFrage[], now: Date): Promise<boolean> {
+  if (!k.termin) return false;
+  if (!st.nachhaken) {
+    const fehlt = await fehltFuerBeitragVon(k, st);
+    if (fehlt) {
+      if (await nachhakenMerken(k, { via: "angabe", kfz: fehlt.kfz, id: st.letzteFrage?.id ?? null })) await sende(k, nachhakenText(k.an, k.person.nom, fehlt), [...NACHHAKEN_KNOEPFE]);
+      return true;
+    }
+  }
+  return restImTermin(k, offen, now);
+}
+
+/**
+ * „Gut, machen wir“ nach dem Nachhaken: Kfz gleich die Bitte um die zwei Fotos (die Fragen der Engine stehen auf der
+ * Rechnung und bleiben für den Termin), sonst die nächste Frage für den Beitrag; ist keine mehr offen, Schluss.
+ */
+async function weiterNachNachhaken(k: StreckenKontext, offen: GeplanteFrage[], now: Date): Promise<boolean> {
+  if (!k.termin) return false;
+  if (await kfzUnterlagenOffen(k)) {
+    const labels = offen.map((f) => f.label);
+    await merke(k.conversationId, STRECKE.angabenRest, { appointmentId: k.termin.id, offen: labels, via: "kfz_unterlagen" });
+    await leadAngabenSpeichern(k.leadId, (x) => x.offen.push(...labels));
+    if (await kfzBitteSenden(k, "Super, danke!")) return true;
+  }
+  if (await sendeAngabeFrage(k, "Super, danke!")) return true;
+  return restImTermin(k, offen, now, { danke: true });
+}
+
+/** Kfz: Bitte um Fahrzeugschein und Rechnung (mit Einwilligung bzw. Formular) direkt senden. false = nicht möglich. */
+async function kfzBitteSenden(k: StreckenKontext, einleitung: string): Promise<boolean> {
+  if (!(await kfzUnterlagenOffen(k))) return false;
+  const s = await policenBitteSchritt(k, einleitung).catch(() => null);
+  if (!s) return false;
+  await sendeSchritt(k, s);
+  return true;
+}
+
+/**
+ * „Rest im Termin“: freundlich stoppen, offene Punkte am Lead und im Verlauf vermerken (keine weiteren Fragen). Kfz ohne
+ * Unterlagen: Satz mit der Bitte um die zwei Fotos (Ole, 27.11.2026). danke: nach den Angaben für den Beitrag.
+ */
+async function restImTermin(k: StreckenKontext, offen: GeplanteFrage[], now: Date, o: { danke?: boolean } = {}): Promise<boolean> {
+  if (!k.termin) return false;
+  const kfz = await kfzUnterlagenOffen(k);
   const labels = offen.map((f) => f.label);
   await merke(k.conversationId, STRECKE.angabenRest, { appointmentId: k.termin.id, offen: labels });
   // wie „Lieber im Termin“: die übrige Strecke (Komplettcheck, Policen) entfällt
@@ -2250,7 +2414,7 @@ async function restImTermin(k: StreckenKontext, offen: GeplanteFrage[], now: Dat
     const { logLeadHistory } = await import("@/lib/lead-history");
     await logLeadHistory(k.leadId, "notiz", `Im Termin klären: ${labels.join(", ")}`, { customerId: k.customerId, userId: null }).catch(() => null);
   }
-  await sende(k, restText(k.an, k.person.nom, bisWann(k.termin.startsAt, now)));
+  await sende(k, restText(k.an, k.person.nom, bisWann(k.termin.startsAt, now), { kfz, danke: o.danke }));
   return true;
 }
 
