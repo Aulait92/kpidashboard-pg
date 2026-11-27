@@ -292,6 +292,7 @@ export async function LeadDetailBody({
   const stornoOptions = stornoOptionsMap.get(lead.id) ?? [];
   // Team: Inhaber sieht und ändert, wer zuständig ist.
   const members = isAdvisor(team) ? [] : await teamMembers(customerId);
+  const adminVorschau = !team.userId && !!(await import("@/lib/buyer-context").then((m) => m.getBuyerContext()).then((c) => c?.preview && !c.demo).catch(() => false));
   // Zuteilen an ein Mitglied ohne „bekommt Leads“ macht es heute zum aktiven Verkäufer (lib/seats.ts): Kostenhinweis
   const assignCost = members.length > 1 ? await assignCostHints(customerId, members) : new Map<string, string>();
   // Löschen (Datenschutz): Inhaber oder Admin in der Kundenansicht.
@@ -752,7 +753,8 @@ export async function LeadDetailBody({
           leadId={lead.id}
           current={lead.assignedUserId}
           members={members.map((m) => ({ id: m.id, name: m.displayName ?? m.email, costHint: assignCost.get(m.id) ?? null }))}
-          readOnly={!team.userId}
+          // Admin-Vorschau darf umverteilen (Ole, 27.11.2026), sonst nur mit eigenem Login
+          readOnly={!team.userId && !adminVorschau}
         />
       ) : null}
 
