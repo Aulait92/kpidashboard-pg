@@ -1,0 +1,65 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="leo.js"></script>
+<style>
+*{box-sizing:border-box;margin:0}body{font-family:Geist,sans-serif;background:#f3f6ff;color:#0b1220;padding:36px;width:1600px}
+h1{font-size:30px;font-weight:800;margin-bottom:6px}h1 span{color:#2563eb}.sub{color:#5b6478;font-size:15px;margin-bottom:24px}
+.poses{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:30px}
+.pose{background:#fff;border:1px solid #e3e8f3;border-radius:18px;padding:18px;text-align:center}
+.pose b{display:block;margin-top:6px;font-size:15px}.pose small{color:#5b6478;font-size:12.5px}
+h2{font-size:20px;margin:0 0 14px}
+.phones{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+.ph{background:#0b1220;border-radius:38px;padding:10px;height:620px}
+.scr{background:#f7f9ff;border-radius:30px;height:100%;overflow:hidden;position:relative;padding:18px 16px}
+.cap{font-size:13px;font-weight:600;color:#2563eb;margin:10px 4px 0}.capd{font-size:12px;color:#5b6478;margin:2px 4px}
+.hdr{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:15px;margin:6px 0 14px}
+.card{background:#fff;border:1px solid #e3e8f3;border-radius:14px;padding:12px;margin-bottom:10px;font-size:13px}
+.btn{background:#2563eb;color:#fff;border-radius:10px;padding:11px;text-align:center;font-weight:600;font-size:14px}
+.nav{position:absolute;bottom:0;left:0;right:0;height:58px;background:#fff;border-top:1px solid #e3e8f3;display:flex;justify-content:space-around;align-items:center;font-size:11px;color:#5b6478}
+.toast{position:absolute;left:14px;right:14px;bottom:76px;background:#0b1220;color:#fff;border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:center;font-size:13.5px}
+.fab{position:absolute;right:14px;bottom:72px;width:62px;height:62px;border-radius:50%;background:#fff;box-shadow:0 6px 20px rgba(11,18,32,.18);display:flex;align-items:center;justify-content:center}
+.chat{position:absolute;right:14px;bottom:144px;left:40px;background:#fff;border:1px solid #e3e8f3;border-radius:14px;padding:12px;font-size:13px;box-shadow:0 6px 20px rgba(11,18,32,.12)}
+.c{text-align:center}
+</style></head><body>
+<h1>Maskottchen <span>„Leo“</span> für die Vermittler-App</h1>
+<div class="sub">Name von „Lead“. Ein freundlicher Assistent im PG-Blau, die Sprechblase mit dem Wachstumspfeil auf dem Kopf steht für den WhatsApp-Assistenten. Bewusst dezent: Leo taucht nur bei Begrüßung, leeren Zuständen, Erfolgen und in der Hilfe auf, nie in Arbeitsabläufen.</div>
+<div class="poses">
+<div class="pose"><div id="p1"></div><b>Hallo</b><small>Begrüßung, Einrichtung</small></div>
+<div class="pose"><div id="p2"></div><b>Jubel</b><small>Abschluss, Konfetti, Meilensteine</small></div>
+<div class="pose"><div id="p3"></div><b>Denkt</b><small>Laden, KI-Hilfe antwortet</small></div>
+<div class="pose"><div id="p4"></div><b>Ruhig</b><small>Alles erledigt, leere Listen</small></div>
+</div>
+<h2>Wo Leo eingebaut wird</h2>
+<div class="phones">
+<div><div class="ph"><div class="scr"><div class="c" id="m1" style="margin-top:30px"></div>
+<div class="c" style="font-weight:800;font-size:20px;margin:10px 0 6px">Willkommen, Herr Berger!</div>
+<div class="c" style="color:#5b6478;font-size:13.5px;margin-bottom:18px">Ich bin Leo und helfe Ihnen bei der Einrichtung. In etwa 15 Minuten sind Ihre ersten Anzeigen startklar.</div>
+<div class="card">1. Kalender verbinden</div><div class="card">2. WhatsApp verbinden</div><div class="card" style="color:#5b6478">3. Erstinformation …</div>
+<div class="btn" style="margin-top:12px">Los geht's</div></div></div>
+<div class="cap">1 · Einrichtung, Begrüßung</div><div class="capd">Erster Login, oben im Einrichtungsassistenten</div></div>
+
+<div><div class="ph"><div class="scr"><div class="hdr"><span>Heute</span><span style="color:#5b6478;font-weight:500;font-size:12px">Do., 27.11.</span></div>
+<div class="c" id="m2" style="margin-top:40px"></div>
+<div class="c" style="font-weight:700;font-size:17px;margin:8px 0 6px">Alles erledigt für heute</div>
+<div class="c" style="color:#5b6478;font-size:13px;margin:0 10px">Neue Leads melde ich Ihnen sofort per Push. Ihr Assistent schreibt sie in wenigen Minuten an.</div>
+<div class="nav"><span style="color:#2563eb;font-weight:600">Heute</span><span>Kontakte</span><span>Nachrichten</span><span>Wachstum</span></div></div></div>
+<div class="cap">2 · Leere Zustände</div><div class="capd">„Heute“ ohne Aufgaben, leere Kontaktliste, keine Nachrichten</div></div>
+
+<div><div class="ph"><div class="scr"><div class="hdr"><span>Julia Becker</span><span style="background:#dcfce7;color:#15803d;border-radius:99px;padding:2px 8px;font-size:11px">Abschluss</span></div>
+<div class="card"><b>Hausrat + Rechtsschutz</b><div style="color:#5b6478;margin-top:4px">Beitrag 34,90 € im Monat · gespeichert</div></div>
+<div class="card" style="color:#5b6478">Verlauf …</div>
+<div class="toast"><div id="m3"></div><div><b>Glückwunsch zum Abschluss! 🎉</b><div style="color:#c9d3ea;font-size:12px">Das ist Ihr 3. Abschluss diese Woche.</div></div></div>
+<div class="nav"><span>Heute</span><span style="color:#2563eb;font-weight:600">Kontakte</span><span>Nachrichten</span><span>Wachstum</span></div></div></div>
+<div class="cap">3 · Abschluss mit Konfetti</div><div class="capd">Kleiner Leo im Erfolgs-Hinweis, zusammen mit dem Konfetti</div></div>
+
+<div><div class="ph"><div class="scr"><div class="hdr"><span>Kontakte</span></div>
+<div class="card">Max Müller · Neu</div><div class="card">Anna Schulz · Termin Mo.</div><div class="card">Tim Weber · Angebot</div>
+<div class="chat"><div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span id="m4b"></span><b>Leo, Ihre Hilfe</b></div>Wie trage ich einen Abschluss ein? <div style="color:#5b6478;margin-top:6px">Einen Moment, ich schaue nach …</div></div>
+<div class="fab" id="m4"></div>
+<div class="nav"><span>Heute</span><span style="color:#2563eb;font-weight:600">Kontakte</span><span>Nachrichten</span><span>Wachstum</span></div></div></div>
+<div class="cap">4 · Hilfe-Knopf</div><div class="capd">Leo ersetzt das Hilfe-Symbol, beim Antworten „denkt“ er</div></div>
+</div>
+<script>
+p1.innerHTML=leo({pose:'hallo'});p2.innerHTML=leo({pose:'jubel'});p3.innerHTML=leo({pose:'denkt'});p4.innerHTML=leo({pose:'ruhig'});
+m1.innerHTML=leo({pose:'hallo',size:120});m2.innerHTML=leo({pose:'ruhig',size:110});m3.innerHTML=leo({pose:'jubel',size:46});m4.innerHTML=leo({pose:'hallo',size:50});m4b.innerHTML=leo({pose:'denkt',size:30});
+</script></body></html>

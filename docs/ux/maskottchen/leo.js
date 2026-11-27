@@ -1,0 +1,33 @@
+// Maskottchen „Leo“ (von Lead): runder Assistent im PG-Blau mit Sprechblasen-Antenne
+function leo({pose='hallo',size=160}={}){
+ const arms={
+  hallo:`<path d="M38 112 q-22 -6 -26 -30" stroke="#1d4ed8" stroke-width="9" stroke-linecap="round" fill="none"/><path d="M122 112 q14 6 18 22" stroke="#1d4ed8" stroke-width="9" stroke-linecap="round" fill="none"/>`,
+  jubel:`<path d="M40 104 q-18 -14 -18 -40" stroke="#1d4ed8" stroke-width="9" stroke-linecap="round" fill="none"/><path d="M120 104 q18 -14 18 -40" stroke="#1d4ed8" stroke-width="9" stroke-linecap="round" fill="none"/>`,
+  denkt:`<path d="M40 114 q-12 10 -10 26" stroke="#1d4ed8" stroke-width="9" stroke-linecap="round" fill="none"/><path d="M120 112 q10 -14 -8 -24" stroke="#1d4ed8" stroke-width="9" stroke-linecap="round" fill="none"/>`,
+  ruhig:`<path d="M40 116 q-12 10 -10 24" stroke="#1d4ed8" stroke-width="9" stroke-linecap="round" fill="none"/><path d="M120 116 q12 10 10 24" stroke="#1d4ed8" stroke-width="9" stroke-linecap="round" fill="none"/>`};
+ const eyes={
+  hallo:`<ellipse cx="64" cy="92" rx="8" ry="10" fill="#0b1220"/><ellipse cx="96" cy="92" rx="8" ry="10" fill="#0b1220"/><circle cx="66.5" cy="88.5" r="2.6" fill="#fff"/><circle cx="98.5" cy="88.5" r="2.6" fill="#fff"/>`,
+  jubel:`<path d="M56 94 q8 -10 16 0" stroke="#0b1220" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M88 94 q8 -10 16 0" stroke="#0b1220" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+  denkt:`<ellipse cx="66" cy="90" rx="7" ry="9" fill="#0b1220"/><ellipse cx="98" cy="90" rx="7" ry="9" fill="#0b1220"/><circle cx="69" cy="86" r="2.4" fill="#fff"/><circle cx="101" cy="86" r="2.4" fill="#fff"/>`,
+  ruhig:`<path d="M56 93 q8 6 16 0" stroke="#0b1220" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M88 93 q8 6 16 0" stroke="#0b1220" stroke-width="5" fill="none" stroke-linecap="round"/>`};
+ const mouth={hallo:`<path d="M70 110 q10 10 20 0" stroke="#0b1220" stroke-width="4.5" fill="none" stroke-linecap="round"/>`,
+  jubel:`<path d="M66 106 q14 20 28 0 z" fill="#0b1220"/><path d="M72 112 q8 6 16 0" fill="#f87171"/>`,
+  denkt:`<path d="M74 113 h14" stroke="#0b1220" stroke-width="4.5" stroke-linecap="round"/>`,
+  ruhig:`<path d="M72 110 q8 6 16 0" stroke="#0b1220" stroke-width="4.5" fill="none" stroke-linecap="round"/>`};
+ const extra={hallo:'',ruhig:`<text x="128" y="52" font-family="Geist,sans-serif" font-weight="700" font-size="16" fill="#93a4c8">z</text><text x="140" y="38" font-family="Geist,sans-serif" font-weight="700" font-size="12" fill="#b6c2dc">z</text>`,
+  jubel:`<rect x="20" y="40" width="7" height="12" rx="2" fill="#22c55e" transform="rotate(-20 23 46)"/><rect x="136" y="34" width="7" height="12" rx="2" fill="#f59e0b" transform="rotate(25 139 40)"/><circle cx="34" cy="22" r="4" fill="#2563eb"/><circle cx="128" cy="16" r="4" fill="#22c55e"/><rect x="146" y="70" width="6" height="10" rx="2" fill="#2563eb" transform="rotate(30 149 75)"/><rect x="8" y="76" width="6" height="10" rx="2" fill="#f59e0b" transform="rotate(-30 11 81)"/>`,
+  denkt:`<circle cx="128" cy="48" r="4" fill="#93a4c8"/><circle cx="138" cy="38" r="5" fill="#93a4c8"/><circle cx="150" cy="26" r="6" fill="#93a4c8"/>`};
+ return `<svg width="${size}" height="${size}" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+ ${extra[pose]}
+ <ellipse cx="80" cy="150" rx="36" ry="5" fill="#0b1220" opacity=".08"/>
+ <path d="M80 30 v-10" stroke="#1d4ed8" stroke-width="5" stroke-linecap="round"/>
+ <rect x="66" y="4" width="28" height="18" rx="7" fill="#fff" stroke="#1d4ed8" stroke-width="3"/><path d="M74 21 l-2 6 l8 -6" fill="#fff" stroke="#1d4ed8" stroke-width="3" stroke-linejoin="round"/>
+ <path d="M72 13 l5 -4 l4 3 l6 -5" stroke="#2563eb" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+ ${arms[pose]}
+ <rect x="32" y="30" width="96" height="110" rx="44" fill="#2563eb"/>
+ <rect x="38" y="36" width="84" height="98" rx="40" fill="url(#g)"/>
+ <ellipse cx="80" cy="96" rx="36" ry="30" fill="#eef3ff"/>
+ <circle cx="52" cy="106" r="6" fill="#fca5a5" opacity=".55"/><circle cx="108" cy="106" r="6" fill="#fca5a5" opacity=".55"/>
+ ${eyes[pose]}${mouth[pose]}
+ <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#2563eb"/></linearGradient></defs>
+ </svg>`;}
