@@ -6,7 +6,8 @@ import { openLeadBooking } from "@/components/lead-booking";
 // Auswahl. Nutzt ausschließlich die bestehenden Aktionen (inbox-actions).
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { CalendarPlus, Check, Clock, PhoneMissed, Send, ThumbsDown, Trophy } from "lucide-react";
+import { CalendarPlus, Check, Clock, PhoneMissed, PhoneOff, Send, ThumbsDown, Trophy } from "lucide-react";
+import { falscheNummerResult } from "@/app/buyer/next-step-actions";
 import {
   callbackOutcomeResult,
   clearFollowUpResult,
@@ -185,6 +186,8 @@ export function CallOutcomeSheet({
     onSelect: () =>
       pick(`${t.name}: morgen wieder in der Liste`, () => (t.kind === "followup" ? followUpNotReachedResult(t.leadId) : callbackOutcomeResult(t.leadId, "not_reached"))),
   });
+  // Falsche Nummer (Ole, 27.11.2026): Anrufplan stoppt; mit E-Mail wird die richtige Nummer erfragt, sonst Verloren
+  actions.push({ label: "Falsche Nummer", icon: PhoneOff, onSelect: () => pick(`${t.name}: falsche Nummer eingetragen`, () => falscheNummerResult(t.leadId)) });
   // Auch ohne verbundenen Kalender: das Buchungsfenster bietet dann „von Hand eintragen“ (UX Runde 4)
   actions.push({ label: "Termin vereinbart", icon: CalendarPlus, keepOpen: true, onSelect: () => needThen(() => openLeadBooking(t.leadId, t.name), true) });
   actions.push(

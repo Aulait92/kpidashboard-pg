@@ -455,6 +455,25 @@ export function TodayInbox({
       </Button>
     ) : undefined;
   const visibleFaellig = showAll ? faellig : faellig.slice(0, 6);
+  // Einstieg aus Kontakte „Zu erledigen“ (Ole, 27.11.2026): /buyer?anrufliste=1 startet die Anrufliste direkt, einmal
+  const anrufbar = calls.filter((c) => c.phone);
+  const autoStart = useRef(false);
+  useEffect(() => {
+    if (autoStart.current || !newUi || !anrufbar.length) return;
+    let wunsch = false;
+    try {
+      const u = new URL(window.location.href);
+      wunsch = u.searchParams.get("anrufliste") === "1";
+      if (wunsch) {
+        u.searchParams.delete("anrufliste");
+        window.history.replaceState(null, "", u.pathname + (u.search ? u.search : "") + u.hash);
+      }
+    } catch {
+      wunsch = false;
+    }
+    autoStart.current = true;
+    if (wunsch) setCallMode({ queue: anrufbar, i: 0 });
+  }, [newUi, anrufbar]);
 
   return (
     <div className="space-y-6">

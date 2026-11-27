@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { NextStepReminderToggle } from "@/components/next-step-reminder-toggle";
+import { TeamWocheToggle } from "./team-woche-toggle";
 import { CrossSellReminderToggle, PoliceReminderToggle } from "@/app/buyer/provisionen/cross-sell-toggle";
 import { canEditProvision } from "@/lib/provision-server";
 import { LeadEmailToggle } from "@/app/buyer/konto/pause-card";
@@ -20,7 +21,7 @@ export default async function ErinnerungenPage() {
     prisma.customer
       .findUnique({ where: { id: ctx.customerId }, select: { crossSellReminder: true, policeReminder: true, leadEmail: true, onboarding: { select: { questionnaire: true } } } })
       .catch(() => null),
-    ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { nextStepReminder: true, teamRole: true, leadMailScope: true, leadPushScope: true } }) : null,
+    ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { nextStepReminder: true, teamRole: true, leadMailScope: true, leadPushScope: true, teamWocheMailOff: true } }) : null,
     prisma.user.count({ where: { customerId: ctx.customerId, role: "BUYER" } }).catch(() => 0),
   ]);
   const canEditAufgaben = canEditProvision(ctx);
@@ -39,6 +40,12 @@ export default async function ErinnerungenPage() {
           <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Für Sie persönlich</h2>
           <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
             <NextStepReminderToggle initial={me?.nextStepReminder ?? true} disabled={!ctx.userId || ctx.preview} />
+            {/* Wochen-Mail an Inhaber mit Team (Ole, 27.11.2026) */}
+            {inhaber && logins > 1 ? (
+              <div className="border-t border-[color:var(--border)]">
+                <TeamWocheToggle initial={!(me?.teamWocheMailOff ?? false)} disabled={!ctx.userId || ctx.preview} />
+              </div>
+            ) : null}
           </div>
         </section>
         {team || leadMail ? (
