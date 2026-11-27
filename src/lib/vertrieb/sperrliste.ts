@@ -16,6 +16,10 @@ export const SPERR_DOMAINS = ["minimi-kanzlei.de", "getminimi.de", "getminimi.co
 export const SPERR_EMAIL_HASHES: readonly string[] = [
   // Unterlassungsvertrag Az. ABCNX (16.11.2026). Nur die Adresse, nicht die Domain (Allianz-Vertreter sind Zielgruppe).
   "083c7c828aa64dc70ad2929eca14c9ed3647e66e1d02cc8bb75aad413eaa62d5",
+  // Abmahnungen Az. H79MA, 6L4S8, LSD5Y (27.11.2026). Nur die Adressen, nicht die Domain (Ole).
+  "ec8695993d600a5e09f974567605b92a2c35e02f6a0c63bd961a70756927b991",
+  "b948b5e7d0b9262ae6f62ae9a313e05b0f93ee7ea21f79b326db36a67ae88e2b",
+  "32097e1307e287fb130f7ae7829112587758b0daa6d7de4689fdaee6ac8dbe3d",
 ];
 
 const hash = (email: string) => createHash("sha256").update(email).digest("hex");
