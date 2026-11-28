@@ -1,0 +1,23 @@
+1
+00:00:00,300 --> 00:00:03,300
+Die Anfrage kommt rein, über Facebook und Instagram,
+
+2
+00:00:03,300 --> 00:00:06,850
+und dann meldet sich ein KI-Assistent über WhatsApp direkt.
+
+3
+00:00:06,850 --> 00:00:10,900
+Und dann qualifiziert er die Person vor, indem er die richtigen Fragen stellt.
+
+4
+00:00:10,900 --> 00:00:14,600
+Und wenn die Person Interesse hat, dann bucht er direkt einen Videotermin,
+
+5
+00:00:14,600 --> 00:00:16,650
+zum Beispiel in Ihrem Kalender.
+
+6
+00:00:17,300 --> 00:00:22,600
+Sie können sich dann einfach voll aufs Beraten konzentrieren in den Terminen.

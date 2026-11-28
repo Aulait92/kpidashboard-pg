@@ -2,6 +2,8 @@
 
 **Status: final nach Runde 3, wartet auf Oles Bestätigungen.**
 
+**Ole 28.11.: Post 4 (Einwand, Bild „Er sagt, was er ist“) gestrichen. Serie hat 4 Posts, Post 3 rückt auf Di 08.12., 7:45 Uhr.**
+
 Stand: 28.11.2026. Chef-Texter, Fassung v3 nach Kritiker-Panel Runde 2 (kritik-runde2.md). Letzte Runde laut prozess.md.
 Basis: posts-v2.md. Eingearbeitet: Pflichtkorrekturen T1 bis T5 aus kritik-runde2.md, die dort angebotenen Ersatztexte für Post 5, Post 2, Post 4 und Post 3, dazu der Abgleich der Folien- und Bildtexte mit den angepassten Visuals (V1 bis V4, V6).
 
