@@ -89,7 +89,7 @@
     "altText": "Umfrage: Wo geht Ihre Zeit drauf? A Anrufen, B Termine, C Nachfassen, D Unterlagen, E Anderes"
    },
    "text": "Wo geht bei Ihnen die meiste Zeit drauf, bevor ein Termin überhaupt steht?\n\nIch geb gleich zu, ich hab da ein eigenes Interesse dran.\n\nA) Hinterhertelefonieren, bis endlich mal einer rangeht\nB) Termine abstimmen, bis einer passt\nC) Nachfassen, wenn sich keiner mehr meldet\nD) Policen und Unterlagen zusammenkriegen\nE) Was ganz anderes, dann bitte drunterschreiben\n\nSchreiben Sie den Buchstaben in die Kommentare, und wer mag, gleich dazu, wie viel Zeit ihn das pro Woche so ungefähr kostet.\n\nFür A bis D schreibt bei uns ein KI-Assistent per WhatsApp, und ich will wissen, wo das bei Ihnen am meisten bringen würde. Ich hab da so meine Vermutung, die schreibe ich aber erst, wenn ein paar Antworten da sind, sonst beeinflusse ich Sie ja.",
-   "comment": "Wer nicht öffentlich antworten mag, schickt mir den Buchstaben per Nachricht. Ich zähl die mit, und ein Angebot schreibe ich Ihnen danach nicht.",
+   "comment": null,
    "status": "geplant"
   },
   {
@@ -112,7 +112,7 @@
    },
    "text": "„Melden Sie sich in zwei Wochen noch mal.“\n\nKlar, mach ich. Und in zwei Wochen haben Sie die Outlook-Erinnerung zweimal weggeklickt, und der Kunde hat längst woanders unterschrieben.\n\nSo sehe ich bei Vermittlern immer wieder richtig gute Anfragen versanden. Genauso, wenn keiner rangeht oder wenn nach dem Angebot nichts mehr kommt.\n\nBei uns fängt das schon früher an: Wir schalten für Vermittler Anzeigen auf Facebook und Instagram unter ihrem Namen, und auf jede Anfrage meldet sich ein KI-Assistent per WhatsApp, in der Regel in unter einer Minute. Derselbe Assistent bleibt auch danach dran.\n\nIn allen drei Fällen schreibt er dem Kunden automatisch per WhatsApp, und wenn er einen Termin will, bekommt er freie Zeiten aus Ihrem Kalender. Sie tragen nach dem Gespräch nur das Ergebnis ein, ans Nachfassen denkt dann der Assistent. Und wenn einer nicht mehr will, ist das auch in Ordnung. Dann ist er wenigstens nicht einfach durchgerutscht.\n\nIch hab die drei Fälle mal nachgebaut, Namen ausgedacht.\n\nWas war Ihr spätester Abschluss nach einem „Melden Sie sich in zwei Wochen“?\n\n#Neukundengewinnung #Versicherungsvermittler",
    "comment": "Wann genau die Nachrichten rausgehen und wie sie klingen, zeige ich Ihnen in der Demo an Ihren eigenen Fällen. performancegrowth.de/termin",
-   "status": "geplant"
+   "status": "gestrichen (Ole 28.11.)"
   },
   {
    "id": "t2_p4",
