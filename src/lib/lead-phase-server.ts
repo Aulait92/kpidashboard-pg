@@ -183,3 +183,23 @@ export async function bereinigeNachfassen(o: { echt: boolean; now?: Date; kunde?
   return { echt: o.echt, geprueft: leads.length, betroffen, jeKunde: [...jeKunde.values()].sort((x, y) => y.leads - x.leads) };
 }
 
+
+/** Merker der einmaligen Bereinigung (Ole, 28.11.2026). */
+export const EINMAL_BEREINIGUNG_KEY = "nachfassen-bereinigung-2026-11-28";
+
+/** Einmalige echte Bereinigung aus dem Cron: läuft nur, solange der Merker fehlt; Ergebnis (nur Zahlen) im Merker. */
+export async function einmalNachfassenBereinigen(now = new Date()): Promise<BereinigungErgebnis | null> {
+  const da = await prisma.systemHeartbeat.findUnique({ where: { key: EINMAL_BEREINIGUNG_KEY }, select: { key: true } });
+  if (da) return null;
+  // Merker zuerst setzen (zwei parallele Cron-Läufe), Ergebnis danach nachtragen
+  const angelegt = await prisma.systemHeartbeat.createMany({ data: [{ key: EINMAL_BEREINIGUNG_KEY, at: now, ok: true, note: "läuft" }], skipDuplicates: true });
+  if (!angelegt.count) return null;
+  try {
+    const r = await bereinigeNachfassen({ echt: true, now });
+    await prisma.systemHeartbeat.update({ where: { key: EINMAL_BEREINIGUNG_KEY }, data: { note: JSON.stringify({ geprueft: r.geprueft, betroffen: r.betroffen, jeKunde: r.jeKunde }).slice(0, 2000) } });
+    return r;
+  } catch (e) {
+    await prisma.systemHeartbeat.update({ where: { key: EINMAL_BEREINIGUNG_KEY }, data: { ok: false, note: e instanceof Error ? e.name : "Fehler" } });
+    throw e;
+  }
+}

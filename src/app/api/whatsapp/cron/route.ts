@@ -103,6 +103,9 @@ async function handle(req: Request): Promise<Response> {
   }
   // Einmal täglich (03:00–03:05 UTC): Löschfristen (siehe docs/datenschutz.md), Logins, Garantien.
   const now = new Date();
+  // Einmalige Bereinigung des Nachfassens nach Status (Ole, 28.11.2026: „Ja“ nach Probelauf 5 Kontakte). Läuft genau
+  // einmal, Merker im SystemHeartbeat; sendet nichts, idempotent (lib/lead-phase-server.ts bereinigeNachfassen).
+  await import("@/lib/lead-phase-server").then((m) => m.einmalNachfassenBereinigen(now)).catch((e: unknown) => reportError(e, "cron-nachfassen-bereinigen"));
   // Bestandskunden-Modul: zum Periodenende gekündigte Module abschalten (Kunde hat selbst gekündigt)
   await expireBestandCancellations(now).catch((e: unknown) => reportError(e, "cron-bestand-expire"));
   // Budget ändern: Preisstufe ins Abo übernehmen, sobald ein geplantes Budget gilt
