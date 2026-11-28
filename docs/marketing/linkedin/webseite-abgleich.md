@@ -47,3 +47,11 @@ Gelesen wurden Startseite, /software, /termin, /kontakt und /datenschutz (Stand 
 4. **Laufzeit:**
    - „Langzeitverträge“ steht unter „Was du NICHT bei uns bekommst“
    - Gleichzeitig wird eine 12-Monats-Laufzeit angeboten
+
+## Entscheidungen Ole 28.11. (umgesetzt in Lovable, veröffentlicht)
+
+- **Hosting in der EU ist korrekt.** Die Railway-Region ist Amsterdam. Die Datenschutzerklärung 9.1 ist ergänzt: Server in Amsterdam, Anbieter mit Sitz in den USA, Standardvertragsklauseln.
+- **PKV-Anfragen gehen an genau einen Vermittler.** Die Datenschutzerklärung 6.4 ist korrigiert. Stand der Erklärung: 28.11.2026.
+- **Erstgespräch:** dauert nur noch 15 Minuten. Auf der Webseite lässt sich nur noch das Erstgespräch buchen.
+- **„Langzeitverträge“** ist aus „Was du NICHT bekommst“ entfernt.
+- **Für Posts erlaubt:** „Server in der EU“. Nicht erlaubt: „alle Daten bleiben in der EU“, weil der KI-Assistent (Anthropic) und einzelne Dienste in den USA verarbeiten.
