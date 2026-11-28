@@ -2,6 +2,8 @@
 
 **Status: final nach Runde 3, wartet auf Oles Bestätigungen.**
 
+**Ole 28.11.: Bild für Post 5 aus vorhandenem Material gebaut (assets/post5-bild.png, Porträt aus dem Präsentationsvideo, Text „Unser Ziel ist der Termin. Nicht die Adresse.“). Kein neues Foto nötig.**
+
 **Ole 28.11.: Karussell neu (assets/karussell-v3.html, 8 Folien): Etiketten „So läuft es oft“ und „Mit KI-Assistent“, Chat Schritt für Schritt, Vergleichsfolie am Ende. Die Folientabelle unten ist damit überholt.**
 
 **Ole 28.11.: Antwortzeit „in der Regel in unter einer Minute“ bestätigt („passt“). Post 1 nutzt das Video mit Gesicht (assets/video-gesicht.mp4, Untertitel video-gesicht.srt), Satz zum Video angepasst. Post 4 (Einwand, Bild „Er sagt, was er ist“) gestrichen. Serie hat 4 Posts, Post 3 rückt auf Di 08.12., 7:45 Uhr.**
