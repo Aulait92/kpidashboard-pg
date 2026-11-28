@@ -1,0 +1,96 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1350px;overflow:hidden}
+body{font-family:Geist,Arial,sans-serif;background:radial-gradient(120% 80% at 50% 0%,#16254a 0%,#0b1220 60%);color:#fff;position:relative}
+.cap{position:absolute;left:70px;right:70px;top:70px;height:250px}
+.cap .k{font-size:30px;font-weight:600;color:#7ea2ff;letter-spacing:.5px;margin-bottom:14px;transition:none}
+.cap h1{font-size:64px;line-height:1.08;font-weight:800;letter-spacing:-1.5px}
+.cap h1 span{color:#60a5fa}
+.phone{position:absolute;left:50%;top:320px;width:540px;height:1000px;margin-left:-270px;background:#0f172a;border-radius:70px;padding:16px;box-shadow:0 40px 120px rgba(0,0,0,.55),0 0 0 2px #26324f inset}
+.scr{width:100%;height:100%;border-radius:56px;overflow:hidden;background:#efe7dd;position:relative}
+.wa{height:118px;background:#075e54;display:flex;align-items:flex-end;padding:0 24px 16px;gap:14px;color:#fff}
+.av{width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.nm{font-size:22px;font-weight:600}.st{font-size:16px;opacity:.8}
+.msgs{position:absolute;left:0;right:0;top:118px;bottom:0;padding:18px 18px;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;overflow:hidden}
+.m{max-width:80%;padding:12px 16px 22px;border-radius:16px;font-size:20px;line-height:1.35;color:#111;position:relative;box-shadow:0 1px 1px rgba(0,0,0,.12)}
+.m.in{background:#fff;align-self:flex-start;border-top-left-radius:4px}
+.m.out{background:#d9fdd3;align-self:flex-end;border-top-right-radius:4px}
+.m .t{position:absolute;right:12px;bottom:5px;font-size:13px;color:#667}
+.form{align-self:center;background:#fff8d6;color:#5b4a00;font-size:17px;border-radius:10px;padding:8px 14px;font-weight:600}
+.typing{align-self:flex-start;background:#fff;border-radius:16px;padding:14px 18px;display:flex;gap:6px}
+.typing i{width:10px;height:10px;border-radius:50%;background:#9aa;display:block}
+.clock{position:absolute;right:70px;top:80px;font-size:30px;font-weight:700;color:#cbd5e1;background:#1b2848;border-radius:14px;padding:8px 16px;font-variant-numeric:tabular-nums}
+.demo{position:absolute;right:70px;top:140px;font-size:18px;color:#64748b}
+.end{position:absolute;inset:0;background:#0b1220;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px;opacity:0}
+.end h2{font-size:76px;font-weight:800;letter-spacing:-2px;line-height:1.05;margin:30px 0 26px}
+.end h2 span{color:#60a5fa}
+.end p{font-size:32px;color:#c9d3ea;line-height:1.4;max-width:820px}
+.end .u{margin-top:46px;font-size:34px;font-weight:700;background:#2563eb;border-radius:18px;padding:18px 34px}
+.brand{display:flex;align-items:center;gap:12px;font-size:30px;font-weight:700}
+.brand i{width:46px;height:46px;border-radius:12px;background:#2563eb;display:inline-flex;align-items:center;justify-content:center}
+</style></head><body>
+<div class="cap"><div class="k" id="k"></div><h1 id="h"></h1></div>
+<div class="clock" id="clock">So 21:47</div>
+<div class="phone"><div class="scr">
+ <div class="wa"><div class="av"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></div>
+ <div><div class="nm">Thomas Berger Versicherungen</div><div class="st">Digitaler Assistent</div></div></div>
+ <div class="msgs" id="msgs"></div>
+</div></div>
+<div class="demo">Demo mit erfundenen Namen</div>
+<div class="end" id="end">
+ <div class="brand"><i><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></i>performancegrowth</div>
+ <h2>Termine statt <span>Leads.</span></h2>
+ <p>Der KI-Assistent meldet sich in unter einer Minute per WhatsApp, qualifiziert vor und bucht den Termin in Ihren Kalender.</p>
+ <div class="u">performancegrowth.de/termin</div>
+</div>
+<script>
+// Zeitplan in Sekunden
+const S=[
+ {t:0.3,form:'Neue Anfrage: Katzenversicherung'},
+ {t:1.6,typ:[1.6,2.6]},
+ {t:2.6,in:'Guten Abend Frau Krüger, hier ist der digitale Assistent von Thomas Berger. Danke für Ihre Anfrage! Darf ich kurz 3 Fragen stellen?',time:'21:47'},
+ {t:4.6,out:'Ja klar',time:'21:48'},
+ {t:5.2,typ:[5.2,5.9]},
+ {t:5.9,in:'Wie alt ist Ihre Katze, und ist sie Freigänger?',time:'21:48'},
+ {t:7.4,out:'Mia ist 2, reine Wohnungskatze',time:'21:49'},
+ {t:8.0,typ:[8.0,8.7]},
+ {t:8.7,in:'Geht es Ihnen um OP-Schutz oder um Vollschutz mit Tierarztbesuchen?',time:'21:49'},
+ {t:10.4,out:'Vollschutz. Letztes Jahr waren es 900 € beim Tierarzt 🙈',time:'21:51'},
+ {t:11.0,typ:[11.0,11.7]},
+ {t:11.7,in:'Verstehe. Herr Berger hat Montag 18:00 oder Dienstag 10:00 Uhr frei, 15 Minuten per Video. Was passt Ihnen?',time:'21:52'},
+ {t:13.6,out:'Montag 18 Uhr',time:'21:55'},
+ {t:14.2,typ:[14.2,14.9]},
+ {t:14.9,in:'Perfekt, Ihr Termin steht: Montag, 18:00 Uhr ✅ Die Einladung kommt gleich per Mail.',time:'21:56'},
+];
+const CAP=[
+ [0,'Sonntag, 21:47','Ihr Büro ist zu.<br>Eine Anfrage kommt rein.'],
+ [2.4,'Sonntag, 21:47','Antwort in unter<br><span>einer Minute.</span>'],
+ [5.8,'Die KI fragt vor','Bedarf, Details,<br><span>echtes Interesse.</span>'],
+ [11.6,'Statt Rückrufpingpong','Die Kundin wählt<br><span>ihren Termin selbst.</span>'],
+ [15.2,'Sonntag, 21:56','Termin gebucht.<br><span>Sie haben geschlafen.</span>'],
+];
+const CLK=[[0,'21:47'],[4.6,'21:48'],[7.4,'21:49'],[10.4,'21:51'],[11.7,'21:52'],[13.6,'21:55'],[14.9,'21:56']];
+const END=18.2, DUR=22.5;
+function esc(s){return s}
+function render(t){
+ let h='';
+ for(const s of S){
+  if(s.typ){ if(t>=s.typ[0]&&t<s.typ[1]){const ph=(t*6)%3|0;h+=`<div class="typing">${[0,1,2].map(i=>`<i style="opacity:${i==ph?1:.35}"></i>`).join('')}</div>`;} continue;}
+  if(t<s.t) continue;
+  const a=Math.min(1,(t-s.t)/0.25), y=(1-a)*24;
+  const st=`opacity:${a};transform:translateY(${y}px)`;
+  if(s.form) h+=`<div class="form" style="${st}">📋 ${s.form}</div>`;
+  if(s.in) h+=`<div class="m in" style="${st}">${s.in}<span class="t">${s.time}</span></div>`;
+  if(s.out) h+=`<div class="m out" style="${st}">${s.out}<span class="t">${s.time} ✓✓</span></div>`;
+ }
+ document.getElementById('msgs').innerHTML=h;
+ let c=CAP[0];for(const x of CAP) if(t>=x[0]) c=x;
+ document.getElementById('k').textContent=c[1];document.getElementById('h').innerHTML=c[2];
+ const ca=Math.min(1,(t-c[0])/0.3);document.querySelector('.cap').style.opacity=ca;
+ let k=CLK[0];for(const x of CLK) if(t>=x[0]) k=x;document.getElementById('clock').textContent='So '+k[1];
+ const e=Math.max(0,Math.min(1,(t-END)/0.5));document.getElementById('end').style.opacity=e;
+}
+window.render=render;window.DUR=DUR;render(0);
+</script></body></html>
