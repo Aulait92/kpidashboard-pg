@@ -1,0 +1,27 @@
+1
+00:00:00,100 --> 00:00:03,300
+Stellen Sie sich vor, es ist Sonntagabend, kurz vor 10 Uhr.
+
+2
+00:00:03,500 --> 00:00:04,800
+Ihr Büro ist natürlich zu.
+
+3
+00:00:05,300 --> 00:00:08,000
+Jetzt kommt eine Anfrage rein, für eine Katzenversicherung.
+
+4
+00:00:08,100 --> 00:00:11,000
+Und unser KI-Assistent schreibt der Kundin direkt per WhatsApp,
+
+5
+00:00:11,200 --> 00:00:14,000
+fragt kurz, was sie braucht, und schlägt ihr zwei Termine vor.
+
+6
+00:00:14,600 --> 00:00:17,000
+Neun Minuten später steht der Termin in Ihrem Kalender.
+
+7
+00:00:17,100 --> 00:00:19,200
+Und Sie haben davon gar nichts mitbekommen.
