@@ -1,0 +1,110 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Geist,Arial,sans-serif;background:#333}
+.s{width:1080px;height:1350px;position:relative;overflow:hidden;color:#fff;background:radial-gradient(120% 80% at 50% 0%,#16254a 0%,#0b1220 62%);margin-bottom:20px}
+.pad{position:absolute;left:90px;right:90px}
+.k{font-size:30px;font-weight:600;color:#7ea2ff;letter-spacing:.4px}
+h1{font-size:88px;line-height:1.04;font-weight:800;letter-spacing:-2.4px}
+h2{font-size:76px;line-height:1.06;font-weight:800;letter-spacing:-2px}
+h1 span,h2 span,.b{color:#60a5fa}
+.foot{position:absolute;left:90px;right:90px;bottom:62px;display:flex;justify-content:space-between;align-items:center;font-size:24px;color:#7b88a6}
+.brand{display:flex;align-items:center;gap:12px;font-weight:700;color:#cbd5e1}
+.brand i{width:38px;height:38px;border-radius:10px;background:#2563eb;display:inline-flex;align-items:center;justify-content:center}
+.pg{font-variant-numeric:tabular-nums}
+.demo{font-size:28px;color:#cbd5e1}
+/* Motiv Formular - Linie - Kalender */
+.track{position:absolute;left:90px;right:90px;height:220px;display:flex;align-items:center;justify-content:space-between}
+.ico{width:190px;height:190px;border-radius:40px;background:#16254a;border:2px solid #2b3d66;display:flex;align-items:center;justify-content:center;flex:none;z-index:2}
+.line{position:absolute;left:190px;right:190px;top:50%;height:0;border-top:6px dashed #2b3d66}
+.line.cut{right:50%}
+.line.ok{border-top:6px solid #2563eb}
+.dot{position:absolute;top:50%;width:64px;height:64px;margin-top:-32px;border-radius:50%;background:#2563eb;color:#fff;font-weight:800;font-size:30px;display:flex;align-items:center;justify-content:center;z-index:3;box-shadow:0 0 0 10px #0f1a33}
+/* Telefon */
+.phone{position:absolute;left:50%;width:520px;margin-left:-260px;background:#0f172a;border-radius:64px;padding:14px;box-shadow:0 40px 120px rgba(0,0,0,.55),0 0 0 2px #26324f inset}
+.scr{border-radius:52px;overflow:hidden;position:relative}
+.calls{background:#fff;color:#111;height:100%}
+.calls .hd{padding:70px 30px 18px;font-size:34px;font-weight:700}
+.call{display:flex;align-items:center;gap:20px;padding:22px 30px;border-top:1px solid #eee}
+.call .ci{width:58px;height:58px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center}
+.call b{font-size:26px;display:block}.call small{font-size:22px;color:#dc2626}
+.call .tm{margin-left:auto;font-size:22px;color:#888}
+.wa{height:112px;background:#075e54;display:flex;align-items:flex-end;padding:0 22px 16px;gap:14px;color:#fff}
+.av{width:50px;height:50px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center}
+.nm{font-size:21px;font-weight:600}.st{font-size:16px;opacity:.8}
+.chat{background:#efe7dd;padding:22px 18px 26px}
+.m{max-width:86%;padding:14px 18px 26px;border-radius:16px;font-size:23px;line-height:1.38;color:#111;position:relative;background:#fff;border-top-left-radius:4px;box-shadow:0 1px 1px rgba(0,0,0,.12)}
+.m .t{position:absolute;right:12px;bottom:6px;font-size:14px;color:#667}
+mark{background:#fde047;color:#111;padding:0 3px;border-radius:3px}
+.form{background:#fff;color:#111;padding:60px 34px 40px;height:100%}
+.form .fl{font-size:20px;color:#666;margin:22px 0 8px}.form .fi{height:56px;border-radius:12px;background:#f1f5f9;border:1px solid #e2e8f0;display:flex;align-items:center;padding:0 18px;font-size:22px;color:#94a3b8}
+.form .bt{margin-top:30px;height:66px;border-radius:14px;background:#2563eb;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:24px}
+/* Bon */
+.bon{position:absolute;left:50%;top:420px;width:640px;margin-left:-320px;background:#fffdf7;color:#1f2937;font-family:"Geist Mono",monospace;padding:56px 54px 70px;transform:rotate(-2.2deg);box-shadow:0 40px 90px rgba(0,0,0,.5)}
+.bon:after{content:"";position:absolute;left:0;right:0;bottom:-18px;height:18px;background:linear-gradient(-45deg,transparent 12px,#fffdf7 0) 0 0/24px 18px,linear-gradient(45deg,transparent 12px,#fffdf7 0) 0 0/24px 18px}
+.bon .r{display:flex;justify-content:space-between;font-size:36px;font-weight:500;padding:14px 0}
+.bon .r.hl span:first-child,.bon .r.hl span:last-child{background:#fde047}
+.bon .sep{border-top:3px dashed #9ca3af;margin:22px 0}
+.bon .tot{display:flex;justify-content:space-between;font-size:52px;font-weight:700;color:#1d4ed8}
+.bon .hd{text-align:center;font-size:26px;color:#6b7280;letter-spacing:3px;margin-bottom:22px}
+.tag{display:inline-block;background:#fde047;color:#111;font-weight:700;font-size:28px;border-radius:10px;padding:8px 18px}
+.curve{position:absolute;left:90px;right:90px}
+
+.lab{display:inline-flex;align-items:center;gap:12px;font-size:28px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:99px;padding:10px 22px}
+.lab.oft{background:#3a1d24;color:#fca5a5}.lab.mit{background:#123a2a;color:#86efac}
+.lab i{width:14px;height:14px;border-radius:50%;display:inline-block}.lab.oft i{background:#f87171}.lab.mit i{background:#4ade80}
+.prog{position:absolute;left:90px;right:90px;top:40px;display:flex;gap:10px}.prog b{flex:1;height:6px;border-radius:3px;background:#24304a}.prog b.on{background:#60a5fa}
+.tm{font-size:34px;font-weight:700;color:#9db8ff;margin:26px 0 10px}
+.m.out{background:#d9fdd3;align-self:flex-end;border-top-left-radius:16px;border-top-right-radius:4px;margin-left:auto}
+.chat{display:flex;flex-direction:column;gap:12px}
+.cmp{position:absolute;left:70px;right:70px;top:450px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.col{border-radius:28px;padding:40px 34px 46px}
+.col.oft{background:#1a1420;border:2px solid #4a2530}.col.mit{background:#0f2a22;border:2px solid #1f5a40}
+.col h3{font-size:52px;line-height:1.1;margin:26px 0 30px;font-weight:800}
+.col p{font-size:38px;line-height:1.35;color:#cbd5e1;margin:0 0 16px}
+</style></head><body>
+<section class="s" id="k1"><div class="prog"><b class="on"></b><b class=""></b><b class=""></b><b class=""></b><b class=""></b><b class=""></b><b class=""></b><b class=""></b></div>
+ <div class="pad" style="top:200px"><h1 style="font-size:96px">Warum gute Leads<br>verloren gehen.</h1>
+ <div style="margin-top:44px;font-size:46px;font-weight:600;color:#cbd5e1;line-height:1.3">Ein Sonntagabend,<br><span class="b">zweimal erzählt.</span></div></div>
+ <div class="pad" style="top:900px;display:flex;flex-direction:column;gap:22px;align-items:flex-start"><span class="lab oft"><i></i>So läuft es oft</span><span class="lab mit"><i></i>Mit KI-Assistent</span></div>
+ <div class="foot"><div class="brand"><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></i>Ole Kannapinn</div><div style="font-size:28px;color:#cbd5e1">Wischen →</div></div>
+</section>
+<section class="s" id="k2"><div class="prog"><b class="on"></b><b class="on"></b><b class=""></b><b class=""></b><b class=""></b><b class=""></b><b class=""></b><b class=""></b></div>
+ <div class="pad" style="top:110px"><span class="lab oft"><i></i>So läuft es oft</span><div class="tm">Sonntag, 21:47 Uhr</div><h2>Jemand füllt<br>Ihr Formular aus.</h2></div>
+ <div class="phone" style="top:600px;height:620px"><div class="scr" style="height:100%"><div class="form">
+  <div style="font-size:30px;font-weight:700">Katzenversicherung</div><div style="font-size:21px;color:#64748b;margin-top:6px">Ihre Angaben</div>
+  <div class="fl">Name</div><div class="fi">••••••• ••••••</div>
+  <div class="fl">Telefon</div><div class="fi">0151 •••• ••12</div>
+  <div class="bt">Anfrage senden</div></div></div></div>
+ <div class="pad" style="top:1268px;font-size:26px;color:#cbd5e1">Nachgestellte Demo</div></section>
+<section class="s" id="k3"><div class="prog"><b class="on"></b><b class="on"></b><b class="on"></b><b class=""></b><b class=""></b><b class=""></b><b class=""></b><b class=""></b></div>
+ <div class="pad" style="top:110px"><span class="lab oft"><i></i>So läuft es oft</span><div class="tm">Montag, 9:00 Uhr</div><h2>Sie rufen zurück.<br><span style="color:#f87171">Niemand geht ran.</span></h2></div>
+ <div class="phone" style="top:620px;height:490px;transform:scale(1.2);transform-origin:50% 0"><div class="scr" style="height:100%"><div class="calls"><div class="hd" style="padding-top:40px">Anrufe</div><div class="call"><div class="ci"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.4" stroke-linecap="round"><path d="M4 4l16 16M20 4L4 20"/></svg></div><div><b>0151 •••• ••12</b><small>Nicht erreicht</small></div><div style="margin-left:auto;font-size:22px;color:#888">Mo 9:02</div></div><div class="call"><div class="ci"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.4" stroke-linecap="round"><path d="M4 4l16 16M20 4L4 20"/></svg></div><div><b>0151 •••• ••12</b><small>Nicht erreicht</small></div><div style="margin-left:auto;font-size:22px;color:#888">Mo 13:40</div></div><div class="call"><div class="ci"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.4" stroke-linecap="round"><path d="M4 4l16 16M20 4L4 20"/></svg></div><div><b>0151 •••• ••12</b><small>Nicht erreicht</small></div><div style="margin-left:auto;font-size:22px;color:#888">Di 10:05</div></div></div></div></div>
+ <div class="pad" style="top:1268px;font-size:26px;color:#cbd5e1">Nachgestellte Demo</div></section>
+<section class="s" id="k4"><div class="prog"><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class=""></b><b class=""></b><b class=""></b><b class=""></b></div>
+ <div class="pad" style="top:360px;text-align:center"><div style="font-size:50px;font-weight:700;color:#e2e8f0;line-height:1.25">Wer in der ersten Stunde antwortet,<br>qualifiziert Leads</div>
+ <div style="font-size:230px;font-weight:800;letter-spacing:-8px;line-height:1.05;white-space:nowrap;color:#60a5fa;margin-top:30px">fast 7x</div>
+ <div style="font-size:50px;font-weight:700;color:#e2e8f0">häufiger.</div>
+ <div style="margin-top:70px;font-size:30px;color:#94a3b8">Harvard Business Review 2011, US-Studie</div></div></section>
+<section class="s" id="k5"><div class="prog"><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class=""></b><b class=""></b><b class=""></b></div>
+ <div class="pad" style="top:110px"><span class="lab mit"><i></i>Mit KI-Assistent</span><div class="tm">Sonntag, 21:47 Uhr</div><h2>Antwort per WhatsApp.<br><span>In derselben Minute.</span></h2></div>
+ <div class="phone" style="top:600px;width:660px;margin-left:-330px;transform:scale(1.3);transform-origin:50% 0"><div class="scr"><div class="wa"><div class="av" style="font-weight:800;color:#075e54;font-size:20px">TB</div><div><div class="nm">Thomas Berger Versicherungen</div><div class="st">KI-Assistent</div></div></div><div class="chat"><div class="m " style="font-size:25px">Guten Abend Frau Krüger, hier ist der KI-Assistent von Thomas Berger. Danke für Ihre Anfrage! Darf ich kurz 2 Fragen stellen?<span class="t">21:47</span></div></div></div></div>
+ <div class="pad" style="top:1268px;font-size:26px;color:#cbd5e1">Nachgestellte Demo, Namen erfunden</div></section>
+<section class="s" id="k6"><div class="prog"><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class=""></b><b class=""></b></div>
+ <div class="pad" style="top:110px"><span class="lab mit"><i></i>Mit KI-Assistent</span><div class="tm">Sonntag, 21:49 Uhr</div><h2>Er fragt nach,<br><span>was sie braucht.</span></h2></div>
+ <div class="phone" style="top:600px;width:660px;margin-left:-330px;transform:scale(1.3);transform-origin:50% 0"><div class="scr"><div class="wa"><div class="av" style="font-weight:800;color:#075e54;font-size:20px">TB</div><div><div class="nm">Thomas Berger Versicherungen</div><div class="st">KI-Assistent</div></div></div><div class="chat"><div class="m " style="font-size:25px">Geht es Ihnen um OP-Schutz oder um Vollschutz?<span class="t">21:49</span></div><div class="m out" style="font-size:25px">Vollschutz. Letztes Jahr waren es 900 € beim Tierarzt<span class="t">21:51</span></div></div></div></div>
+ <div class="pad" style="top:1268px;font-size:26px;color:#cbd5e1">Nachgestellte Demo, Namen erfunden</div></section>
+<section class="s" id="k7"><div class="prog"><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class=""></b></div>
+ <div class="pad" style="top:110px"><span class="lab mit"><i></i>Mit KI-Assistent</span><div class="tm">Sonntag, 21:56 Uhr</div><h2>Der Termin steht.<br><span>Sie hatten Feierabend.</span></h2></div>
+ <div class="phone" style="top:600px;width:660px;margin-left:-330px;transform:scale(1.3);transform-origin:50% 0"><div class="scr"><div class="wa"><div class="av" style="font-weight:800;color:#075e54;font-size:20px">TB</div><div><div class="nm">Thomas Berger Versicherungen</div><div class="st">KI-Assistent</div></div></div><div class="chat"><div class="m out" style="font-size:25px">Montag 18 Uhr passt<span class="t">21:55</span></div><div class="m " style="font-size:25px">Perfekt, Ihr Termin steht: Montag, 18:00 Uhr. Die Einladung kommt gleich per Mail.<span class="t">21:56</span></div></div></div></div>
+ <div class="pad" style="top:1268px;font-size:26px;color:#cbd5e1">Nachgestellte Demo, Namen erfunden</div></section>
+<section class="s" id="k8"><div class="prog"><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b></div>
+ <div class="pad" style="top:130px"><h2 style="font-size:84px">Dieselbe Anfrage.<br><span>Zwei Ergebnisse.</span></h2></div>
+ <div class="cmp">
+  <div class="col oft"><span class="lab oft" style="font-size:20px;padding:8px 16px"><i></i>So läuft es oft</span><h3>Montag:<br>nicht erreicht.</h3><p>3 Anrufe.</p><p>Kein Gespräch.</p></div>
+  <div class="col mit"><span class="lab mit" style="font-size:20px;padding:8px 16px"><i></i>Mit KI-Assistent</span><h3>Sonntag:<br>Termin steht.</h3><p>Exklusiv für Sie.</p><p>In Ihrem Namen.</p></div>
+ </div>
+ <div class="foot"><div class="brand"><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></i>performancegrowth</div><div style="font-size:30px;color:#cbd5e1;font-weight:600">Link im Kommentar</div></div>
+</section>
+</body></html>

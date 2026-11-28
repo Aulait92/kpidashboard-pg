@@ -2,7 +2,9 @@
 
 **Status: final nach Runde 3, wartet auf Oles Bestätigungen.**
 
-**Ole 28.11.: Post 1 nutzt das Video mit Gesicht (assets/video-gesicht.mp4, Untertitel video-gesicht.srt), Satz zum Video angepasst. Post 4 (Einwand, Bild „Er sagt, was er ist“) gestrichen. Serie hat 4 Posts, Post 3 rückt auf Di 08.12., 7:45 Uhr.**
+**Ole 28.11.: Karussell neu (assets/karussell-v3.html, 8 Folien): Etiketten „So läuft es oft“ und „Mit KI-Assistent“, Chat Schritt für Schritt, Vergleichsfolie am Ende. Die Folientabelle unten ist damit überholt.**
+
+**Ole 28.11.: Antwortzeit „in der Regel in unter einer Minute“ bestätigt („passt“). Post 1 nutzt das Video mit Gesicht (assets/video-gesicht.mp4, Untertitel video-gesicht.srt), Satz zum Video angepasst. Post 4 (Einwand, Bild „Er sagt, was er ist“) gestrichen. Serie hat 4 Posts, Post 3 rückt auf Di 08.12., 7:45 Uhr.**
 
 Stand: 28.11.2026. Chef-Texter, Fassung v3 nach Kritiker-Panel Runde 2 (kritik-runde2.md). Letzte Runde laut prozess.md.
 Basis: posts-v2.md. Eingearbeitet: Pflichtkorrekturen T1 bis T5 aus kritik-runde2.md, die dort angebotenen Ersatztexte für Post 5, Post 2, Post 4 und Post 3, dazu der Abgleich der Folien- und Bildtexte mit den angepassten Visuals (V1 bis V4, V6).
@@ -187,7 +189,7 @@ Aber ich habe auch viele gute Anfragen scheitern sehen. Meiner Erfahrung nach se
 
 Im Karussell erzähle ich denselben Sonntagabend zweimal.
 Einmal so, wie er oft läuft.
-Einmal mit den drei Schritten, die zwischen Formular und Termin passieren müssen.
+Und einmal mit KI-Assistent.
 
 Was ist bei Ihnen der häufigste Grund, warum aus einem Lead kein Gespräch wird?
 Nicht erreicht, mehrfach verkauft oder schon woanders abgeschlossen?
