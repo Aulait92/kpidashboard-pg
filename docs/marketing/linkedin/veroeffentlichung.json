@@ -10,7 +10,10 @@
    },
    "text": "Über 200.000 Leads im Versicherungsbereich.\nUnd ich habe lange das Falsche gezählt.\n\nSo viele Anfragen haben wir seit 2019 erzeugt, zusammengezählt über alle Kampagnen. Eine große Zahl. Sie sagt nur nichts darüber, wie viele Gespräche daraus geworden sind.\n\nIch mache seit 2014 Online-Marketing. Mein Gedanke war: Wenn die Anzeige gut ist und der Leadpreis stimmt, läuft der Rest von allein.\n\nTut er nicht.\n\nEin Lead war für mich fertig, sobald er beim Vermittler ankam. Was danach passierte, habe ich zu selten gefragt. Das war mein Fehler.\n\nWas Vermittler über gekaufte Leads erzählen, kennen Sie: mehrfach verkauft, nie erreicht, am Ende Storno. Und selbst gute Anfragen bleiben liegen, weil niemand sonntags um 21 Uhr am Telefon sitzt.\nIch verstehe jeden, der beim Wort Lead die Augen verdreht.\n\nDeshalb verkaufen wir Vermittlern keine Rohleads mehr. Unser Ziel ist der Termin, nicht die Adresse.\n\nDie Werbung läuft in Ihrem Namen.\nJede Anfrage geht nur an Sie. Sie wird nicht weiterverkauft.\nEin KI-Assistent meldet sich per WhatsApp, in der Regel in unter einer Minute. Er fragt nach dem Bedarf und bietet Termine aus Ihrem Kalender an.\nIn unserer nachgestellten Demo steht der Termin 9 Minuten nach dem Formular.\nDie Beratung bleibt bei Ihnen.\n\nWas ärgert Sie an gekauften Leads am meisten?\nMehrfach verkauft, nie erreicht oder am Ende Storno?\n\n#Versicherungsvermittler #Neukundengewinnung",
    "comment": "Kurz zu mir: Ich bin seit 2014 im Online-Marketing und seit 2019 im Versicherungsbereich. In den nächsten Wochen zeige ich hier offen, wie unser Ablauf funktioniert, auch die Stellen, an denen es nicht glattläuft. Wenn Sie ein Thema dazu haben, schreiben Sie es gern drunter.",
-   "status": "geplant"
+   "status": "veröffentlicht",
+   "urn": "urn:li:share:7532339726973014016",
+   "veroeffentlicht": "2026-11-28T08:00 Europe/Berlin",
+   "kommentar": "ok"
   },
   {
    "id": "p2",
@@ -133,5 +136,6 @@
    "comment": "Welche Sparte bei Ihnen zum Start passt, kann ich vorher nicht sagen. Das rechnen wir im Erstgespräch mit Ihren eigenen Provisionen durch. performancegrowth.de/termin",
    "status": "geplant"
   }
- ]
+ ],
+ "hinweis": "Erster Kommentar NICHT über REST /rest/socialActions (403), sondern über Composio-Tool LINKEDIN_CREATE_COMMENT_ON_POST mit target_urn = object = Post-URN."
 }
