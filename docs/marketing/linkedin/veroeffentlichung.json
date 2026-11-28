@@ -32,12 +32,17 @@
       "id": "p1",
       "slot": "2026-11-28T15:00:00[Europe/Berlin]",
       "media": {
-        "id": "urn:li:video:D4D10AQE-RSdviMEhDA",
-        "title": "Sonntag, 21:47"
+        "id": "urn:li:video:D4D10AQFEX6SYB22iSQ",
+        "title": "Warum Ihr Lead nicht rangeht"
       },
       "text": "Ihr Büro ist zu.\nDie Anfrage kommt trotzdem.\nWas passiert mit ihr bis Montag?\n\nIn vielen Büros erst einmal nichts. Verständlich, es ist Sonntagabend. Nur ist die Anfrage am Montagmorgen dann oft schon kalt.\n\nIm Video erkläre ich, was in dieser Zeit stattdessen passieren kann. Daneben läuft ein nachgestellter Chat mit erfundenen Namen.\n\n21:47 Uhr kommt eine Anfrage für eine Katzenversicherung rein.\nNoch in derselben Minute schreibt der KI-Assistent per WhatsApp. Im Namen des Vermittlers, mit Texten, die er vorher freigegeben hat.\nZwei kurze Fragen. Zwei Terminvorschläge.\n21:56 Uhr steht der Termin.\n\nDer Vermittler hatte Feierabend und hat davon nichts mitbekommen.\nAm Montag weiß er schon: Die Kundin will Vollschutz, beim Tierarzt waren es letztes Jahr 900 €.\nEr telefoniert nicht hinterher. Er bereitet sich vor.\n\nDie Katze ist nur das Beispiel. Bei Hausrat oder Wohngebäude läuft der Ablauf genauso.\n\nEhrliche Frage: Wann rufen Sie eine Anfrage von Sonntagabend heute zurück?\nMontag früh, Montag irgendwann oder wenn es passt?\n\n#Versicherungsvermittler #Versicherungsmakler #Neukundengewinnung",
       "comment": "Kurz zur Einordnung, weil mich hier nicht jeder kennt: Wir schalten für Versicherungsvermittler Anzeigen auf Facebook und Instagram, die unter ihrem Namen laufen, und jede Anfrage daraus geht nur an diesen einen Vermittler. Der KI-Assistent aus dem Video übernimmt den ersten Kontakt, danach berät der Vermittler selbst. Wie das mit Ihren eigenen Produkten und Ihrem Kalender aussähe, zeige ich Ihnen gern im Erstgespräch live in der Demo-Umgebung.",
-      "status": "geplant"
+      "status": "geplant",
+      "media_alt": {
+        "id": "urn:li:video:D4D10AQE-RSdviMEhDA",
+        "title": "Sonntag, 21:47"
+      },
+      "media_datei": "assets/ole-handy/video-ole-supermarkt.mp4"
     },
     {
       "id": "p3",
@@ -54,12 +59,17 @@
       "id": "t2_p1",
       "slot": "2026-11-29T08:00:00[Europe/Berlin]",
       "media": {
-        "id": "urn:li:video:D4D10AQG1rrXUzNGU8A",
-        "title": "Exklusiv ab der Anzeige"
+        "id": "urn:li:video:D4D10AQEUlxXN2wcWqA",
+        "title": "Jeder hat schon mal ins Klo gegriffen"
       },
       "text": "Ich glaube, ich habe noch mit keinem Vermittler gesprochen, der immer nur mit guten Leads gearbeitet hat.\nJeder hat schon mal ins Klo gegriffen.\n\nUnd wer schon mal Leads gekauft hat, der fragt sich natürlich auch, ob den gleichen Kontakt noch fünf andere bekommen haben. Die Sorge ist auch klar. Wenn man an dem Tag schon der Dritte ist, der da anruft, dann ist die Person am anderen Ende einfach bedient, bevor man überhaupt seinen Namen gesagt hat.\n\nUnd genau deshalb läuft bei uns die Werbung in Ihrem Namen, auf Facebook und Instagram. Das heißt, der Interessent meldet sich wirklich bei Ihnen. Und die Leads sind 100 % exklusiv, die gehen an keinen zweiten, keinen dritten.\n\nDirekt nach der Eintragung geht dann innerhalb von Sekunden die erste WhatsApp raus. Da schreibt ein KI-Assistent in Ihrem Namen, stellt ein paar Fragen, schaut, ob tatsächlich Interesse an der Versicherung da ist, und wenn ja, bucht er direkt einen Termin in Ihrem Kalender.\n\nUnd das macht einfach einen riesen Unterschied. Im Termin sitzt Ihnen dann jemand gegenüber, der sich bei Ihnen gemeldet hat und den vorher noch keiner dreimal angerufen hat. Sie müssen nur noch beraten und verkaufen, das, was Sie am besten können.\n\nMan muss auch dazusagen, Ihre Kunden bleiben Ihre Kunden. Auch wenn Sie irgendwann aufhören.\n\nWie oft hören Sie am Telefon „Da hat schon einer angerufen“?\n\n#Versicherungsvermittler #Neukundengewinnung",
       "comment": "Kleiner Tipp für den Sonntag. Schauen Sie bei Ihrem aktuellen Leadanbieter mal in die Bedingungen, ob da etwas zu Weiterverkauf oder Mehrfachvergabe steht. Und wenn da nichts steht, fragen Sie einfach nach. Bei uns ist die Antwort ganz klar, jeder Lead geht nur an Sie, an keinen zweiten, keinen dritten. Wie das im Detail läuft, zeige ich Ihnen gern in einem kurzen Erstgespräch.",
-      "status": "geplant"
+      "status": "geplant",
+      "media_alt": {
+        "id": "urn:li:video:D4D10AQG1rrXUzNGU8A",
+        "title": "Exklusiv ab der Anzeige"
+      },
+      "media_datei": "assets/ole-handy/video-ole-ins-klo.mp4"
     },
     {
       "id": "t2_p2",
@@ -162,12 +172,17 @@
       "id": "t3_p2",
       "slot": "2026-12-01T17:30:00[Europe/Berlin]",
       "media": {
-        "id": "urn:li:video:D4D10AQFAcXI43LJsBA",
-        "title": "Was Abnehm-Coaching mit Versicherungsanfragen zu tun hat"
+        "id": "urn:li:video:D4D10AQHkJ_6BlfcKtA",
+        "title": "700 Verträge in einem Monat"
       },
       "text": "Ich komme eigentlich aus dem Abnehm-Coaching.\nUnd 2019 kam dann eine Anfrage, über die ich bei Versicherungen gelandet bin.\n\nSeit 2014 bin ich im Online-Marketing, und damals habe ich eines der größten Abnehm-Coachings in Deutschland aufgebaut.\n\nUnd dann kam 2019 diese Anfrage. Eine Agentur wollte Leads für Katzenversicherungen. Also habe ich den Auftrag angenommen, und wir haben für die Agentur Werbung auf Facebook und Instagram geschaltet.\n\nMan muss dazusagen, die Agentur war verdammt stark im Vertrieb. Der Agenturleiter hatte sehr viel Saleserfahrung, die Mitarbeiter genauso. Ich habe sie dann mit Leads geflutet, und das zu sehr günstigen Preisen. Und das Team hat einfach einen Lead nach dem anderen abgeschlossen.\n\nAm Ende hat die Agentur sage und schreibe 700 Verträge in einem Monat zusätzlich geschrieben. Das war ein echter Erfolg. Das war natürlich ein besonderer Monat. Aber da habe ich gemerkt, worauf es im Lead-Geschäft im Prinzip ankommt. Also eine hervorragende Lead-Generierung und ein hervorragender Vertrieb dahinter. Wenn beides zusammenkommt, macht das einfach einen riesen Unterschied.\n\nUnd genau deshalb übernehmen wir heute für Vermittler die Lead-Generierung. Die Werbung läuft in Ihrem Namen, das heißt, der Interessent meldet sich wirklich bei Ihnen und nicht bei irgendeinem zufälligen Portal. Die Leads sind 100 % exklusiv, die gehen an keinen zweiten und keinen dritten.\n\nDirekt nach der Eintragung geht innerhalb von Sekunden eine WhatsApp-Nachricht raus. Dann schreibt ein KI-Assistent, stellt ein paar Fragen, qualifiziert vor und bucht, wenn die Person tatsächlich Interesse hat, direkt einen Termin in Ihrem Kalender. Sie müssen dann im Prinzip nur noch beraten und verkaufen, das, was Sie am besten können.\n\nWie ist das bei Ihnen, was war bisher eher der Engpass, die Leads selbst oder die Zeit, sie schnell genug anzurufen?\n\n#Versicherungsvermittler #Neukundengewinnung",
       "comment": "Falls Sie mal sehen möchten, wie das bei Ihnen konkret abläuft, von der Anzeige bis zum Termin im Kalender, zeige ich Ihnen das gern in 15 Minuten. Entscheidend ist am Ende das Verhältnis aus einem günstigen Lead-Preis, einer guten Abschlussquote und einer ordentlichen Provision, und das rechne ich gern mit Ihnen für Ihre Sparte durch. performancegrowth.de/termin",
-      "status": "geplant"
+      "status": "geplant",
+      "media_alt": {
+        "id": "urn:li:video:D4D10AQFAcXI43LJsBA",
+        "title": "Was Abnehm-Coaching mit Versicherungsanfragen zu tun hat"
+      },
+      "media_datei": "assets/ole-handy/video-ole-700-vertraege.mp4"
     },
     {
       "id": "t3_p6",
