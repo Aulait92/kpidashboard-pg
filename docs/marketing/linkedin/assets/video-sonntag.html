@@ -22,7 +22,7 @@ body{font-family:Geist,Arial,sans-serif;background:radial-gradient(120% 80% at 5
 .typing{align-self:flex-start;background:#fff;border-radius:16px;padding:14px 18px;display:flex;gap:6px}
 .typing i{width:10px;height:10px;border-radius:50%;background:#9aa;display:block}
 .clock{position:absolute;right:70px;top:80px;font-size:30px;font-weight:700;color:#cbd5e1;background:#1b2848;border-radius:14px;padding:8px 16px;font-variant-numeric:tabular-nums}
-.demo{position:absolute;right:70px;top:140px;font-size:18px;color:#64748b}
+.demo{position:absolute;right:70px;top:140px;font-size:26px;color:#cbd5e1}
 .end{position:absolute;inset:0;background:#0b1220;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px;opacity:0}
 .end h2{font-size:76px;font-weight:800;letter-spacing:-2px;line-height:1.05;margin:30px 0 26px}
 .end h2 span{color:#60a5fa}
@@ -34,15 +34,15 @@ body{font-family:Geist,Arial,sans-serif;background:radial-gradient(120% 80% at 5
 <div class="cap"><div class="k" id="k"></div><h1 id="h"></h1></div>
 <div class="clock" id="clock">So 21:47</div>
 <div class="phone"><div class="scr">
- <div class="wa"><div class="av"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></div>
- <div><div class="nm">Thomas Berger Versicherungen</div><div class="st">Digitaler Assistent</div></div></div>
+ <div class="wa"><div class="av" style="font-weight:800;color:#075e54;font-size:20px">TB</div>
+ <div><div class="nm">Thomas Berger Versicherungen</div><div class="st">KI-Assistent</div></div></div>
  <div class="msgs" id="msgs"></div>
 </div></div>
-<div class="demo">Demo mit erfundenen Namen</div>
+<div class="demo">Nachgestellte Demo, Namen erfunden</div>
 <div class="end" id="end">
  <div class="brand"><i><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></i>performancegrowth</div>
  <h2>Termine statt <span>Leads.</span></h2>
- <p>Der KI-Assistent meldet sich in unter einer Minute per WhatsApp, qualifiziert vor und bucht den Termin in Ihren Kalender.</p>
+ <p>Der KI-Assistent meldet sich per WhatsApp, in der Regel in unter einer Minute. Er fragt vor und bietet Termine aus Ihrem Kalender an.</p>
  <div class="u">performancegrowth.de/termin</div>
 </div>
 <script>
@@ -50,7 +50,7 @@ body{font-family:Geist,Arial,sans-serif;background:radial-gradient(120% 80% at 5
 const S=[
  {t:0.3,form:'Neue Anfrage: Katzenversicherung'},
  {t:1.6,typ:[1.6,2.6]},
- {t:2.6,in:'Guten Abend Frau Krüger, hier ist der digitale Assistent von Thomas Berger. Danke für Ihre Anfrage! Darf ich kurz 3 Fragen stellen?',time:'21:47'},
+ {t:2.6,in:'Guten Abend Frau Krüger, hier ist der KI-Assistent von Thomas Berger. Danke für Ihre Anfrage! Darf ich kurz 2 Fragen stellen?',time:'21:47'},
  {t:4.6,out:'Ja klar',time:'21:48'},
  {t:5.2,typ:[5.2,5.9]},
  {t:5.9,in:'Wie alt ist Ihre Katze, und ist sie Freigänger?',time:'21:48'},
@@ -62,14 +62,14 @@ const S=[
  {t:11.7,in:'Verstehe. Herr Berger hat Montag 18:00 oder Dienstag 10:00 Uhr frei, 15 Minuten per Video. Was passt Ihnen?',time:'21:52'},
  {t:13.6,out:'Montag 18 Uhr',time:'21:55'},
  {t:14.2,typ:[14.2,14.9]},
- {t:14.9,in:'Perfekt, Ihr Termin steht: Montag, 18:00 Uhr ✅ Die Einladung kommt gleich per Mail.',time:'21:56'},
+ {t:14.9,in:'Perfekt, Ihr Termin steht: Montag, 18:00 Uhr Die Einladung kommt gleich per Mail.',time:'21:56'},
 ];
 const CAP=[
  [0,'Sonntag, 21:47','Ihr Büro ist zu.<br>Eine Anfrage kommt rein.'],
- [2.4,'Sonntag, 21:47','Antwort in unter<br><span>einer Minute.</span>'],
+ [2.4,'Sonntag, 21:47','Antwort noch in<br><span>derselben Minute.</span>'],
  [5.8,'Die KI fragt vor','Bedarf, Details,<br><span>echtes Interesse.</span>'],
  [11.6,'Statt Rückrufpingpong','Die Kundin wählt<br><span>ihren Termin selbst.</span>'],
- [15.2,'Sonntag, 21:56','Termin gebucht.<br><span>Sie haben geschlafen.</span>'],
+ [15.2,'Sonntag, 21:56','Termin gebucht.<br><span>Sie hatten Feierabend.</span>'],
 ];
 const CLK=[[0,'21:47'],[4.6,'21:48'],[7.4,'21:49'],[10.4,'21:51'],[11.7,'21:52'],[13.6,'21:55'],[14.9,'21:56']];
 const END=18.2, DUR=22.5;
