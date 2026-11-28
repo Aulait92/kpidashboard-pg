@@ -68,3 +68,7 @@ Wiederkehrende Säulen:
 3. Zahlen und Erfahrungen
 4. Einwände
 5. Oles Haltung
+
+## Regel von Ole (28.11.)
+
+Nichts schreiben, was uns abwertet: keine Schwächen, Unsicherheiten oder Einschränkungen von performancegrowth betonen (z. B. „weniger Erfahrung bei anderen Sparten“, „unsere KI kann sich irren“, „kostet uns einen Termin“, „man kann uns auseinandernehmen“). Rechtlich nötige Vorsicht positiv formulieren („rechne ich gern mit Ihnen durch“ statt „kann ich nicht versprechen“).
