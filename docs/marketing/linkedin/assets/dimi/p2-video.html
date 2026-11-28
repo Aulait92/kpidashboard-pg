@@ -1,0 +1,30 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}html,body{width:1080px;height:1350px;overflow:hidden}
+body{font-family:Geist,Arial,sans-serif;background:radial-gradient(120% 80% at 50% 0%,#16254a 0%,#0b1220 62%);color:#fff;position:relative}
+.card{position:absolute;left:90px;right:90px;opacity:0}
+.ring{position:absolute;border-radius:50%;border:10px solid #2563eb;opacity:0}
+.sub{position:absolute;left:90px;right:90px;top:830px;text-align:center;font-size:46px;font-weight:700;line-height:1.25;opacity:0}
+.src{position:absolute;left:0;right:0;top:1270px;text-align:center;font-size:24px;color:#cbd5e1}
+</style></head><body>
+<div class="card" id="c0" style="top:470px"><div style="font-size:64px;font-weight:800;line-height:1.1;letter-spacing:-1px">Was Abnehm-Coaching mit <span style="color:#60a5fa">Versicherungsanfragen</span> zu tun hat</div></div>
+<div class="card" id="c1" style="top:520px"><div style="font-size:72px;font-weight:800;line-height:1.15">3. Januar: fest entschlossen.</div><div style="font-size:72px;font-weight:800;line-height:1.15;color:#60a5fa;margin-top:16px">6. Januar: wieder Alltag.</div></div>
+<div class="card" id="c2" style="top:520px;text-align:center"><div style="font-size:60px;font-weight:800;line-height:1.15">KI-Assistent per WhatsApp, <span style="color:#60a5fa">in der Regel in unter einer Minute.</span></div><div style="font-size:30px;color:#cbd5e1;margin-top:30px">Ole Kannapinn, performancegrowth</div></div>
+<div class="ring" id="big" style="left:250px;top:180px;width:580px;height:580px"></div>
+<div class="ring" id="small" style="left:780px;top:80px;width:220px;height:220px;border-width:6px"></div>
+<div class="sub" id="sub"></div>
+<div class="src">Ausschnitte aus Oles Präsentationsvideo</div>
+<script>
+const SUB=[[2.05,5.3,'Ich habe damals eines der größten Abnehm-Coachings in Deutschland aufgebaut.'],[9.7,11.4,'Die Werbung läuft auch in Ihrem Namen,'],[11.4,14.95,'das heißt, der Interessent meldet sich wirklich bei Ihnen'],[14.95,17.3,'und nicht bei irgendeinem zufälligen Portal.']];
+const DUR=21;
+function f(t,a,b){const d=0.3;return Math.max(0,Math.min(1,(t-a)/d,(b-t)/d))}
+function render(t){
+ document.getElementById('c0').style.opacity=f(t,0,2.0);
+ document.getElementById('c1').style.opacity=f(t,5.5,9.5);
+ document.getElementById('c2').style.opacity=f(t,17.6,21.5);
+ document.getElementById('big').style.opacity=Math.max(f(t,1.6,5.5),f(t,9.4,17.5));
+ document.getElementById('small').style.opacity=f(t,5.5,9.5);
+ let s='';for(const [a,b,x] of SUB)if(t>=a&&t<b)s=x;const e=document.getElementById('sub');e.textContent=s;e.style.opacity=s?1:0;
+}
+window.render=render;window.DUR=DUR;render(0);
+</script></body></html>
