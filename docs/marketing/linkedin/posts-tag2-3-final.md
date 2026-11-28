@@ -2,6 +2,8 @@
 
 **Status: Endfassung nach Runde 2 (Kundenpanel, Viralität, KI-Detektor). Wartet auf Oles Bestätigungen (Liste am Ende).**
 
+Ole 28.11.: Bestätigt sind Name in der Anzeige, Nachfassen in allen drei Fällen, Datenschutz und Sonntag 8:00. Policen-Bitte noch nicht für Kranken und Leben, deshalb ist „Gern aus allen Bereichen“ gestrichen.
+
 Stand: 28.11.2026. Ersetzt posts-tag2-3-v2.md. Grundlage: prozess.md, recherche.md, posts-v3.md und veroeffentlichung.json (Tag 1 am Sa 28.11., wird nicht wiederholt), sprechzettel-vertrieb.md, transkript-praesentationsvideo.txt, assets/video-gesicht.srt.
 
 ## Notenstand nach Runde 2 und Endeinschätzung je Post
@@ -225,7 +227,7 @@ Die Folien sind im PG-Stil wie Tag 1 gehalten (Navy, Geist, Akzent in PG-Blau, H
 |---|---|---|---|---|
 | 1 | Läuft bei Ihrem Kunden was doppelt? / Das sehen Sie vor dem Termin. | 6 + 6 = 12 | Stapel Papierpolicen als Illustration (weiß, graue Platzhalterzeilen, keine Logos), zwei gleiche Blätter leicht versetzt und PG-blau umrandet. Rechts unten ein Pfeil-Symbol → als Wischhinweis (kein Wort). In der Fußzeile steht Ole Kannapinn. | keine |
 | 2 | Etikett „So läuft es oft“ / „Moment, ich hole mal den Ordner.“ | 4 + 6 = 10 | Nachgebautes Videocall-Fenster: links die Kachel des Vermittlers, rechts die Kachel des Kunden mit leerem Stuhl. Der Satz steht als Sprechblase an der Kundenkachel. Kein Status-Text. | Nachgestellte Demo, Namen erfunden |
-| 3 | Etikett „Mit KI-Assistent“ / Nach der Buchung fragt er nach den Policen. | 2 + 8 = 10 | Chat, Kopfzeile „TB / Thomas Berger Versicherungen / KI-Assistent“, Mo 18:05: „Guten Abend Herr Köhler, hier ist der KI-Assistent von Thomas Berger. Damit sich Herr Berger gut auf Donnerstag vorbereiten kann: Möchten Sie Fotos oder PDFs Ihrer aktuellen Policen schicken? Gern aus allen Bereichen. Das ist freiwillig.“ | Nachgestellte Demo, Namen erfunden |
+| 3 | Etikett „Mit KI-Assistent“ / Nach der Buchung fragt er nach den Policen. | 2 + 8 = 10 | Chat, Kopfzeile „TB / Thomas Berger Versicherungen / KI-Assistent“, Mo 18:05: „Guten Abend Herr Köhler, hier ist der KI-Assistent von Thomas Berger. Damit sich Herr Berger gut auf Donnerstag vorbereiten kann: Möchten Sie Fotos oder PDFs Ihrer aktuellen Policen schicken? Das ist freiwillig.“ | Nachgestellte Demo, Namen erfunden |
 | 4 | Kommt nichts, erinnert er freundlich daran. | 6 | Chat, Mi 10:00, KI-Assistent: „Guten Morgen Herr Köhler, eine kurze Erinnerung: Wenn Sie mögen, schicken Sie Ihre Policen gern noch vor Donnerstag.“ Kunde Mi 19:12: drei Foto-Kacheln und „Mehr hab ich gerade nicht gefunden.“ | Nachgestellte Demo, Namen erfunden |
 | 5 | Die Software liest die Verträge automatisch aus. | 7 | Links das Foto einer Police (Demo, „Versicherer A“, kein Briefkopf, kein Logo), ein Pfeil, rechts die erkannten Felder „Privathaftpflicht / 6,90 € im Monat / kündbar zum 01.02.“ | Demodaten |
 | 6 | Daraus wird das Vergleichsblatt in Ihrer Terminvorbereitung. | 7 | Blatt mit vier Blöcken: „Beiträge im Monat 214,30 €“, „Kündigungstermin in den nächsten 3 Monaten: Kfz“, „Mögliche Doppelung: Privathaftpflicht, 2 Verträge“ (markiert), „Fehlender Baustein: Elementarschaden“ | Demodaten |

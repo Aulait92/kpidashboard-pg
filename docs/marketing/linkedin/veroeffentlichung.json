@@ -44,6 +44,88 @@
    "text": "Ihr Leadpreis ist nicht Ihr Preis.\nWas kostet Sie ein Termin wirklich?\nBeispiel: 25 € pro Lead, 200 € pro Termin.\n\nAlle Werte sind angenommen, es sind keine Ergebnisse von uns oder von Kunden. Den Leadpreis habe ich bewusst günstig angesetzt. Setzen Sie Ihre eigenen Zahlen ein:\n\n50 Leads zu je 25 € = 1.250 €\nJe Lead 15 Minuten für Anrufe, Mailbox, Notiz, Nachfassen = 12,5 Stunden\n12,5 Stunden zu je 60 € = 750 €\nZusammen 2.000 €. Daraus werden 10 Termine.\n\nMacht 200 € pro Termin. 40 von 50 Anfragen haben Sie bezahlt, ohne dass ein Termin daraus wurde.\n\nJetzt zwei Stellschrauben, beide um 20 %:\nLeadpreis 20 statt 25 €: 175 € pro Termin.\n12 statt 10 Termine aus denselben 50 Anfragen: rund 167 € pro Termin.\n\nGleich großer Schritt, und die Quote bewegt mehr. Bei 15 statt 10 Terminen wären es rund 133 €.\nUnd die Quote entscheidet sich oft in den Stunden nach dem Formular.\n\nBei uns übernimmt den ersten Kontakt ein KI-Assistent per WhatsApp, in der Regel in unter einer Minute. Er fragt vor und bietet Termine aus Ihrem Kalender an.\nIn unserer nachgestellten Demo aus dem Video vom 3. Dezember stand der Termin 9 Minuten nach der Anfrage.\nOb das bei Ihnen zu mehr Terminen führt, kann ich nicht versprechen. Ich kann es mit Ihnen durchrechnen.\n\nWelche Annahme ist bei Ihnen anders?\nMehr Zeit je Lead, ein anderer Stundensatz, mehr oder weniger Termine?\nSchreiben Sie Ihre Werte gern drunter, ich rechne mit.\n\n#Versicherungsvermittler #Versicherungsmakler",
    "comment": "Wenn Sie die Rechnung lieber nicht öffentlich mit Ihren echten Zahlen durchgehen wollen: Das machen wir im Erstgespräch gemeinsam. Dort sage ich Ihnen auch, was ein Termin bei uns kostet, mit Zahl. performancegrowth.de/termin",
    "status": "geplant"
+  },
+  {
+   "id": "t2_p1",
+   "slot": "2026-11-29T08:00:00[Europe/Berlin]",
+   "media": null,
+   "text": "„Das kriegen doch fünf andere auch.“\n\nDer Satz fällt im Erstgespräch meistens genau dann, wenn es ums Geld geht. Und ich kann es keinem verdenken. Bei manchen Leadanbietern steht der Mehrfachverkauf ganz offen in den Bedingungen, man muss nur mal bis ins Kleingedruckte lesen. Dann ruft man an, ist an dem Tag vielleicht schon der Dritte, und die Frau am anderen Ende ist bedient, bevor man überhaupt seinen Namen gesagt hat.\n\nDeshalb läuft bei uns schon die Anzeige unter Ihrem Namen. Wer da das Formular ausfüllt, hat sich bei Ihnen gemeldet. Und wenn danach per WhatsApp geschrieben wird, steht da „Hier ist der KI-Assistent von“ und dann Ihr Name.\n\nWenn der Kunde dann antwortet, hat ihn vorher noch keiner dreimal angerufen. Mit so einem Kunden redet es sich im Termin anders.\n\nUnd wenn Sie irgendwann aufhören, bleiben das trotzdem Ihre Kunden.\n\nWie oft hören Sie am Telefon „Da hat schon einer angerufen“?\n\n#Versicherungsvermittler #Neukundengewinnung",
+   "comment": "Kleiner Tipp für den Sonntag: Schauen Sie bei Ihrem aktuellen Leadanbieter mal in die Bedingungen, ob da etwas zu Weiterverkauf oder Mehrfachvergabe steht. Und wenn da gar nichts steht, fragen Sie nach. Die Antwort sagt oft schon eine Menge.",
+   "status": "wartet auf Video-Upload"
+  },
+  {
+   "id": "t2_p2",
+   "slot": "2026-11-29T11:30:00[Europe/Berlin]",
+   "media": {
+    "id": "urn:li:image:D4D10AQGN9754QMHo-w",
+    "altText": "Termin vorbereiten: eine Frage ist noch offen. Demodaten"
+   },
+   "text": "Termin steht, Donnerstag 16 Uhr. Was passiert eigentlich bis dahin?\n\nBei vielen Vermittlern hört die Kundin bis dahin nichts mehr. Verständlich, Sie haben ja auch genug anderes auf dem Tisch. Am Donnerstag sitzt man sich gegenüber, die erste Frage ist „Was haben Sie denn bisher so?“, und schon geht ein guter Teil vom Termin fürs Abfragen drauf.\n\nGenau diese Tage nutzt der KI-Assistent. Er schreibt der Kundin per WhatsApp die Fragen, die sonst im Termin kommen würden, so Sachen wie Miete oder Eigentum und wie groß die Wohnung ist, je nachdem, was für den Termin noch fehlt.\n\nAm Mittwoch steht bei Ihnen dann „Termin vorbereiten“ auf der Liste. Darin ist alles, was die Kundin im Formular und im Chat gesagt hat, und was noch fehlt, ist markiert. Frau Albers im Bild gibt es nicht, die Daten sind erfunden. Bei ihr wäre die offene Frage die nach den Fahrrädern, die klären Sie dann eben im Termin.\n\nMich würde mal interessieren, womit Ihre Ersttermine heute anfangen.\n\n#Versicherungsmakler",
+   "comment": null,
+   "status": "geplant"
+  },
+  {
+   "id": "t2_p3",
+   "slot": "2026-11-29T15:00:00[Europe/Berlin]",
+   "media": {
+    "id": "urn:li:document:D4D10AQGU8lmDuf6P0A",
+    "title": "Policen vorab: vom Foto zum Vergleichsblatt"
+   },
+   "text": "Irgendwann im Termin steht der Kunde auf und holt den Ordner.\n\nDann blättern Sie zehn Minuten mit, und irgendwo ganz hinten taucht ein Vertrag auf, von dem er selbst nicht mehr wusste, dass er ihn hat.\n\nDas haben wir seit Kurzem umgedreht. Nach der Buchung fragt der KI-Assistent Ihren Kunden per WhatsApp, ob er Fotos oder PDFs seiner Policen schicken mag, und zwar nur mit seiner Einwilligung. Die Software liest die Verträge automatisch aus, und in Ihrer Terminvorbereitung haben Sie dann ein Vergleichsblatt.\n\nUnd nicht auf jedem Blatt steht etwas Auffälliges. Dann wissen Sie schon vorher, dass bei dem Kunden alles sauber aussieht, und für den Termin ist das auch was wert.\n\nWas war das Kurioseste, das Sie mal in einem Kundenordner gefunden haben?\n\n#Versicherungsvermittler #Versicherungsmakler",
+   "comment": "Im Erstgespräch zeig ich Ihnen das Blatt in der Demo, gern mit Ihrer eigenen Sparte, und dann rechnen wir zusammen durch, ob sich das für Sie lohnt. Dauert 15 Minuten. performancegrowth.de/termin",
+   "status": "geplant"
+  },
+  {
+   "id": "t2_p7",
+   "slot": "2026-11-29T18:30:00[Europe/Berlin]",
+   "media": {
+    "id": "urn:li:image:D4D10AQHce4qdgrO7Hg",
+    "altText": "Umfrage: Wo geht Ihre Zeit drauf? A Anrufen, B Termine, C Nachfassen, D Unterlagen, E Anderes"
+   },
+   "text": "Wo geht bei Ihnen die meiste Zeit drauf, bevor ein Termin überhaupt steht?\n\nIch geb gleich zu, ich hab da ein eigenes Interesse dran.\n\nA) Hinterhertelefonieren, bis endlich mal einer rangeht\nB) Termine abstimmen, bis einer passt\nC) Nachfassen, wenn sich keiner mehr meldet\nD) Policen und Unterlagen zusammenkriegen\nE) Was ganz anderes, dann bitte drunterschreiben\n\nSchreiben Sie den Buchstaben in die Kommentare, und wer mag, gleich dazu, wie viel Zeit ihn das pro Woche so ungefähr kostet.\n\nFür A bis D schreibt bei uns ein KI-Assistent per WhatsApp, und ich will wissen, wo das bei Ihnen am meisten bringen würde. Ich hab da so meine Vermutung, die schreibe ich aber erst, wenn ein paar Antworten da sind, sonst beeinflusse ich Sie ja.",
+   "comment": "Wer nicht öffentlich antworten mag, schickt mir den Buchstaben per Nachricht. Ich zähl die mit, und ein Angebot schreibe ich Ihnen danach nicht.",
+   "status": "geplant"
+  },
+  {
+   "id": "t2_p5",
+   "slot": "2026-11-30T08:00:00[Europe/Berlin]",
+   "media": {
+    "id": "urn:li:document:D4D10AQFroZH2zKmocA",
+    "title": "Ein Morgen mit der Seite Heute"
+   },
+   "text": "Montag, kurz vor acht. Wo sehen Sie eigentlich, was heute alles ansteht?\n\nWenn ich das im Erstgespräch frage, kommt meistens eine kleine Aufzählung. Kalender, Postfach, ein paar Sachen in WhatsApp, der gelbe Zettel am Bildschirm, und der Rest ist im Kopf. Abends sitzt man dann noch da und trägt nach, was in den Gesprächen eigentlich war.\n\nWir haben dafür eine Seite gebaut, die heißt einfach „Heute“. Da stehen morgens Ihre Termine drauf. Zu jedem Termin steht da auch, was die Kundin dem KI-Assistenten im WhatsApp-Chat schon erzählt hat, Sie gehen also in kein Gespräch mehr ohne Vorwissen. Und nach dem Gespräch klicken Sie das Ergebnis an.\n\nIhre Beratungsdoku bleibt natürlich, die nimmt Ihnen keine Software ab.\n\nWie viele Stellen sind es bei Ihnen? Schreiben Sie mir die Zahl drunter.\n\n#Versicherungsvermittler",
+   "comment": null,
+   "status": "geplant"
+  },
+  {
+   "id": "t2_p6",
+   "slot": "2026-11-30T11:30:00[Europe/Berlin]",
+   "media": null,
+   "text": "„Melden Sie sich in zwei Wochen noch mal.“\n\nKlar, mach ich. Und in zwei Wochen haben Sie die Outlook-Erinnerung zweimal weggeklickt, und der Kunde hat längst woanders unterschrieben.\n\nSo sehe ich bei Vermittlern immer wieder richtig gute Anfragen versanden. Genauso, wenn keiner rangeht oder wenn nach dem Angebot nichts mehr kommt.\n\nIn allen drei Fällen schreibt der KI-Assistent Ihres Büros dem Kunden automatisch per WhatsApp, und wenn er einen Termin will, bekommt er freie Zeiten aus Ihrem Kalender. Sie tragen nach dem Gespräch nur das Ergebnis ein, ans Nachfassen denkt dann der Assistent. Und wenn einer nicht mehr will, ist das auch in Ordnung. Dann ist er wenigstens nicht einfach durchgerutscht.\n\nIch hab die drei Fälle mal nachgebaut, Namen ausgedacht.\n\nWas war Ihr spätester Abschluss nach einem „Melden Sie sich in zwei Wochen“?\n\n#Neukundengewinnung #Versicherungsvermittler",
+   "comment": "Wann genau die Nachrichten rausgehen und wie sie klingen, zeige ich Ihnen in der Demo an Ihren eigenen Fällen. performancegrowth.de/termin",
+   "status": "wartet auf Video-Upload"
+  },
+  {
+   "id": "t2_p4",
+   "slot": "2026-11-30T15:00:00[Europe/Berlin]",
+   "media": {
+    "id": "urn:li:image:D4D10AQEFpSYnvkalsQ",
+    "altText": "Vier Fragen für Ihren Datenschutzbeauftragten: Einwilligung, Speicherort, Zugriff, Löschung"
+   },
+   "text": "Ich bin kein Datenschutzbeauftragter, und ich will hier auch nicht so tun.\n\nAber wenn ein Vermittler hört, dass ihm Kunden ihre Policen per WhatsApp schicken, kommt die Frage nach dem Datenschutz oft noch im selben Satz. Und das finde ich auch richtig so. Also sage ich Ihnen einfach, wie das eingestellt ist.\n\nOb Ihr Kunde Unterlagen schickt, entscheidet er selbst, der KI-Assistent fragt vorher nach seiner Einwilligung. In unserer Software liegen die Unterlagen auf Servern in der EU, und sehen kann man sie nur in Ihrem Konto. Da kommt kein anderer Vermittler ran. Nach einiger Zeit löscht die Software sie automatisch wieder.\n\nDas Gespräch mit Ihrem Datenschutzbeauftragten ersetzt das nicht. Aber Sie gehen nicht mit leeren Händen rein, und wenn Sie mögen, zeige ich Ihnen vorher, wie alles eingestellt ist.\n\nDie vier Fragen im Bild würde ich an Ihrer Stelle jedem Anbieter stellen, mir auch.\n\nWas wäre bei Ihnen die erste Frage, wenn Kunden Ihnen Policen per WhatsApp schicken?\n\n#Datenschutz #Versicherungsvermittler",
+   "comment": "Wer die Einstellungen sehen will, bevor er mit seinem Datenschutzbeauftragten spricht, schreibt mir eine Nachricht. Den Auftragsverarbeitungsvertrag schicke ich Ihnen dann gern vorab zum Lesen.",
+   "status": "geplant"
+  },
+  {
+   "id": "t2_p8",
+   "slot": "2026-11-30T18:30:00[Europe/Berlin]",
+   "media": {
+    "id": "urn:li:image:D4D10AQHX4lBM5MPIrw",
+    "altText": "Sparte zwei kommt, wenn die Zahlen stehen: Lead, Termin, Abschluss"
+   },
+   "text": "Ich rate fast immer dazu, mit einer Sparte anzufangen. Auch wenn Sie lieber gleich drei hätten.\n\nIm Erstgespräch fragen mich viele, ob wir nicht Hausrat, Haftpflicht und Zahn zusammen starten können. Können wir, klar.\n\nAm Anfang hab ich das selbst anders gesehen. Mehr Kampagnen heißt mehr Anfragen, so hab ich mir das jedenfalls gedacht. In der Praxis lief das nicht so. Wenn drei Kampagnen gleichzeitig laufen, weiß nach ein paar Wochen keiner mehr so richtig, welche davon eigentlich trägt. Und bevor eine Sparte richtig läuft, ist die Geduld oft schon weg, und zwar auf beiden Seiten.\n\nEntscheidend ist im Prinzip das Verhältnis aus Leadpreis, Abschlussquote und Provision. Das sieht man nur sauber, wenn erst mal eine Sparte allein läuft. Bei vielen ist das die Katzenversicherung, weil wir da die meisten Erfahrungswerte haben. Ja, Katze, ich weiß, klingt erst mal klein.\n\nDann schauen wir zusammen drauf, was ein Lead kostet, was ein Termin und was am Ende ein Abschluss. Das sehen Sie in der Software, sobald Sie die Ergebnisse eintragen. Erst wenn die Zahlen stehen, kommt die nächste Sparte dazu.\n\nUnd die kommt oft über den Termin. Der KI-Assistent fragt im WhatsApp-Chat ja schon nach bestehenden Verträgen, dann sehen Sie vor dem Termin, was der Kunde sonst noch hat. Und viele wollen im Termin dann sowieso alles einmal durchgehen.\n\nWer gerade überlegt, mit mehreren Sparten gleichzeitig loszulegen, schreibt mir gern. Dann sag ich Ihnen ehrlich, womit ich an Ihrer Stelle anfangen würde.",
+   "comment": "Welche Sparte bei Ihnen zum Start passt, kann ich vorher nicht sagen. Das rechnen wir im Erstgespräch mit Ihren eigenen Provisionen durch. performancegrowth.de/termin",
+   "status": "geplant"
   }
  ]
 }
