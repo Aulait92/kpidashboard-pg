@@ -86,12 +86,16 @@
       "id": "t2_p3",
       "slot": "2026-11-29T15:00:00[Europe/Berlin]",
       "media": {
-        "id": "urn:li:document:D4D10AQGU8lmDuf6P0A",
+        "id": "urn:li:document:D4D10AQEnmVLfe6WGxA",
         "title": "Policen vorab: vom Foto zum Vergleichsblatt"
       },
       "text": "Irgendwann im Termin sagt der Kunde „Moment, ich hol mal eben den Ordner“ und steht auf.\n\nUnd dann blättern Sie zehn Minuten mit, und ganz hinten taucht noch ein Vertrag auf, von dem er selbst gar nicht mehr wusste, dass er den hat. Ist ganz normal, das kennt eigentlich jeder Vermittler.\n\nGenau deshalb haben wir das seit Kurzem umgedreht. Wenn der Termin gebucht ist, fragt der KI-Assistent Ihren Kunden per WhatsApp, ob er Fotos oder PDFs seiner aktuellen Policen schicken mag. Das ist freiwillig und läuft nur mit seiner Einwilligung. Und wenn erst mal nichts kommt, erinnert ihn der KI-Assistent noch mal freundlich daran.\n\nDie Software liest die Verträge dann automatisch aus, und in Ihrer Terminvorbereitung haben Sie ein Vergleichsblatt. Da sehen Sie, was der Kunde heute im Monat zahlt, was in den nächsten drei Monaten kündbar ist, ob irgendwo etwas doppelt läuft und welcher Baustein noch fehlt.\n\nMan muss dazusagen, nicht auf jedem Blatt steht etwas Auffälliges. Dann wissen Sie eben schon vorher, dass bei dem Kunden alles sauber aussieht, und das ist für den Termin auch was wert.\n\nAber das macht einfach einen riesen Unterschied, ob Sie vorbereitet in den Termin gehen oder erst mal zehn Minuten im Ordner suchen. Und so kann aus der einen Sparte, wegen der sich jemand eingetragen hat, im Prinzip ein Komplettcheck werden.\n\nWas war eigentlich das Kurioseste, das Sie mal in einem Kundenordner gefunden haben? Bin gespannt.\n\n#Versicherungsvermittler #Versicherungsmakler",
       "comment": "Kurz für alle, die mich noch nicht kennen. Wir schalten für Vermittler Werbung auf Facebook und Instagram, und zwar im Namen des Vermittlers, und die Leads gehen an keinen zweiten und keinen dritten. Direkt nach der Eintragung geht innerhalb von Sekunden eine WhatsApp-Nachricht raus, der KI-Assistent stellt ein paar Fragen, qualifiziert vor und bucht den Termin direkt in Ihren Kalender. Das Vergleichsblatt gehört zur Software, in der Sie diese Termine dann vorbereiten. Im Erstgespräch zeig ich Ihnen das Blatt in der Demo mit Demodaten, und dann rechnen wir gern zusammen durch, ob sich das für Sie lohnt. Dauert 15 Minuten. performancegrowth.de/termin",
-      "status": "geplant"
+      "status": "geplant",
+      "media_alt": {
+        "id": "urn:li:document:D4D10AQGU8lmDuf6P0A",
+        "title": "Policen vorab: vom Foto zum Vergleichsblatt"
+      }
     },
     {
       "id": "t2_p7",
@@ -108,12 +112,16 @@
       "id": "t2_p5",
       "slot": "2026-11-30T08:00:00[Europe/Berlin]",
       "media": {
-        "id": "urn:li:document:D4D10AQFroZH2zKmocA",
+        "id": "urn:li:document:D4D10AQFIgLbuVkZDsQ",
         "title": "Ein Morgen mit der Seite Heute"
       },
       "text": "Montag, kurz vor acht. Wo sehen Sie eigentlich, was heute alles ansteht?\n\nWenn ich das im Erstgespräch frage, kommt meistens eine kleine Aufzählung. Kalender, Postfach, ein paar Sachen in WhatsApp, der gelbe Zettel am Bildschirm, und der Rest ist im Kopf. Im Prinzip fünf Stellen, bevor der Tag richtig anfängt. Und abends sitzt man dann noch da und trägt nach, was in den Gesprächen eigentlich war. Ist ganz normal, so arbeiten die meisten.\n\nBei uns läuft es ja so, dass sich jemand einträgt und dann direkt eine WhatsApp-Nachricht rausgeht, unser KI-Assistent stellt ein paar Fragen, qualifiziert vor und bucht, wenn tatsächlich Interesse da ist, einen Termin in Ihren Kalender. Und Ihre Termine stehen morgens auf einer Seite in unserer Software, die heißt einfach „Heute“.\n\nZu jedem Termin steht da auch, was die Person dem KI-Assistenten im Chat schon erzählt hat. Sie gehen also vorbereitet ins Gespräch und wissen vorher, worum es geht. Nach dem Gespräch klicken Sie das Ergebnis an, und abends steht schon drin, was heute war.\n\nMan muss dazusagen, die Beratungsdoku machen Sie wie bisher, die gehört zu Ihrer Beratung dazu. Aber für den gelben Zettel bleibt dann wenig.\n\nUnd das macht einfach einen riesen Unterschied. Sie müssen im Prinzip nur noch Ihre Termine wahrnehmen und dort mal hinterhertelefonieren, wo jemand im Chat nicht geantwortet hat. Beraten, verkaufen, das, was Sie am besten können.\n\nWie viele Stellen sind es bei Ihnen morgens? Schreiben Sie mir die Zahl gern drunter.\n\n#Versicherungsvermittler",
       "comment": "Ein bisschen Hintergrund, falls Sie neu hier sind. Die Software bekommen Sie bei uns zusammen mit Werbung auf Facebook und Instagram, die in Ihrem eigenen Namen läuft. Die Leads sind 100 % exklusiv, die gehen an keinen zweiten und keinen dritten. Der KI-Assistent schreibt die Interessenten dann per WhatsApp an und bucht, wenn tatsächlich Interesse da ist, den Termin direkt in Ihren Kalender. Die Beratung machen Sie selbst, „Heute“ zeigt Ihnen vorher, was im Chat schon besprochen wurde. Wenn Sie sehen wollen, wie so ein Morgen bei Ihnen aussehen würde, schreiben Sie mir einfach.",
-      "status": "geplant"
+      "status": "geplant",
+      "media_alt": {
+        "id": "urn:li:document:D4D10AQFroZH2zKmocA",
+        "title": "Ein Morgen mit der Seite Heute"
+      }
     },
     {
       "id": "t2_p6",
