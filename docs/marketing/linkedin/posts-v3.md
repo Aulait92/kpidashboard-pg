@@ -189,6 +189,8 @@ Manche Leads sind schlicht schlecht. Falsche Nummer, mehrfach verkauft. Gegen Me
 
 Aber ich habe auch viele gute Anfragen scheitern sehen. Meiner Erfahrung nach selten am Formular. Meistens an den Stunden danach.
 
+Genau um diese Stunden kümmern wir uns: Wir schalten für Vermittler Anzeigen auf Facebook und Instagram unter ihrem eigenen Namen, und auf jede Anfrage schreibt ein KI-Assistent per WhatsApp, in der Regel in unter einer Minute. Er bietet dann gleich freie Termine aus dem Kalender des Vermittlers an.
+
 Im Karussell erzähle ich denselben Sonntagabend zweimal.
 Einmal so, wie er oft läuft.
 Und einmal mit KI-Assistent.
@@ -285,7 +287,7 @@ Montag früh, Montag irgendwann oder wenn es passt?
 **Erster Kommentar**
 
 ```text
-Wer sehen möchte, wie das mit Ihren eigenen Produkten und Ihrem Kalender aussähe: Im Erstgespräch zeige ich Ihnen den Ablauf live in der Demo-Umgebung. performancegrowth.de/termin
+Kurz zur Einordnung, weil mich hier nicht jeder kennt: Wir schalten für Versicherungsvermittler Anzeigen auf Facebook und Instagram, die unter ihrem Namen laufen, und jede Anfrage daraus geht nur an diesen einen Vermittler. Der KI-Assistent aus dem Video übernimmt den ersten Kontakt, danach berät der Vermittler selbst. Wie das mit Ihren eigenen Produkten und Ihrem Kalender aussähe, zeige ich Ihnen gern im Erstgespräch live in der Demo-Umgebung.
 ```
 
 **Visual: exakte Texte im Video (Stand nach Anpassung, verbindlich)**
@@ -429,6 +431,7 @@ Leadpreis 20 statt 25 €: 175 € pro Termin.
 Gleich großer Schritt, und die Quote bewegt mehr. Bei 15 statt 10 Terminen wären es rund 133 €.
 Und die Quote entscheidet sich oft in den Stunden nach dem Formular.
 
+Falls Sie mich noch nicht kennen: Wir schalten für Vermittler wie Sie Anzeigen auf Facebook und Instagram, die unter Ihrem Namen laufen, und die Anfragen daraus landen nur bei Ihnen.
 Bei uns übernimmt den ersten Kontakt ein KI-Assistent per WhatsApp, in der Regel in unter einer Minute. Er fragt vor und bietet Termine aus Ihrem Kalender an.
 In unserer nachgestellten Demo aus dem Video vom 3. Dezember stand der Termin 9 Minuten nach der Anfrage.
 Ob das bei Ihnen zu mehr Terminen führt, kann ich nicht versprechen. Ich kann es mit Ihnen durchrechnen.

@@ -2,6 +2,8 @@
 
 **Status: Endfassung nach Runde 2 (Kundenpanel, Viralität, KI-Detektor). Wartet auf Oles Bestätigungen (Liste am Ende).**
 
+**Hinweis 28.11.: Maßgeblich für die Veröffentlichung sind die Texte in veroeffentlichung.json. Dort sind die Einordnungssätze ausgedünnt (p3, t2_p2, t2_p4, t2_p7) und „Zahn“ in t2_p8 gestrichen.**
+
 Ole 28.11.: Bestätigt sind Name in der Anzeige, Nachfassen in allen drei Fällen, Datenschutz und Sonntag 8:00. Policen-Bitte noch nicht für Kranken und Leben, deshalb ist „Gern aus allen Bereichen“ gestrichen.
 
 Stand: 28.11.2026. Ersetzt posts-tag2-3-v2.md. Grundlage: prozess.md, recherche.md, posts-v3.md und veroeffentlichung.json (Tag 1 am Sa 28.11., wird nicht wiederholt), sprechzettel-vertrieb.md, transkript-praesentationsvideo.txt, assets/video-gesicht.srt.
@@ -88,7 +90,7 @@ Hinweise:
 
 Der Satz fällt im Erstgespräch meistens genau dann, wenn es ums Geld geht. Und ich kann es keinem verdenken. Bei manchen Leadanbietern steht der Mehrfachverkauf ganz offen in den Bedingungen, man muss nur mal bis ins Kleingedruckte lesen. Dann ruft man an, ist an dem Tag vielleicht schon der Dritte, und die Frau am anderen Ende ist bedient, bevor man überhaupt seinen Namen gesagt hat.
 
-Deshalb läuft bei uns schon die Anzeige unter Ihrem Namen. Wer da das Formular ausfüllt, hat sich bei Ihnen gemeldet. Und wenn danach per WhatsApp geschrieben wird, steht da „Hier ist der KI-Assistent von“ und dann Ihr Name.
+Deshalb läuft bei uns schon die Anzeige unter Ihrem Namen. Die schalten wir für Sie auf Facebook und Instagram, und jede Anfrage daraus geht nur an Sie. Wer da das Formular ausfüllt, hat sich bei Ihnen gemeldet. Und wenn danach per WhatsApp geschrieben wird, steht da „Hier ist der KI-Assistent von“ und dann Ihr Name.
 
 Wenn der Kunde dann antwortet, hat ihn vorher noch keiner dreimal angerufen. Mit so einem Kunden redet es sich im Termin anders.
 
@@ -148,9 +150,9 @@ Termin steht, Donnerstag 16 Uhr. Was passiert eigentlich bis dahin?
 
 Bei vielen Vermittlern hört die Kundin bis dahin nichts mehr. Verständlich, Sie haben ja auch genug anderes auf dem Tisch. Am Donnerstag sitzt man sich gegenüber, die erste Frage ist „Was haben Sie denn bisher so?“, und schon geht ein guter Teil vom Termin fürs Abfragen drauf.
 
-Genau diese Tage nutzt der KI-Assistent. Er schreibt der Kundin per WhatsApp die Fragen, die sonst im Termin kommen würden, so Sachen wie Miete oder Eigentum und wie groß die Wohnung ist, je nachdem, was für den Termin noch fehlt.
+Kurz, wie der Termin bei uns zustande kommt: Wir schalten für Vermittler Anzeigen auf Facebook und Instagram unter ihrem Namen, und wer sich meldet, bekommt von unserem KI-Assistenten per WhatsApp freie Zeiten aus dem Kalender angeboten. Die Tage bis zum Termin nutzt derselbe Assistent auch. Er schreibt der Kundin per WhatsApp die Fragen, die sonst im Termin kommen würden, so Sachen wie Miete oder Eigentum und wie groß die Wohnung ist, je nachdem, was für den Termin noch fehlt.
 
-Am Mittwoch steht bei Ihnen dann „Termin vorbereiten“ auf der Liste. Darin ist alles, was die Kundin im Formular und im Chat gesagt hat, und was noch fehlt, ist markiert. Frau Albers im Bild gibt es nicht, die Daten sind erfunden. Bei ihr wäre die offene Frage die nach den Fahrrädern, die klären Sie dann eben im Termin.
+Am Mittwoch steht bei Ihnen in der Software dann „Termin vorbereiten“ auf der Liste. Darin ist alles, was die Kundin im Formular und im Chat gesagt hat, und was noch fehlt, ist markiert. Frau Albers im Bild gibt es nicht, die Daten sind erfunden. Bei ihr wäre die offene Frage die nach den Fahrrädern, die klären Sie dann eben im Termin.
 
 Mich würde mal interessieren, womit Ihre Ersttermine heute anfangen.
 
@@ -216,7 +218,7 @@ Was war das Kurioseste, das Sie mal in einem Kundenordner gefunden haben?
 **Erster Kommentar**
 
 ```text
-Im Erstgespräch zeig ich Ihnen das Blatt in der Demo, gern mit Ihrer eigenen Sparte, und dann rechnen wir zusammen durch, ob sich das für Sie lohnt. Dauert 15 Minuten. performancegrowth.de/termin
+Für alle, die mich noch nicht kennen: Wir schalten für Vermittler Anzeigen auf Facebook und Instagram unter deren Namen, und der KI-Assistent bietet den Interessenten per WhatsApp Termine im Kalender des Vermittlers an. Das Vergleichsblatt gehört zur Software, in der Sie diese Termine dann vorbereiten. Im Erstgespräch zeig ich Ihnen das Blatt in der Demo, gern mit Ihrer eigenen Sparte, und dann rechnen wir zusammen durch, ob sich das für Sie lohnt. Dauert 15 Minuten. performancegrowth.de/termin
 ```
 
 **Karussell-Folien**
@@ -268,7 +270,7 @@ E) Was ganz anderes, dann bitte drunterschreiben
 
 Schreiben Sie den Buchstaben in die Kommentare, und wer mag, gleich dazu, wie viel Zeit ihn das pro Woche so ungefähr kostet.
 
-Für A bis D schreibt bei uns ein KI-Assistent per WhatsApp, und ich will wissen, wo das bei Ihnen am meisten bringen würde. Ich hab da so meine Vermutung, die schreibe ich aber erst, wenn ein paar Antworten da sind, sonst beeinflusse ich Sie ja.
+Damit Sie wissen, wer hier fragt: Wir schalten für Versicherungsvermittler Anzeigen auf Facebook und Instagram unter ihrem Namen, und auf die Anfragen antwortet ein KI-Assistent per WhatsApp mit freien Terminen aus dem Kalender des Vermittlers. Für A bis D schreibt dieser Assistent bei uns schon, und ich will wissen, wo das bei Ihnen am meisten bringen würde. Ich hab da so meine Vermutung, die schreibe ich aber erst, wenn ein paar Antworten da sind, sonst beeinflusse ich Sie ja.
 ```
 
 **Erster Kommentar (ohne Link)**
@@ -321,7 +323,7 @@ Montag, kurz vor acht. Wo sehen Sie eigentlich, was heute alles ansteht?
 
 Wenn ich das im Erstgespräch frage, kommt meistens eine kleine Aufzählung. Kalender, Postfach, ein paar Sachen in WhatsApp, der gelbe Zettel am Bildschirm, und der Rest ist im Kopf. Abends sitzt man dann noch da und trägt nach, was in den Gesprächen eigentlich war.
 
-Wir haben dafür eine Seite gebaut, die heißt einfach „Heute“. Da stehen morgens Ihre Termine drauf. Zu jedem Termin steht da auch, was die Kundin dem KI-Assistenten im WhatsApp-Chat schon erzählt hat, Sie gehen also in kein Gespräch mehr ohne Vorwissen. Und nach dem Gespräch klicken Sie das Ergebnis an.
+Wir haben dafür in unserer Software eine Seite gebaut, die heißt einfach „Heute“. Da stehen morgens Ihre Termine drauf. Zu jedem Termin steht da auch, was die Kundin dem KI-Assistenten im WhatsApp-Chat schon erzählt hat, Sie gehen also in kein Gespräch mehr ohne Vorwissen. Und nach dem Gespräch klicken Sie das Ergebnis an.
 
 Ihre Beratungsdoku bleibt natürlich, die nimmt Ihnen keine Software ab.
 
@@ -330,7 +332,11 @@ Wie viele Stellen sind es bei Ihnen? Schreiben Sie mir die Zahl drunter.
 #Versicherungsvermittler
 ```
 
-**Erster Kommentar:** kein erster Kommentar.
+**Erster Kommentar (ohne Link)**
+
+```text
+Ein bisschen Hintergrund, falls Sie neu hier sind: Die Software bekommen Vermittler bei uns zusammen mit Anzeigen auf Facebook und Instagram, die unter ihrem Namen laufen, und mit einem KI-Assistenten, der den Interessenten per WhatsApp Termine aus ihrem Kalender anbietet. Die Beratung machen Sie selbst, „Heute“ zeigt Ihnen vorher, was im Chat schon besprochen wurde.
+```
 
 **Karussell-Folien**
 
@@ -386,7 +392,9 @@ Klar, mach ich. Und in zwei Wochen haben Sie die Outlook-Erinnerung zweimal wegg
 
 So sehe ich bei Vermittlern immer wieder richtig gute Anfragen versanden. Genauso, wenn keiner rangeht oder wenn nach dem Angebot nichts mehr kommt.
 
-In allen drei Fällen schreibt der KI-Assistent Ihres Büros dem Kunden automatisch per WhatsApp, und wenn er einen Termin will, bekommt er freie Zeiten aus Ihrem Kalender. Sie tragen nach dem Gespräch nur das Ergebnis ein, ans Nachfassen denkt dann der Assistent. Und wenn einer nicht mehr will, ist das auch in Ordnung. Dann ist er wenigstens nicht einfach durchgerutscht.
+Bei uns fängt das schon früher an: Wir schalten für Vermittler Anzeigen auf Facebook und Instagram unter ihrem Namen, und auf jede Anfrage meldet sich ein KI-Assistent per WhatsApp, in der Regel in unter einer Minute. Derselbe Assistent bleibt auch danach dran.
+
+In allen drei Fällen schreibt er dem Kunden automatisch per WhatsApp, und wenn er einen Termin will, bekommt er freie Zeiten aus Ihrem Kalender. Sie tragen nach dem Gespräch nur das Ergebnis ein, ans Nachfassen denkt dann der Assistent. Und wenn einer nicht mehr will, ist das auch in Ordnung. Dann ist er wenigstens nicht einfach durchgerutscht.
 
 Ich hab die drei Fälle mal nachgebaut, Namen ausgedacht.
 
@@ -446,6 +454,8 @@ Ich bin kein Datenschutzbeauftragter, und ich will hier auch nicht so tun.
 
 Aber wenn ein Vermittler hört, dass ihm Kunden ihre Policen per WhatsApp schicken, kommt die Frage nach dem Datenschutz oft noch im selben Satz. Und das finde ich auch richtig so. Also sage ich Ihnen einfach, wie das eingestellt ist.
 
+Kurz zum Hintergrund: Wir schalten für Vermittler Anzeigen auf Facebook und Instagram unter ihrem Namen, und mit den Interessenten schreibt dann ein KI-Assistent per WhatsApp. Der fragt nach der Terminbuchung auch nach Policen, und genau darum geht es hier.
+
 Ob Ihr Kunde Unterlagen schickt, entscheidet er selbst, der KI-Assistent fragt vorher nach seiner Einwilligung. In unserer Software liegen die Unterlagen auf Servern in der EU, und sehen kann man sie nur in Ihrem Konto. Da kommt kein anderer Vermittler ran. Nach einiger Zeit löscht die Software sie automatisch wieder.
 
 Das Gespräch mit Ihrem Datenschutzbeauftragten ersetzt das nicht. Aber Sie gehen nicht mit leeren Händen rein, und wenn Sie mögen, zeige ich Ihnen vorher, wie alles eingestellt ist.
@@ -503,7 +513,7 @@ Das Bild hat 3 + 5 + 4 = 12 Wörter. Es zeigt Fragen statt Antworten und taugt a
 ```text
 Ich rate fast immer dazu, mit einer Sparte anzufangen. Auch wenn Sie lieber gleich drei hätten.
 
-Im Erstgespräch fragen mich viele, ob wir nicht Hausrat, Haftpflicht und Zahn zusammen starten können. Können wir, klar.
+Im Erstgespräch fragen mich viele, ob wir nicht Hausrat, Haftpflicht und Zahn zusammen starten können. Können wir, klar. Sparte heißt bei uns übrigens: Wir schalten für Sie Anzeigen auf Facebook und Instagram zu genau diesem Thema, unter Ihrem Namen, und der KI-Assistent bietet den Interessenten per WhatsApp Termine in Ihrem Kalender an.
 
 Am Anfang hab ich das selbst anders gesehen. Mehr Kampagnen heißt mehr Anfragen, so hab ich mir das jedenfalls gedacht. In der Praxis lief das nicht so. Wenn drei Kampagnen gleichzeitig laufen, weiß nach ein paar Wochen keiner mehr so richtig, welche davon eigentlich trägt. Und bevor eine Sparte richtig läuft, ist die Geduld oft schon weg, und zwar auf beiden Seiten.
 
