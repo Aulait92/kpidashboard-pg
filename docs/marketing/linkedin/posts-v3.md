@@ -2,7 +2,7 @@
 
 **Status: final nach Runde 3, wartet auf Oles Bestätigungen.**
 
-**Ole 28.11.: Post 4 (Einwand, Bild „Er sagt, was er ist“) gestrichen. Serie hat 4 Posts, Post 3 rückt auf Di 08.12., 7:45 Uhr.**
+**Ole 28.11.: Post 1 nutzt das Video mit Gesicht (assets/video-gesicht.mp4, Untertitel video-gesicht.srt), Satz zum Video angepasst. Post 4 (Einwand, Bild „Er sagt, was er ist“) gestrichen. Serie hat 4 Posts, Post 3 rückt auf Di 08.12., 7:45 Uhr.**
 
 Stand: 28.11.2026. Chef-Texter, Fassung v3 nach Kritiker-Panel Runde 2 (kritik-runde2.md). Letzte Runde laut prozess.md.
 Basis: posts-v2.md. Eingearbeitet: Pflichtkorrekturen T1 bis T5 aus kritik-runde2.md, die dort angebotenen Ersatztexte für Post 5, Post 2, Post 4 und Post 3, dazu der Abgleich der Folien- und Bildtexte mit den angepassten Visuals (V1 bis V4, V6).
@@ -259,7 +259,7 @@ Was passiert mit ihr bis Montag?
 
 In vielen Büros erst einmal nichts. Verständlich, es ist Sonntagabend. Nur ist die Anfrage am Montagmorgen dann oft schon kalt.
 
-Im Video sehen Sie, was in dieser Zeit stattdessen passieren kann. Nachgestellt, mit erfundenen Namen.
+Im Video erkläre ich, was in dieser Zeit stattdessen passieren kann. Daneben läuft ein nachgestellter Chat mit erfundenen Namen.
 
 21:47 Uhr kommt eine Anfrage für eine Katzenversicherung rein.
 Noch in derselben Minute schreibt der KI-Assistent per WhatsApp. Im Namen des Vermittlers, mit Texten, die er vorher freigegeben hat.
